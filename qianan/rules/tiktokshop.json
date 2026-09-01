@@ -1,0 +1,199 @@
+{
+  "schemaVersion": "rules.v1",
+  "platform": "tiktokshop",
+  "displayName": "TikTok Shop",
+  "demoDepth": "simple",
+  "updated": "2026-09-01",
+  "source": "TikTok Shop Seller Center 公开规范整理；上架前以最新官方文档复核",
+  "locales": [
+    "en-US",
+    "th-TH",
+    "id-ID",
+    "vi-VN"
+  ],
+  "marketplaces": [
+    "US",
+    "UK",
+    "TH",
+    "ID",
+    "VN",
+    "MY",
+    "PH",
+    "SG"
+  ],
+  "title": {
+    "maxLength": 255,
+    "recommendedLength": [
+      40,
+      120
+    ],
+    "formula": "清晰产品名 + 1 个核心卖点（避免堆砌关键词，影响商品卡审核）",
+    "styleRules": [
+      "不使用夸大词与绝对化用语",
+      "不使用全大写与特殊符号"
+    ]
+  },
+  "description": {
+    "type": "plain_text",
+    "maxLength": 2000,
+    "structure": [
+      "一句话卖点",
+      "规格参数",
+      "使用场景",
+      "售后说明"
+    ]
+  },
+  "mainImage": {
+    "minWidth": 800,
+    "minHeight": 800,
+    "aspectRatio": "1:1",
+    "background": "clean",
+    "noWatermark": true,
+    "noQrCode": true,
+    "noTextOverload": true
+  },
+  "gallery": {
+    "maxImages": 9,
+    "note": "商品卡图片以真实产品为主"
+  },
+  "videoScript": {
+    "supported": true,
+    "orientation": "9:16",
+    "durationSec": [
+      15,
+      60
+    ],
+    "structure": [
+      {
+        "beat": "hook",
+        "seconds": 3,
+        "goal": "前 3 秒抓住注意力：痛点/反差/悬念"
+      },
+      {
+        "beat": "demo",
+        "seconds": 20,
+        "goal": "展示产品使用与效果"
+      },
+      {
+        "beat": "social_proof",
+        "seconds": 10,
+        "goal": "用户反馈/场景共鸣"
+      },
+      {
+        "beat": "cta",
+        "seconds": 5,
+        "goal": "引导点击小黄车下单"
+      }
+    ],
+    "note": "Demo 阶段输出视频脚本（分镜 + 台词 + 字幕建议），不真生成视频"
+  },
+  "categoryAttributes": {
+    "electronics": [
+      "品牌",
+      "型号",
+      "包装清单"
+    ],
+    "home_kitchen": [
+      "品牌",
+      "材质",
+      "尺寸"
+    ],
+    "apparel": [
+      "品牌",
+      "材质",
+      "尺码"
+    ]
+  },
+  "bannedWords": {
+    "promotional": [
+      "cheapest",
+      "free shipping",
+      "best price"
+    ],
+    "claims": [
+      "best",
+      "#1",
+      "100%",
+      "guaranteed",
+      "permanent"
+    ],
+    "restricted": [
+      "cure",
+      "treat",
+      "medical",
+      "slimming",
+      "whitening injection"
+    ],
+    "restrictedNote": "绝对化用语与医疗/功效宣称会被商品卡审核拦截"
+  },
+  "complianceChecks": [
+    {
+      "id": "title_length",
+      "type": "length",
+      "field": "title",
+      "max": 255,
+      "severity": "error"
+    },
+    {
+      "id": "promotional_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "promotional",
+      "severity": "warn"
+    },
+    {
+      "id": "claims_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "claims",
+      "severity": "warn"
+    },
+    {
+      "id": "restricted_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "restricted",
+      "severity": "error"
+    },
+    {
+      "id": "main_image",
+      "type": "image_spec",
+      "field": "mainImage",
+      "minWidth": 800,
+      "minHeight": 800,
+      "noWatermark": true,
+      "noQrCode": true,
+      "severity": "error"
+    },
+    {
+      "id": "category_attrs",
+      "type": "required_attrs",
+      "severity": "warn"
+    }
+  ],
+  "economics": {
+    "note": "economics 费率为公开文档整理的演示估算值（非实时），定价引擎直接消费；上架前以卖家后台实际费率复核。头程单价与汇率在引擎侧统一维护。",
+    "currency": "USD",
+    "commissionRate": 0.07,
+    "adTacosDefault": 0.15,
+    "returnRateDefault": 0.08,
+    "returnHandlingFee": 1.5,
+    "fulfillment": {
+      "type": "per_order",
+      "fee": 1.3,
+      "note": "平台合作物流/海外仓尾程按件估算"
+    },
+    "monthlyStoragePerCubicMeter": 15.0,
+    "vatRate": 0.0,
+    "dutyNote": "美区销售税平台代扣；短视频投流重，TACOS 默认取高（demo）"
+  }
+}

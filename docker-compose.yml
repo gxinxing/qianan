@@ -1,0 +1,36 @@
+version: "3.8"
+
+services:
+  backend:
+    build: ./qianan/server
+    ports:
+      - "8000:8000"
+    environment:
+      - BAILIAN_API_KEY=${BAILIAN_API_KEY}
+      - BAILIAN_BASE_URL=${BAILIAN_BASE_URL:-https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1}
+      - QIANAN_TEXT_MODEL=${QIANAN_TEXT_MODEL:-qwen3.7-max}
+      - QIANAN_IMAGE_MODEL=${QIANAN_IMAGE_MODEL:-qwen-image-2.0}
+      - QIANAN_VL_MODEL=${QIANAN_VL_MODEL:-}
+      - QIANAN_MOCK=${QIANAN_MOCK:-1}
+    volumes:
+      - ./qianan/server/data:/app/data
+      - ./qianan/server/.env:/app/.env:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./qianan/web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

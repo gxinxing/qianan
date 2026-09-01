@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Add a Product - Seller Central</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Amazon Ember", Arial, sans-serif; background: #eaeaea; color: #0f1111; font-size: 13px; }
+  header { background: #232f3e; color: #fff; padding: 10px 24px; display: flex; align-items: center; gap: 24px; }
+  header .logo { font-size: 17px; font-weight: 700; letter-spacing: .3px; }
+  header .logo span { color: #ff9900; }
+  header nav { display: flex; gap: 18px; font-size: 12px; color: #ddd; }
+  header .user { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 12px; color: #ddd; }
+  header .user .avatar { width: 26px; height: 26px; border-radius: 50%; background: #ff9900; color: #232f3e; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+  .subnav { background: #37475a; color: #fff; padding: 6px 24px; font-size: 12px; display: flex; gap: 20px; }
+  .subnav a { color: #fff; text-decoration: none; }
+  .breadcrumb { padding: 10px 24px; font-size: 12px; color: #565959; }
+  .breadcrumb a { color: #c45500; text-decoration: none; }
+  .wrap { max-width: 900px; margin: 0 auto 40px; }
+  h1 { font-size: 21px; font-weight: 400; padding: 6px 0 14px; }
+  .card { background: #fff; border: 1px solid #d5d9d9; border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+  .card h2 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+  .card .hint { color: #565959; font-size: 12px; margin-bottom: 14px; }
+  label { display: block; font-weight: 700; font-size: 12px; margin: 12px 0 4px; }
+  label .req { color: #c40000; }
+  label .counter { float: right; font-weight: 400; color: #565959; }
+  input[type=text], input[type=number], textarea, select {
+    width: 100%; border: 1px solid #888c8c; border-radius: 4px; padding: 7px 10px;
+    font-size: 13px; font-family: inherit; background: #fff; outline: none;
+  }
+  input:focus, textarea:focus, select:focus { border-color: #e77600; box-shadow: 0 0 0 3px #f8dfa6; }
+  textarea { resize: vertical; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .bullet-row { display: flex; gap: 8px; align-items: center; margin-bottom: 6px; }
+  .bullet-row .idx { width: 18px; color: #565959; font-size: 12px; text-align: right; }
+  .img-box { width: 160px; height: 160px; border: 1px dashed #888c8c; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #565959; font-size: 12px; text-align: center; background: #fafafa; overflow: hidden; }
+  .img-box img { width: 100%; height: 100%; object-fit: cover; }
+  .btn-primary {
+    background: linear-gradient(to bottom, #f7dfa5, #f0c14b); border: 1px solid #a88734;
+    border-radius: 6px; padding: 8px 28px; font-size: 13px; cursor: pointer; color: #0f1111;
+  }
+  .btn-primary:hover { background: #f0c14b; }
+  .btn-primary:disabled { opacity: .6; cursor: wait; }
+  .save-row { display: flex; align-items: center; gap: 14px; }
+  .save-msg { color: #067d62; font-weight: 700; font-size: 12px; opacity: 0; transition: opacity .3s; }
+  .err-msg { color: #c40000; font-weight: 700; font-size: 12px; display: none; }
+  .mock-badge {
+    position: fixed; right: 12px; bottom: 12px; background: #232f3e; color: #ffa724;
+    font-size: 11px; padding: 4px 10px; border-radius: 999px; opacity: .85; z-index: 50;
+  }
+  /* ---------- Live 视图（上架后的商品页 + 业务报表） ---------- */
+  .live-banner { background: #067d62; color: #fff; border-radius: 8px; padding: 12px 18px; margin: 14px 0 16px; display: flex; align-items: center; gap: 10px; }
+  .live-banner .dot { width: 9px; height: 9px; border-radius: 50%; background: #7dffb0; box-shadow: 0 0 0 4px rgba(125,255,176,.25); }
+  .live-banner b { font-size: 14px; }
+  .live-banner code { margin-left: auto; font-size: 11px; opacity: .85; }
+  .live-grid { display: grid; grid-template-columns: 220px 1fr; gap: 20px; }
+  .live-img { width: 220px; height: 220px; border: 1px solid #d5d9d9; border-radius: 8px; background: #fafafa; display: flex; align-items: center; justify-content: center; color: #999; font-size: 12px; overflow: hidden; }
+  .live-img img { width: 100%; height: 100%; object-fit: cover; }
+  .live-title { font-size: 17px; font-weight: 700; line-height: 1.35; }
+  .live-brand { color: #007185; font-size: 12px; margin-top: 4px; }
+  .live-price { color: #b12704; font-size: 21px; margin: 10px 0 2px; }
+  .live-price small { font-size: 12px; color: #565959; font-weight: 400; }
+  .live-meta { color: #565959; font-size: 12px; margin-bottom: 10px; }
+  .live-bullets { margin: 8px 0 0 18px; }
+  .live-bullets li { margin-bottom: 5px; line-height: 1.45; }
+  .live-desc { border-top: 1px solid #e7e7e7; margin-top: 14px; padding-top: 12px; color: #333; line-height: 1.55; white-space: pre-wrap; }
+  .metrics-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .metric-box { background: #f7f8f8; border: 1px solid #e3e6e6; border-radius: 8px; padding: 12px 14px; }
+  .metric-box .k { font-size: 11px; color: #565959; text-transform: uppercase; letter-spacing: .05em; }
+  .metric-box .v { font-size: 22px; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .metric-box .v.warn { color: #b12704; }
+  .metrics-note { margin-top: 10px; font-size: 11px; color: #565959; }
+  .back-link { color: #c45500; text-decoration: none; font-size: 12px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Seller<span>Central</span></div>
+  <nav>
+    <span>Catalog</span><span>Inventory</span><span>Pricing</span><span>Orders</span><span>Advertising</span><span>Stores</span>
+  </nav>
+  <div class="user"><div class="avatar">S</div><span>Simon · US marketplace</span></div>
+</header>
+<div class="subnav">
+  <a href="#">Add a Product</a><a href="#">Manage Inventory</a><a href="#">Bulk Upload</a><a href="#">Listing Quality Dashboard</a>
+</div>
+
+<!-- ==================== 表单视图 ==================== -->
+<div class="wrap" id="form-view">
+  <div class="breadcrumb"><a href="#">Catalog</a> › <a href="#">Add Products</a> › <b>Add a Product</b></div>
+  <h1>Add a Product</h1>
+
+  <div class="card">
+    <h2>Product Identity</h2>
+    <div class="hint">Required fields are marked with an asterisk (*)</div>
+
+    <label>Product Title <span class="req">*</span><span class="counter"><span id="title-count">0</span>/200</span></label>
+    <input type="text" data-sc-field="title" maxlength="200" placeholder="Brand + Model + Product Type, e.g. Acme Portable Blender 380ml USB-C" />
+
+    <div class="row2">
+      <div>
+        <label>Brand Name <span class="req">*</span></label>
+        <input type="text" data-sc-field="brand" placeholder="e.g. Acme" />
+      </div>
+      <div>
+        <label>SKU</label>
+        <input type="text" data-sc-field="sku" placeholder="auto-generated if blank" />
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Description &amp; Key Product Features</h2>
+    <div class="hint">5 bullet points recommended · max 500 characters each</div>
+    <div id="bullets">
+      <div class="bullet-row"><span class="idx">1</span><input type="text" data-sc-field="bullet1" maxlength="500" /></div>
+      <div class="bullet-row"><span class="idx">2</span><input type="text" data-sc-field="bullet2" maxlength="500" /></div>
+      <div class="bullet-row"><span class="idx">3</span><input type="text" data-sc-field="bullet3" maxlength="500" /></div>
+      <div class="bullet-row"><span class="idx">4</span><input type="text" data-sc-field="bullet4" maxlength="500" /></div>
+      <div class="bullet-row"><span class="idx">5</span><input type="text" data-sc-field="bullet5" maxlength="500" /></div>
+    </div>
+    <label>Product Description</label>
+    <textarea data-sc-field="description" rows="6" placeholder="Describe materials, size, use cases, what's in the box"></textarea>
+  </div>
+
+  <div class="card">
+    <h2>Offer &amp; Image</h2>
+    <div class="row2">
+      <div>
+        <label>Price (USD) <span class="req">*</span></label>
+        <input type="number" data-sc-field="price" step="0.01" min="0" placeholder="19.99" />
+        <label>Quantity <span class="req">*</span></label>
+        <input type="number" data-sc-field="quantity" min="0" placeholder="100" />
+      </div>
+      <div>
+        <label>Main Image <span class="req">*</span></label>
+        <div class="img-box" id="img-box">PNG/JPEG ≥1000×1000<br />pure white background</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card save-row">
+    <button class="btn-primary" id="btn-save" type="button">Save and Finish</button>
+    <span class="save-msg" id="save-msg">✓ Submitted for processing</span>
+    <span class="err-msg" id="err-msg"></span>
+  </div>
+</div>
+
+<!-- ==================== Live 视图 ==================== -->
+<div class="wrap" id="live-view" hidden>
+  <div class="live-banner">
+    <span class="dot"></span>
+    <b>Your listing is live</b>
+    <span>买家现在可以在商城看到该商品</span>
+    <code id="live-listing-id"></code>
+  </div>
+
+  <div class="card">
+    <div class="live-grid">
+      <div class="live-img" id="live-img">no image</div>
+      <div>
+        <div class="live-title" id="live-title"></div>
+        <div class="live-brand">Brand: <span id="live-brand"></span> · SKU: <span id="live-sku"></span></div>
+        <div class="live-price" id="live-price"></div>
+        <div class="live-meta" id="live-meta"></div>
+        <ul class="live-bullets" id="live-bullets"></ul>
+      </div>
+    </div>
+    <div class="live-desc" id="live-desc"></div>
+  </div>
+
+  <div class="card">
+    <h2>Business Report <span style="font-weight:400;color:#565959;font-size:12px">（mock 模拟流量 · 每 5s 刷新）</span></h2>
+    <div class="hint">逻辑时钟：1 真实分钟 = 1 小时 · 已运行 <b id="m-hours">0</b> 小时</div>
+    <div class="metrics-grid">
+      <div class="metric-box"><div class="k">Impressions 曝光</div><div class="v" id="m-imp">0</div></div>
+      <div class="metric-box"><div class="k">Clicks 点击</div><div class="v" id="m-clk">0</div></div>
+      <div class="metric-box"><div class="k">CTR 点击率</div><div class="v" id="m-ctr">0%</div></div>
+      <div class="metric-box"><div class="k">Conversions 转化</div><div class="v" id="m-cnv">0</div></div>
+    </div>
+    <div class="metrics-note" id="m-quality"></div>
+  </div>
+
+  <a class="back-link" href="#" id="back-link">‹ Add another product</a>
+</div>
+
+<div class="mock-badge">Demo mock page · not affiliated with Amazon</div>
+
+<script>
+  var QA_API = new URLSearchParams(location.search).get("api") || "http://localhost:8001";
+
+  var FILL_MAP = {
+    title: "title", brand: "brand", sku: "sku",
+    bullet1: "bullet1", bullet2: "bullet2", bullet3: "bullet3", bullet4: "bullet4", bullet5: "bullet5",
+    description: "description", price: "price", quantity: "quantity"
+  };
+
+  function fields() {
+    var out = {};
+    document.querySelectorAll("[data-sc-field]").forEach(function (el) {
+      out[el.getAttribute("data-sc-field")] = el.value;
+    });
+    var img = document.querySelector("#img-box img");
+    if (img) out.mainImage = img.getAttribute("src");
+    return out;
+  }
+
+  function fill(payload) {
+    var touched = 0;
+    Object.keys(FILL_MAP).forEach(function (key) {
+      var v = payload[key];
+      if (v === undefined || v === null) return;
+      var el = document.querySelector('[data-sc-field="' + FILL_MAP[key] + '"]');
+      if (!el) return;
+      el.value = String(v);
+      touched++;
+    });
+    if (payload.mainImage) {
+      var box = document.getElementById("img-box");
+      box.innerHTML = '<img src="' + payload.mainImage + '" alt="main image" />';
+      touched++;
+    }
+    return touched;
+  }
+
+  window.addEventListener("message", function (event) {
+    var msg = event.data || {};
+    if (msg.type === "QA_READ") {
+      event.source.postMessage({ type: "QA_FIELDS", payload: fields() }, "*");
+    } else if (msg.type === "QA_FILL") {
+      var n = fill(msg.payload || {});
+      event.source.postMessage({ type: "QA_FILLED", payload: { filled: n } }, "*");
+    }
+  });
+
+  document.querySelector('[data-sc-field="title"]').addEventListener("input", function (e) {
+    document.getElementById("title-count").textContent = e.target.value.length;
+  });
+
+  /* ---------- 提交上架：表单 → POST /mock/api/listings → live 视图 ---------- */
+
+  function showError(text) {
+    var el = document.getElementById("err-msg");
+    el.textContent = text;
+    el.style.display = text ? "inline" : "none";
+  }
+
+  document.getElementById("btn-save").addEventListener("click", async function () {
+    showError("");
+    var f = fields();
+    if (!f.title || !f.title.trim()) return showError("Product Title 为必填");
+    if (!f.brand || !f.brand.trim()) return showError("Brand Name 为必填");
+    if (!f.price || parseFloat(f.price) <= 0) return showError("Price 必须大于 0");
+    var btn = document.getElementById("btn-save");
+    btn.disabled = true;
+    btn.textContent = "Submitting…";
+    try {
+      var res = await fetch(QA_API + "/mock/api/listings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          platform: "amazon",
+          title: f.title.trim(),
+          brand: f.brand.trim(),
+          sku: (f.sku || "").trim(),
+          bullets: [f.bullet1, f.bullet2, f.bullet3, f.bullet4, f.bullet5].filter(function (b) { return b && b.trim(); }),
+          description: f.description || "",
+          price: parseFloat(f.price),
+          quantity: parseInt(f.quantity || "0", 10) || 0,
+          image: f.mainImage || ""
+        })
+      });
+      if (!res.ok) {
+        var err = await res.json().catch(function () { return {}; });
+        throw new Error(err.detail || ("HTTP " + res.status));
+      }
+      var data = await res.json();
+      location.hash = "#live/" + data.listing_id;
+      renderLive(data.listing);
+    } catch (e) {
+      showError("提交失败：" + e.message + "（确认千岸后端在 " + QA_API + " 运行）");
+    } finally {
+      btn.disabled = false;
+      btn.textContent = "Save and Finish";
+    }
+  });
+
+  /* ---------- live 视图渲染 + 指标轮询 ---------- */
+
+  var metricsTimer = null;
+
+  function renderLive(listing) {
+    document.getElementById("form-view").hidden = true;
+    document.getElementById("live-view").hidden = false;
+    document.title = listing.title.slice(0, 60) + " : Seller Central";
+    document.getElementById("live-listing-id").textContent = listing.listing_id + " · " + listing.platform;
+    document.getElementById("live-title").textContent = listing.title;
+    document.getElementById("live-brand").textContent = listing.brand;
+    document.getElementById("live-sku").textContent = listing.sku;
+    document.getElementById("live-price").innerHTML =
+      "$" + Number(listing.price).toFixed(2) + " <small>· " + listing.quantity + " in stock</small>";
+    document.getElementById("live-meta").textContent =
+      "Published at " + new Date(listing.published_at * 1000).toLocaleString();
+    var imgBox = document.getElementById("live-img");
+    imgBox.innerHTML = listing.image
+      ? '<img src="' + listing.image + '" alt="main image" />'
+      : "no image";
+    var ul = document.getElementById("live-bullets");
+    ul.innerHTML = "";
+    (listing.bullets || []).forEach(function (b) {
+      var li = document.createElement("li");
+      li.textContent = b;
+      ul.appendChild(li);
+    });
+    document.getElementById("live-desc").textContent = listing.description || "";
+    startMetrics(listing.sku);
+  }
+
+  function startMetrics(sku) {
+    if (metricsTimer) clearInterval(metricsTimer);
+    async function tick() {
+      try {
+        var r = await fetch(QA_API + "/mock/api/metrics?sku=" + encodeURIComponent(sku));
+        if (!r.ok) return;
+        var d = await r.json();
+        document.getElementById("m-imp").textContent = d.totals.impressions.toLocaleString();
+        document.getElementById("m-clk").textContent = d.totals.clicks.toLocaleString();
+        var ctrEl = document.getElementById("m-ctr");
+        ctrEl.textContent = (d.totals.ctr * 100).toFixed(2) + "%";
+        ctrEl.className = "v" + (d.totals.ctr < 0.02 && d.totals.impressions >= 200 ? " warn" : "");
+        document.getElementById("m-cnv").textContent = d.totals.conversions.toLocaleString();
+        document.getElementById("m-hours").textContent = d.logical_hours;
+        document.getElementById("m-quality").textContent =
+          "标题质量分 " + d.title_quality + "（规则计算：长度窗口/含品牌/关键词丰富度/含规格）——质量分越低，CTR 系统性越低。";
+      } catch (e) { /* 后端暂不可达时下轮重试 */ }
+    }
+    tick();
+    metricsTimer = setInterval(tick, 5000);
+  }
+
+  document.getElementById("back-link").addEventListener("click", function (e) {
+    e.preventDefault();
+    location.hash = "";
+    if (metricsTimer) clearInterval(metricsTimer);
+    document.getElementById("live-view").hidden = true;
+    document.getElementById("form-view").hidden = false;
+    document.title = "Add a Product - Seller Central";
+  });
+
+  window.addEventListener("load", function () {
+    var m = location.hash.match(/^#live\/(.+)$/);
+    if (!m) return;
+    fetch(QA_API + "/mock/api/listings/" + encodeURIComponent(m[1]))
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(new Error("not found")); })
+      .then(renderLive)
+      .catch(function () { /* 后端没起或 listing 不存在：停留在表单 */ });
+  });
+</script>
+</body>
+</html>

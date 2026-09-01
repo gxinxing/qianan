@@ -1,0 +1,67 @@
+{
+  "name": "dsh-profile-qianan",
+  "private": true,
+  "description": "千岸 QianAn — 一稿多岸的跨境上新 Agent DSH Profile。7 个 Skill 覆盖商品理解、规则引擎、文案生成、合规体检、视觉生成、利润测算、选品灵感。",
+  "version": "1.0.0",
+  "scripts": {
+    "test:skills": "python -c \"from skills.compliance_check import ComplianceCheckSkill; from skills.copywriting import CopywritingSkill; from skills.economics import EconomicsSkill; from skills.ideation import IdeationSkill; from skills.product_understanding import ProductUnderstandingSkill; from skills.rules_engine import RulesEngineSkill; from skills.visual_agent import VisualAgentSkill; print('All 7 skills OK')\"",
+    "test:rules": "python -c \"from skills import load_rules, all_platforms; p = all_platforms(); print(f'Loaded {len(p)} platforms: {list(p.keys())}')\"",
+    "test:economics": "python -c \"import asyncio; from skills.economics import EconomicsSkill; s = EconomicsSkill(mock=True); r = asyncio.run(s.run(cost_cny=12, weight_kg=0.3, length_cm=20, width_cm=15, height_cm=8)); print(f'Economics test OK: {len(r[\"platforms\"])} platforms')\"",
+    "test:compliance": "python -c \"import asyncio; from skills.compliance_check import ComplianceCheckSkill; s = ComplianceCheckSkill(mock=True); r = asyncio.run(s.run(listing={'platform':'amazon','title':'test','bullets':[],'description':'test','attributes':{}}, rules={'title':{'maxLength':200},'bannedWords':{}}, category='home_kitchen')); print(f'Compliance test OK: passed={r[\"passed\"]}, issues={r[\"issue_count\"]}')\"",
+    "dev": "pnpm dev --filter qianan-dsh"
+  },
+  "dependencies": {
+    "@deepseek-ai/dsh-base": "0.1.1-rc.2",
+    "@deepseek-ai/dsh-web-app": "0.1.0-rc.8",
+    "@deepseek-ai/dsh-web-frontend": "0.1.0-rc.8",
+    "@omdsh-dev/dsh-genui": "https://codeload.github.com/omdsh-dev/dsh-genui/tar.gz/refs/heads/main",
+    "@liustack/modlens": "3.16.5",
+    "@anionex/dsh-vision-toolkit": "^0.1.38",
+    "dsh-better-sidebar": "0.12.1",
+    "dsh-at-file": "^0.6.3",
+    "dsh-context": "^0.13.0",
+    "dshmarket": "github:dsh-market/dsh-market#eca19a156c9fb7ee8982ebe295f9f1a3647e1843",
+    "typeless-sdk": "^0.2.2"
+  },
+  "dsh": {
+    "profile": {
+      "bundles": [
+        "@deepseek-ai/dsh-base",
+        "@deepseek-ai/dsh-web-app",
+        "@deepseek-ai/dsh-web-frontend",
+        "@deepseek-ai/dsh-tool-read-prd",
+        "dsh-better-sidebar",
+        "dsh-at-file",
+        "@omdsh-dev/dsh-genui",
+        "@liustack/modlens",
+        "@anionex/dsh-vision-toolkit",
+        "dsh-context",
+        "dshmarket",
+        "typeless-sdk"
+      ]
+    },
+    "agents": {
+      "pipeline": [
+        "ideation",
+        "product-understanding",
+        "rules-engine",
+        "copywriting",
+        "visual-agent",
+        "compliance-check",
+        "economics"
+      ],
+      "defaults": {
+        "mock": true,
+        "timeout": 30,
+        "retry": 2
+      }
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "keywords": ["qianan", "cross-border", "ecommerce", "listing", "ai-agent", "dsh-profile"],
+  "author": "Simon Studio <stars>",
+  "license": "MIT"
+}

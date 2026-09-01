@@ -1,0 +1,183 @@
+{
+  "schemaVersion": "rules.v1",
+  "platform": "lazada",
+  "displayName": "Lazada",
+  "demoDepth": "reuse",
+  "updated": "2026-09-01",
+  "source": "Lazada University / 卖家中心公开规范整理；上架前以最新官方文档复核",
+  "locales": [
+    "en-SG",
+    "th-TH",
+    "id-ID",
+    "vi-VN",
+    "ms-MY"
+  ],
+  "marketplaces": [
+    "SG",
+    "MY",
+    "TH",
+    "ID",
+    "VN",
+    "PH"
+  ],
+  "title": {
+    "maxLength": 255,
+    "recommendedLength": [
+      80,
+      160
+    ],
+    "formula": "品牌 + 型号 + 产品类型 + 关键特性 + 规格",
+    "styleRules": [
+      "避免关键词堆砌",
+      "不使用全大写与特殊符号",
+      "本地站点使用当地语言"
+    ],
+    "perLocale": true
+  },
+  "description": {
+    "type": "rich_text",
+    "maxLength": 25000,
+    "structure": [
+      "卖点摘要",
+      "规格表",
+      "包装清单（What's in the box，Lazada 必填字段）"
+    ],
+    "requiredSections": [
+      "What's in the box"
+    ]
+  },
+  "mainImage": {
+    "minWidth": 500,
+    "minHeight": 500,
+    "recommendedWidth": 1000,
+    "aspectRatio": "1:1",
+    "background": "white",
+    "backgroundNote": "白底优先，搜索与活动会场更友好",
+    "noWatermark": true,
+    "noBorder": true
+  },
+  "gallery": {
+    "maxImages": 8,
+    "note": "副图建议含尺寸对比与场景图"
+  },
+  "categoryAttributes": {
+    "electronics": [
+      "品牌",
+      "型号",
+      "保修（按站点）",
+      "电压/插头标准"
+    ],
+    "home_kitchen": [
+      "品牌",
+      "材质",
+      "尺寸",
+      "产地"
+    ],
+    "apparel": [
+      "品牌",
+      "材质",
+      "尺码（本地标准）"
+    ]
+  },
+  "bannedWords": {
+    "promotional": [
+      "cheapest",
+      "free shipping",
+      "best price",
+      "flash sale"
+    ],
+    "claims": [
+      "best",
+      "#1",
+      "guaranteed",
+      "100% authentic"
+    ],
+    "restricted": [
+      "cure",
+      "treat disease",
+      "whitening injection",
+      "slimming",
+      "medical"
+    ],
+    "restrictedNote": "东南亚站点对医疗/瘦身/美白宣称监管严格"
+  },
+  "complianceChecks": [
+    {
+      "id": "title_length",
+      "type": "length",
+      "field": "title",
+      "max": 255,
+      "severity": "error"
+    },
+    {
+      "id": "promotional_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "promotional",
+      "severity": "warn"
+    },
+    {
+      "id": "claims_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "claims",
+      "severity": "warn"
+    },
+    {
+      "id": "restricted_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "restricted",
+      "severity": "error"
+    },
+    {
+      "id": "main_image",
+      "type": "image_spec",
+      "field": "mainImage",
+      "minWidth": 500,
+      "minHeight": 500,
+      "background": "white",
+      "noWatermark": true,
+      "severity": "error"
+    },
+    {
+      "id": "package_contents",
+      "type": "required_sections",
+      "field": "description",
+      "sections": [
+        "What's in the box"
+      ],
+      "severity": "warn"
+    },
+    {
+      "id": "category_attrs",
+      "type": "required_attrs",
+      "severity": "warn"
+    }
+  ],
+  "economics": {
+    "note": "economics 费率为公开文档整理的演示估算值（非实时），定价引擎直接消费；上架前以卖家后台实际费率复核。头程单价与汇率在引擎侧统一维护。",
+    "currency": "USD",
+    "commissionRate": 0.07,
+    "adTacosDefault": 0.1,
+    "returnRateDefault": 0.04,
+    "returnHandlingFee": 1.0,
+    "fulfillment": {
+      "type": "per_order",
+      "fee": 1.2,
+      "note": "LGS 平台物流尾程按件估算"
+    },
+    "monthlyStoragePerCubicMeter": 15.0,
+    "vatRate": 0.0,
+    "dutyNote": "东南亚多站点，demo 统一以美元核算（简化）"
+  }
+}

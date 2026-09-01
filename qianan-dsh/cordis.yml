@@ -1,0 +1,67 @@
+# QIANAN agents registry — 7 skills → 7 agents
+
+agents:
+  - id: compliance-check
+    name: 合规体检 Agent
+    description: 对 Listing 文案逐项校验各平台规则，38 项确定性校验
+    skill: skills.compliance_check.ComplianceCheckSkill
+    entry: agents/compliance_check
+    mock: true          # Demo 默认 mock
+    order: 5            # 流水线第 5 步
+
+  - id: copywriting
+    name: 文案生成 Agent
+    description: 按平台规则生成多语言 Listing 文案，含自愈修订
+    skill: skills.copywriting.CopywritingSkill
+    entry: agents/copywriting
+    mock: true
+    order: 3
+
+  - id: economics
+    name: 单位经济测算 Agent
+    description: 纯数学引擎，5 平台保本价 / 建议价 / 净利 / 盈亏判定
+    skill: skills.economics.EconomicsSkill
+    entry: agents/economics
+    mock: true
+    order: 0            # 上架前阶段
+
+  - id: ideation
+    name: 选品灵感 Agent
+    description: 市场 + 类目 → 3 条具体可落地的选品建议
+    skill: skills.ideation.IdeationSkill
+    entry: agents/ideation
+    mock: true
+    order: -1           # 可选前置
+
+  - id: product-understanding
+    name: 商品理解 Agent
+    description: 商品图 + 卖点 → 结构化商品档案（类目/材质/卖点/关键词）
+    skill: skills.product_understanding.ProductUnderstandingSkill
+    entry: agents/product_understanding
+    mock: true
+    order: 1            # 流水线第 1 步
+
+  - id: rules-engine
+    name: 规则引擎 Agent
+    description: 确定性 JSON 规则库加载，输出平台约束清单
+    skill: skills.rules_engine.RulesEngineSkill
+    entry: agents/rules_engine
+    mock: false         # 纯确定性逻辑，不需要 mock
+    order: 2            # 流水线第 2 步
+
+  - id: visual-agent
+    name: 视觉生成 Agent
+    description: 以图改图优先，生成本图合平台规范的商品主图
+    skill: skills.visual_agent.VisualAgentSkill
+    entry: agents/visual_agent
+    mock: true
+    order: 4            # 流水线第 4 步
+
+pipeline:
+  - ideation           # 可选：未确定卖什么时触发
+  - product-understanding  # ① 理解商品
+  - rules-engine       # ② 匹配平台规则
+  - copywriting        # ③ 生成文案
+  - visual-agent       # ④ 生成主图
+  - compliance-check   # ⑤ 合规体检 + 自愈
+  - economics          # 利润测算（可穿插在任意阶段）

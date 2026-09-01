@@ -1,0 +1,181 @@
+{
+  "version": "v1",
+  "platform": "lazada",
+  "displayName": "Lazada SEA",
+  "updated": "2025-09",
+  "source": "Lazada Seller Center · Product Listing Requirements & Localization",
+  "demoDepth": "deep",
+  "locales": ["en-SG", "th-TH", "id-ID", "vi-VN", "ms-MY"],
+  "marketplaces": ["lazada.sg", "lazada.co.th", "lazada.co.id", "lazada.vn", "lazada.com.my"],
+  "title": {
+    "maxLength": 255,
+    "recommendedLength": [80, 150],
+    "formula": "Brand + Product Name + Key Feature + Spec + Color/Size",
+    "mustIncludeKeywords": true,
+    "perLocale": true,
+    "caseStyle": "sentence_case",
+    "separator": " - "
+  },
+  "bullets": {
+    "count": 0,
+    "style": "none",
+    "note": "Lazada 无独立五点描述；卖点融入 description 段落"
+  },
+  "description": {
+    "maxLength": 5000,
+    "type": "rich_text",
+    "minLength": 150,
+    "supportsHtml": true,
+    "htmlTagsAllowed": ["p", "br", "b", "strong", "ul", "ol", "li", "table", "tr", "td", "span"],
+    "structuredSections": ["产品介绍", "功能特点", "规格参数", "包装清单", "保修政策", "使用说明"]
+  },
+  "aPlus": {
+    "modules": ["产品详情模板", "卖点展示", "规格表", "品牌故事"],
+    "requireApproval": false,
+    "maxModules": 10,
+    "primaryLanguage": "en-SG"
+  },
+  "mainImage": {
+    "background": "white",
+    "minWidth": 500,
+    "minHeight": 500,
+    "recommendedSize": [1000, 1000],
+    "noText": false,
+    "noWatermark": true,
+    "noBorder": true,
+    "productFillRatio": 0.80,
+    "acceptedFormats": ["JPEG", "PNG", "WebP"],
+    "maxFileSizeKB": 3000,
+    "ratio1v1": true
+  },
+  "additionalImages": {
+    "recommendedCount": 5,
+    "maxCount": 10,
+    "infoGraphics": true,
+    "lifestyleImages": true,
+    "sizeComparison": true
+  },
+  "categoryAttributes": {
+    "electronics": ["品牌", "型号", "颜色", "存储容量", "屏幕尺寸", "电池容量", "产地"],
+    "home_kitchen": ["品牌", "材质", "容量", "尺寸", "颜色", "产地", "适用人数"],
+    "apparel": ["品牌", "材质", "尺码", "颜色", "款式", "季节", "产地"],
+    "beauty": ["品牌", "功效", "肤质", "容量", "成分", "产地", "保质期"],
+    "sports": ["品牌", "材质", "尺寸", "重量", "颜色", "产地"],
+    "mother_baby": ["品牌", "适用年龄", "材质", "尺寸", "产地", "安全标准"],
+    "pet_supplies": ["品牌", "适用动物", "材质", "尺寸", "产地"]
+  },
+  "bannedWords": {
+    "promotional": ["sale", "free shipping", "discount", "promotion", "coupon", "deal", "murah meriah", "gratis ongkir"],
+    "claims": ["best", "#1", "top", "guarantee", "guaranteed", "pasti bagus", "jujur", "tahan lama"],
+    "misleading": ["original (非授权)", "authentic (非授权)", "barang asli (非授权)"],
+    "offensive": ["粗俗用语", "宗教敏感词", "政治敏感词", "对王室不敬（泰国站）"],
+    "restricted": ["仿冒品牌", "假货", "管制药品", "武器", "烟草", "成人用品", "信号干扰器"],
+    "trademark": ["apple (非授权)", "samsung (非授权)", "nike (非授权)", "adidas (非授权)", "gucci (非授权)"],
+    "lazadaSpecific": [
+      "外部联系方式（WhatsApp/Line/Zalo）",
+      "引导站外交易链接",
+      "虚假原产地声明",
+      "回流/深圳发货宣称本地仓（非 Lazada 认证仓）"
+    ]
+  },
+  "complianceChecks": [
+    {
+      "id": "laz-title-001",
+      "type": "length",
+      "severity": "error",
+      "field": "title",
+      "message": "标题超过 255 字符限制",
+      "max": 255
+    },
+    {
+      "id": "laz-title-002",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "title",
+      "message": "标题命中禁用词/绝对化用语",
+      "dict": "claims",
+      "fields": ["title"]
+    },
+    {
+      "id": "laz-title-003",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "title",
+      "message": "标题含站外导流信息",
+      "dict": "lazadaSpecific",
+      "fields": ["title", "description"]
+    },
+    {
+      "id": "laz-title-004",
+      "type": "banned_words",
+      "severity": "warn",
+      "field": "description",
+      "message": "文案含促销用语",
+      "dict": "promotional",
+      "fields": ["description", "title"]
+    },
+    {
+      "id": "laz-desc-001",
+      "type": "length",
+      "severity": "error",
+      "field": "description",
+      "message": "描述超过 5000 字符限制",
+      "max": 5000
+    },
+    {
+      "id": "laz-desc-002",
+      "type": "required_sections",
+      "severity": "warn",
+      "field": "description",
+      "message": "描述缺少必备段落（建议包含规格参数）",
+      "sections": ["规格", "参数", "specification"]
+    },
+    {
+      "id": "laz-img-001",
+      "type": "image_spec",
+      "severity": "error",
+      "field": "mainImage",
+      "message": "主图尺寸不足（需 ≥500×500，建议 1000×1000）",
+      "minWidth": 500,
+      "minHeight": 500
+    },
+    {
+      "id": "laz-img-002",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "description",
+      "message": "主图含水印或边框",
+      "dict": "lazadaSpecific",
+      "fields": ["title", "description"]
+    },
+    {
+      "id": "laz-attr-001",
+      "type": "required_attrs",
+      "severity": "warn",
+      "field": "attributes",
+      "message": "缺少必填类目属性"
+    },
+    {
+      "id": "laz-locale-001",
+      "type": "locale_coverage",
+      "severity": "info",
+      "field": "locales",
+      "message": "东南亚多语言覆盖提示",
+      "locales": ["th-TH", "id-ID", "vi-VN"]
+    }
+  ],
+  "economics": {
+    "commissionRate": 0.05,
+    "commissionNote": "普通类目约 2%；具体依 Lazada 佣金表",
+    "adTacosDefault": 0.08,
+    "returnRateDefault": 0.12,
+    "returnHandlingFee": 0.0,
+    "fulfillment": {
+      "type": "lazada_fulfillment",
+      "note": "Lazada Fulfillment (LF) 含仓储/履约；FBC（官方仓）可提高排名"
+    },
+    "vatRate": 0.07,
+    "vatNote": "泰国 7% VAT；印尼 11%；越南 10%；马来西亚 降低至 5% (中小企) ; 新加坡 GST 9%",
+    "dutyNote": "Lazada Global Shipping (LGS) 包税方案可选"
+  }
+}

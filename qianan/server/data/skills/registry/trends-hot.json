@@ -1,0 +1,23 @@
+{
+  "id": "trends-hot",
+  "name": "平台热搜趋势连接器",
+  "version": "1.0.0",
+  "kind": "connector",
+  "description": "接入 Google Trends 实时热搜 RSS，按目标市场拉取当前热搜词。安装后选品 Agent 自动把实时趋势注入建议，首页展示趋势词云。",
+  "source": "https://trends.google.com/trending/rss（公开 RSS，无需 key）",
+  "tools": [
+    {
+      "name": "get_trending_searches",
+      "type": "http",
+      "description": "获取指定地区当前实时热搜词列表（RSS）。做选品、写卖点、判断市场热度时调用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "geo": {"type": "string", "description": "地区代码：US（美国）/ SG（东南亚）", "default": "US"}
+        }
+      },
+      "url": "https://trends.google.com/trending/rss?geo={geo}",
+      "method": "GET"
+    }
+  ]
+}

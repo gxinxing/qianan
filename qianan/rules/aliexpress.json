@@ -1,0 +1,156 @@
+{
+  "schemaVersion": "rules.v1",
+  "platform": "aliexpress",
+  "displayName": "AliExpress 速卖通",
+  "demoDepth": "reuse",
+  "updated": "2026-09-01",
+  "source": "AliExpress 卖家后台公开规范整理；上架前以最新官方文档复核",
+  "locales": [
+    "en-US",
+    "ru-RU",
+    "es-ES",
+    "pt-BR",
+    "fr-FR"
+  ],
+  "marketplaces": [
+    "Global"
+  ],
+  "title": {
+    "maxLength": 128,
+    "recommendedLength": [
+      60,
+      128
+    ],
+    "formula": "核心关键词 + 产品类型 + 属性（平台搜索以关键词匹配为主，关键词尽量占满）",
+    "styleRules": [
+      "关键词堆叠需自然可读",
+      "不使用品牌侵权词",
+      "不使用全大写与特殊符号"
+    ],
+    "keywordHint": "速卖通标题是搜索流量核心，充分利用 128 字符"
+  },
+  "description": {
+    "type": "modular_html",
+    "maxLength": 65535,
+    "structure": [
+      "产品概述",
+      "参数表",
+      "细节图",
+      "包装与物流"
+    ],
+    "note": "使用官方模块化描述编辑器"
+  },
+  "mainImage": {
+    "minWidth": 800,
+    "minHeight": 800,
+    "recommendedWidth": 1000,
+    "aspectRatio": "1:1",
+    "background": "white",
+    "backgroundNote": "建议白底，部分会场活动强制白底",
+    "noWatermark": true,
+    "noBorder": true
+  },
+  "gallery": {
+    "maxImages": 6,
+    "note": "副图可包含尺寸表与场景图"
+  },
+  "categoryAttributes": {
+    "electronics": [
+      "品牌",
+      "型号",
+      "认证（CE/FCC）",
+      "插头标准"
+    ],
+    "home_kitchen": [
+      "品牌",
+      "材质",
+      "尺寸"
+    ],
+    "apparel": [
+      "品牌",
+      "材质",
+      "尺码（国际码对照）"
+    ]
+  },
+  "bannedWords": {
+    "promotional": [
+      "cheapest",
+      "free shipping",
+      "big sale"
+    ],
+    "claims": [
+      "best",
+      "#1",
+      "guaranteed"
+    ],
+    "restricted": [
+      "replica",
+      "AAA",
+      "fake",
+      "1:1 copy",
+      "cure",
+      "medical"
+    ],
+    "restrictedNote": "restricted 组涉及仿牌与医疗宣称，属平台高压线"
+  },
+  "complianceChecks": [
+    {
+      "id": "title_length",
+      "type": "length",
+      "field": "title",
+      "max": 128,
+      "severity": "error"
+    },
+    {
+      "id": "promotional_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "promotional",
+      "severity": "warn"
+    },
+    {
+      "id": "restricted_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "restricted",
+      "severity": "error"
+    },
+    {
+      "id": "main_image",
+      "type": "image_spec",
+      "field": "mainImage",
+      "minWidth": 800,
+      "minHeight": 800,
+      "background": "white",
+      "noWatermark": true,
+      "severity": "error"
+    },
+    {
+      "id": "category_attrs",
+      "type": "required_attrs",
+      "severity": "warn"
+    }
+  ],
+  "economics": {
+    "note": "economics 费率为公开文档整理的演示估算值（非实时），定价引擎直接消费；上架前以卖家后台实际费率复核。头程单价与汇率在引擎侧统一维护。",
+    "currency": "USD",
+    "commissionRate": 0.06,
+    "adTacosDefault": 0.1,
+    "returnRateDefault": 0.05,
+    "returnHandlingFee": 1.0,
+    "fulfillment": {
+      "type": "per_order",
+      "fee": 1.5,
+      "note": "菜鸟无忧物流尾程按件估算"
+    },
+    "monthlyStoragePerCubicMeter": 15.0,
+    "vatRate": 0.2,
+    "dutyNote": "欧区 IOSS：≤150€ 订单平台代扣 VAT（demo 按 20% 计），卖家收款为含税价折净"
+  }
+}

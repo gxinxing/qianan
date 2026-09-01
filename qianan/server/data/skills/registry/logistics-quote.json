@@ -1,0 +1,27 @@
+{
+  "id": "logistics-quote",
+  "name": "物流报价连接器",
+  "version": "1.0.0",
+  "kind": "connector",
+  "description": "按市场与运输方式返回头程物流参考报价与时效（演示数据）。成本测算、发货方案对比时调用；接入货代 API 后把 type 改为 http 即可上线。",
+  "source": "演示数据（Placeholder：拿到货代 API key 后切换为 http 连接器）",
+  "tools": [
+    {
+      "name": "get_shipping_quote",
+      "type": "static",
+      "description": "获取头程物流报价（CNY/kg）与参考时效。测算运费、比较海运/空运方案时调用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "market": {"type": "string", "description": "市场：us / sea / global"},
+          "method": {"type": "string", "description": "运输方式：ocean / air"},
+          "weight_kg": {"type": "number", "description": "计费重（kg）"}
+        }
+      },
+      "data": {
+        "ocean": {"unit": "CNY/kg", "us": 8, "sea": 6, "global": 9, "days": "25-35"},
+        "air": {"unit": "CNY/kg", "us": 28, "sea": 22, "global": 32, "days": "5-8"}
+      }
+    }
+  ]
+}

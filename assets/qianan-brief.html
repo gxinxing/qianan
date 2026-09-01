@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>千岸 QianAn · 创意方案</title>
+<style>
+  :root{--ink:#1d1d1f;--sub:#5b5b60;--line:#e6e6e8;--bg:#ffffff;--tint:#f6f6f4;--accent:#0a7d4b}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;line-height:1.7;font-size:15px}
+  .wrap{max-width:880px;margin:0 auto;padding:72px 40px 96px}
+  h1,h2,h3{font-weight:700;letter-spacing:-.005em;line-height:1.25}
+  h1{font-size:38px;margin-bottom:8px}
+  h2{font-size:24px;margin:56px 0 16px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  h3{font-size:17px;margin:28px 0 8px}
+  p{margin:10px 0;color:var(--ink)}
+  .muted{color:var(--sub)}
+  .lead{font-size:17px;color:var(--ink);margin:18px 0 4px}
+  ul{margin:10px 0;padding-left:22px}
+  li{margin:6px 0}
+  strong{font-weight:600}
+  .doc-head{margin-bottom:8px;padding-bottom:28px;border-bottom:2px solid var(--ink)}
+  .doc-head .meta{display:flex;flex-wrap:wrap;gap:8px 28px;font-size:13px;color:var(--sub);margin-top:16px}
+  .doc-head .meta b{color:var(--ink);font-weight:600}
+  .tag{display:inline-block;font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.02em;margin-bottom:14px}
+  .num{font-variant-numeric:tabular-nums}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:20px 0;border-radius:4px;overflow:hidden}
+  .stat{background:var(--bg);padding:18px 18px}
+  .stat .n{font-size:26px;font-weight:700;color:var(--ink);line-height:1.1;font-variant-numeric:tabular-nums}
+  .stat .n .u{font-size:14px;color:var(--sub);font-weight:500;margin-left:2px}
+  .stat .l{font-size:12.5px;color:var(--sub);margin-top:6px;line-height:1.45}
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:13.5px}
+  th,td{text-align:left;padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;color:var(--sub);font-size:12px;border-bottom:1.5px solid var(--ink);background:transparent}
+  td:first-child,th:first-child{font-weight:600}
+  tbody tr:hover{background:var(--tint)}
+  .rule-table td:first-child{width:120px;color:var(--sub);font-weight:500}
+  .callout{border-left:3px solid var(--accent);background:var(--tint);padding:16px 20px;margin:20px 0;border-radius:0 4px 4px 0;font-size:14.5px}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin:18px 0}
+  hr{border:0;border-top:1px solid var(--line);margin:40px 0}
+  .funnel{margin:16px 0}
+  .step{display:grid;grid-template-columns:28px 1fr;gap:14px;padding:14px 0;border-bottom:1px solid var(--line);font-size:14.5px}
+  .step:last-child{border-bottom:0}
+  .step .idx{font-variant-numeric:tabular-nums;color:var(--accent);font-weight:700;font-size:13px;padding-top:2px}
+  .step .body b{font-weight:600}
+  .step .body .r{float:right;color:var(--sub);font-size:13px;font-variant-numeric:tabular-nums}
+  .note{font-size:12.5px;color:var(--sub);margin-top:6px}
+  .footer{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);font-size:12px;color:var(--sub)}
+  @media(max-width:680px){.stats{grid-template-columns:1fr 1fr}.two-col{grid-template-columns:1fr}}
+  .w5{border:1px solid var(--line);border-radius:4px;margin:24px 0;overflow:hidden}
+  .w5-row{display:grid;grid-template-columns:120px 1fr;border-bottom:1px solid var(--line);align-items:start}
+  .w5-row:last-child{border-bottom:0}
+  .w5-key{background:var(--tint);padding:16px 18px;font-weight:600;font-size:13.5px;color:var(--sub);border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center}
+  .w5-key span{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:2px}
+  .w5-val{padding:16px 20px;font-size:14.5px}
+  .w5-val b{font-weight:600}
+  @media print{body{background:#fff}.wrap{padding:40px 0}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<div class="doc-head">
+  <span class="tag">创意初赛方案</span>
+  <h1>千岸 QianAn</h1>
+  <p class="muted">把同一个商品，铺到全球每一个平台的上架规范里。</p>
+  <div class="meta">
+    <span>团队 <b>Simon Studio</b></span>
+    <span>赛道 <b>AI 智能上新</b></span>
+    <span>队长 <b>星星</b></span>
+    <span>2025-08-25</span>
+  </div>
+</div>
+
+<p class="lead">跨境电商卖家上架一个新品，最大的隐性成本不是货、不是物流，而是<strong>把同一个商品反复重做成符合每个平台、每种语言规范的上架素材</strong>。千岸要做的事一句话能讲完：<strong>卖家给一张白底主图加一段中文卖点，30 秒拿到五个平台各自合规、可直接导入的上架包。</strong></p>
+
+<h2>方案概览（5W）</h2>
+<p class="muted">用 5W 把这个生意讲清楚——以下五点构成了千岸完整的商业逻辑，后文逐条展开。</p>
+
+<div class="w5">
+  <div class="w5-row"><div class="w5-key"><span>Why</span>为什么做</div><div class="w5-val">跨境卖家上架一个新品到多平台，要把同一个商品反复重做成符合每个平台、每种语言规范的上架素材——一套外包 <b>¥1000–3300、3–7 天</b>，铺 5 个站点成本直接乘 5。这是高频、强规则、必须本地化的隐性大成本，也是卖家最愿意付费解决的环节。</div></div>
+  <div class="w5-row"><div class="w5-key"><span>What</span>做什么</div><div class="w5-val">一个把「同一商品」翻译成「多平台合规版本」的 AI Agent。输入一张白底图 + 一段中文卖点，30 秒输出 Amazon / 速卖通 / Shopee / Lazada / TikTok Shop 五平台的上架包（主图、A+ 详情、Listing 文案）+ 合规报告。<b>差异化不在「生成」，在「多平台规则引擎」</b>。</div></div>
+  <div class="w5-row"><div class="w5-key"><span>Who</span>给谁用</div><div class="w5-val"><b>中小跨境卖家</b>（中国数百万，缺设计资源、多平台多站点铺货）、<b>品牌大卖</b>（SKU 多、上新频次高，素材是规模化瓶颈）、<b>跨境 ISV / ERP</b>（可集成本方案作为上架模块）。付费方是卖家，按次 ¥9.9–29.9 或订阅 ¥199/月，对标原外包价省 90%+ 成本。</div></div>
+  <div class="w5-row"><div class="w5-key"><span>When</span>何时用</div><div class="w5-val">卖家每次上新、或想把已有商品铺到新平台/新语种站点时调用。<b>行业时机</b>：2025 年百炼多语言 LLM + 文生图 + 视觉理解成熟到可商用，同时中国卖家从「单平台铺货」转向「多平台品牌出海」，需求与技术在这个时间点相遇。</div></div>
+  <div class="w5-row"><div class="w5-key"><span>Where</span>在哪落地</div><div class="w5-val">技术上落在<b>阿里云百炼平台</b>（主办方指定算力：Qwen-Max 多语言 / Wanx 文生图 / Qwen-VL 视觉）；场景上天然服务<b>阿里国际系</b>（速卖通、Lazada）的多平台出海——这是别家 SaaS 没做深、且主办方天然对口的护城河。前端 Next.js、后端 FastAPI、Agent 编排复用团队既有框架。</div></div>
+</div>
+
+<h2>一、问题</h2>
+<p>我们把"一个新品铺到多个平台"这件事拆开看，真实的成本结构是这样的：</p>
+
+<div class="stats">
+  <div class="stat"><div class="n">¥1k–3.3k<span class="u">/款</span></div><div class="l">一套 A+ / 详情页素材外包价<br><span style="color:#999">来源 CSDN / 什么值得买</span></div></div>
+  <div class="stat"><div class="n">3–7<span class="u">天</span></div><div class="l">单款素材生产周期<br><span style="color:#999">不含合规反复修改</span></div></div>
+  <div class="stat"><div class="n">× 5</div><div class="l">铺 5 个站点，成本直接乘 5<br><span style="color:#999">中小卖家铺不起</span></div></div>
+  <div class="stat"><div class="n">12<span class="u">%</span></div><div class="l">新手选品成功率<br><span style="color:#999">规则踩雷下架是主因</span></div></div>
+</div>
+
+<p>这不是某个卖家的偶发抱怨，而是这个行业的结构性问题，原因有三层：</p>
+
+<h3>平台规则各不相同，且经常变</h3>
+<p>同一个商品，五个平台的规则完全不一样——下面这张表是我们整理的真实差异，也是千岸要解决的第一个核心问题：</p>
+
+<table class="rule-table">
+  <thead><tr><th>维度</th><th>Amazon</th><th>速卖通</th><th>Shopee</th><th>Lazada</th><th>TikTok Shop</th></tr></thead>
+  <tbody>
+    <tr><td>标题字数</td><td>≤200 字符，需埋 A10 词</td><td>≤128，多语言</td><td>≤120，各站点不同</td><td>≤255，按类目</td><td>短，重关键词</td></tr>
+    <tr><td>主图规范</td><td>白底、无文字水印</td><td>允许少量文字</td><td><strong>禁水印/边框</strong></td><td>白底为主</td><td>可场景化</td></tr>
+    <tr><td>详情形态</td><td>A+ 模块（需审核）</td><td>详情模板</td><td>图文描述</td><td>类目属性必填</td><td><strong>短视频脚本</strong></td></tr>
+    <tr><td>本地化</td><td>英语为主</td><td>俄/西/葡等</td><td>泰/印尼/越</td><td>东南亚多语</td><td>英语+本地</td></tr>
+    <tr><td>高频踩雷</td><td>敏感词下架</td><td>类目属性漏填</td><td>主图违规</td><td>属性不全</td><td>资质缺失</td></tr>
+  </tbody>
+</table>
+<p class="note">这张表本身就是我们产品的核心——一个把"同一商品"翻译成五种平台规范的规则引擎。</p>
+
+<h3>多语言靠机翻，转化差还会下架</h3>
+<p>直译的 Listing 在目标市场读起来生硬，不触发购买，更可能踩中平台禁用词。本地化不是翻译，是改写，而卖家没有这种能力。</p>
+
+<h3>素材生产卡住了上新节奏</h3>
+<p>外包美工慢且贵，自拍质量差，纯 AI 出图合规与质感不稳定。中小卖家想多铺几个平台，被素材成本挡在门外——长尾市场就这么失守了。</p>
+
+<h2>二、方案</h2>
+<p>卖家只需提供"一稿"——一张白底主图、一段中文卖点。剩下的由多 Agent 系统完成。核心功能五项：</p>
+<ul>
+  <li><strong>一稿输入，多平台产出</strong>：自动产出五个平台各自合规的上架包（主图组、详情页/A+、Listing 文案）。</li>
+  <li><strong>多平台规则引擎</strong>：内置上表那张规则库，把同一商品改写成符合每个平台规范的版本——这是我们和市面单平台 Listing 工具的根本区别。</li>
+  <li><strong>多语言本地化（非直译）</strong>：基于百炼多语言大模型，改写成符合目标市场购物习惯的文案，自动校验合规词。</li>
+  <li><strong>视觉规范生成</strong>：基于百炼文生图，按各平台高转化模板生成场景主图、对比图、卖点图，A+ 模块自动排版。</li>
+  <li><strong>合规预检与一键导出</strong>：提交前体检禁用词、字符超限、图片规范、类目属性，通过后导出各平台可直接导入的格式。</li>
+</ul>
+
+<div class="callout">
+  <strong>我们的差异化，不在"生成"，在"规则"。</strong>市面上 Helium 10、Jungle Scout、亚马逊官方 AI 都在做 Listing 生成，纯生成我们已经输定了。千岸做的是"规则翻译层"——把一个商品适配到多个平台的不同规范里去。这件事没人做深，而且阿里国际（速卖通、Lazada）的多平台场景，正好是这个产品的天然主场。
+</div>
+
+<h2>三、商业逻辑</h2>
+<p>钱从哪里来，价值到哪里去。这是一条完整的价值链：</p>
+
+<div class="funnel">
+  <div class="step"><div class="idx">1</div><div class="body"><b>输入</b>：卖家上传一张白底图 + 一段中文卖点<span class="r">成本 ≈ ¥0</span></div></div>
+  <div class="step"><div class="idx">2</div><div class="body"><b>理解</b>：Agent 读懂商品类目、材质、受众、核心卖点<span class="r">Qwen-VL</span></div></div>
+  <div class="step"><div class="idx">3</div><div class="body"><b>适配</b>：规则引擎查五个平台约束，文案与视觉 Agent 并行生产<span class="r">5 平台并行</span></div></div>
+  <div class="step"><div class="idx">4</div><div class="body"><b>校验</b>：合规 Agent 逐项过检，给出整改建议<span class="r">目标 0 违规</span></div></div>
+  <div class="step"><div class="idx">5</div><div class="body"><b>交付</b>：五平台 × 多语言完整上架包 + 合规报告，一键导出<span class="r">30 秒</span></div></div>
+  <div class="step"><div class="idx">6</div><div class="body"><b>变现</b>：卖家省下数千元与数天，付几十块按次/订阅费<span class="r">三方共赢</span></div></div>
+</div>
+
+<div class="two-col">
+  <div>
+    <h3>谁付费</h3>
+    <p class="muted">中国数百万跨境卖家，每人每月上新数款到数十款。对标目前单款素材 ¥1000–3300 的外包价，千岸按次 ¥9.9–29.9 或订阅 ¥199/月，卖家省 90% 以上成本，付费意愿是确定的。</p>
+  </div>
+  <div>
+    <h3>谁受益</h3>
+    <p class="muted">卖家降本提速、能铺更多平台；平台拿到更多合规、本地化良好的商品（GMV 与生态健康提升）；海外消费者买到描述准确的本地化商品。三方共赢，模式可持续。</p>
+  </div>
+  <div>
+    <h3>为什么是现在</h3>
+    <p class="muted">百炼多语言 LLM + 文生图 + 视觉理解在 2025 年成熟到可商用；同时中国卖家正从"单平台铺货"转向"多平台品牌出海"。需求与技术在这个时间点相遇。</p>
+  </div>
+  <div>
+    <h3>为什么是我们</h3>
+    <p class="muted">队长是游戏视觉设计师出身，同时有十几个 AI Agent / CLI 项目落地。既能把图像生成做到商业质感，又能把多 Agent 编排工程化——这两个能力同时具备的团队不多。</p>
+  </div>
+</div>
+
+<h2>四、技术方案</h2>
+<p>主控 Agent 拆解任务，调度五个专家 Agent 并行工作，全程调用阿里云百炼平台的多语言与多模态能力。架构如下：</p>
+
+<table>
+  <thead><tr><th>层</th><th>选型</th><th>理由</th></tr></thead>
+  <tbody>
+    <tr><td>模型能力</td><td>百炼：Qwen-Max（多语言文案）/ Wanx（文生图）/ Qwen-VL（视觉理解）</td><td>主办方指定算力；多语言与多模态齐全</td></tr>
+    <tr><td>Agent 编排</td><td>自研轻量编排（团队既有 harness 项目）或 LangGraph</td><td>团队 Agent 框架经验丰富，工程化有保障</td></tr>
+    <tr><td>后端</td><td>Node/Express 或 Python FastAPI</td><td>轻、快，适配 Agent 编排</td></tr>
+    <tr><td>前端</td><td>Next.js + TypeScript + Tailwind</td><td>上传→生成→展示交互需要好的表现力</td></tr>
+    <tr><td>存储部署</td><td>对象存储 OSS（临时存图）+ 函数计算 FC</td><td>阿里云一体化，契合主办方生态</td></tr>
+    <tr><td>规则库</td><td>人工整理 + LLM 辅助提取各平台公开规范，存为结构化 JSON</td><td>本方案核心资产；不爬平台数据，合规</td></tr>
+  </tbody>
+</table>
+
+<p>多 Agent 协作流程：<strong>商品理解 → 规则匹配 → 文案生成 + 视觉生成（并行）→ 合规体检 → 聚合导出</strong>。卖家自有商品图与卖点，无需爬取平台数据，没有 ToS 风险。</p>
+
+<h2>五、可行性</h2>
+<p>团队的既有项目覆盖本方案所需的全部技术能力——这不是 PPT，这是我们做得出来的：</p>
+
+<div class="two-col">
+  <div>
+    <h3>Agent 编排（最强项）</h3>
+    <p class="muted">14+ 个公开 Agent / CLI 项目（deepseek-harness-tui、esp32-flash-rescue、design-fde-cli 等）。Agent 框架选型与工程化是团队最强项，直接作为本方案多 Agent 编排的底座。</p>
+  </div>
+  <div>
+    <h3>视觉与前端</h3>
+    <p class="muted">队长游戏视觉设计师出身。game-vision-ai（视觉资产生成）、ASCII-music（可视化）、kandong-demo 等项目印证设计师级审美与前端落地能力。</p>
+  </div>
+  <div>
+    <h3>多模态 AI</h3>
+    <p class="muted">novel-writing、minimax-music、short-video-shot-analysis、multimodal-rag、tiktok_ai_desk 等项目，覆盖文案/图像/视频/音乐生成与多模态理解。</p>
+  </div>
+  <div>
+    <h3>交付节奏</h3>
+    <p class="muted">近期连续参赛（WorkBuddy、AMD Radeon、StepX Neo、HackerHouse、movie-ticket-bot），48 小时极限交付流程熟练，两周复赛期完全可控。</p>
+  </div>
+</div>
+
+<p>结论：百炼的多语言 LLM、文生图、视觉理解均为成熟 API，无需自训模型；团队技术栈完全覆盖；2 周内跑出可运行 Demo 没有不可逾越的技术壁垒。</p>
+
+<div class="callout">
+  <strong>一句话：</strong>把跨境卖家"一个新品铺遍全球"这件事，从几周三万块，压到 30 秒几十块。用阿里云百炼的多语言与多模态能力，加一个多平台规则引擎，让中小卖家也能像大卖一样一键铺全球。
+</div>
+
+<div class="footer">
+  千岸 QianAn · Simon Studio · AI+跨境黑客松巅峰赛 · 场景一 AI 智能上新
+</div>
+
+</div>
+</body>
+</html>

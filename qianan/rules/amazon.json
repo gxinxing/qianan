@@ -1,0 +1,264 @@
+{
+  "schemaVersion": "rules.v1",
+  "platform": "amazon",
+  "displayName": "Amazon",
+  "demoDepth": "deep",
+  "updated": "2026-09-01",
+  "source": "Amazon Seller Central / Listing 规范公开文档整理；上架前以目标站点最新官方文档复核",
+  "locales": [
+    "en-US"
+  ],
+  "marketplaces": [
+    "US",
+    "EU",
+    "JP"
+  ],
+  "title": {
+    "maxLength": 200,
+    "recommendedLength": [
+      80,
+      150
+    ],
+    "formula": "品牌 + 核心关键词 + 产品类型 + 关键属性（材质/颜色/尺寸/数量） + 适用场景或兼容型号",
+    "styleRules": [
+      "每个单词首字母大写（介词、连词除外）",
+      "使用阿拉伯数字，不拼写数字",
+      "不使用特殊符号、emoji、全大写",
+      "不堆砌关键词，不使用主观夸大词"
+    ],
+    "mustIncludeKeywords": true,
+    "keywordHint": "标题是 A10 搜索权重最高的位置，核心搜索词前置"
+  },
+  "bullets": {
+    "count": 5,
+    "maxLengthPer": 500,
+    "recommendedLengthPer": 250,
+    "structure": "特性开头（大写短语）+ 用户收益展开",
+    "forbiddenContent": [
+      "价格与促销信息",
+      "物流与保修细节（放到对应字段）",
+      "HTML 标签",
+      "外部链接"
+    ]
+  },
+  "description": {
+    "maxLength": 2000,
+    "note": "有 A+ 内容时前台展示 A+，纯文本描述仍用于索引"
+  },
+  "searchTerms": {
+    "maxLengthBytes": 250,
+    "note": "后台搜索词，不重复标题已有词，不用逗号分隔"
+  },
+  "mainImage": {
+    "background": "white",
+    "backgroundRGB": [
+      255,
+      255,
+      255
+    ],
+    "productFillRatio": 0.85,
+    "minWidth": 1000,
+    "minHeight": 1000,
+    "recommendedWidth": 1600,
+    "noText": true,
+    "noWatermark": true,
+    "noBorder": true,
+    "noProps": true,
+    "formats": [
+      "JPEG",
+      "PNG"
+    ]
+  },
+  "gallery": {
+    "maxImages": 9,
+    "note": "副图允许信息图、场景图、尺寸对比图",
+    "recommended": [
+      "场景图",
+      "卖点信息图",
+      "尺寸/规格图",
+      "包装清单图"
+    ]
+  },
+  "aPlus": {
+    "requiresBrandRegistry": true,
+    "modules": [
+      "品牌故事",
+      "卖点对比表",
+      "场景图模块",
+      "规格参数模块"
+    ],
+    "imageSpecs": {
+      "standardHeader": "970x600",
+      "comparisonTable": "150x300 per cell"
+    },
+    "note": "A+ 内容需审核，通常 7 天内生效"
+  },
+  "categoryAttributes": {
+    "electronics": [
+      "品牌",
+      "型号",
+      "电压/电源",
+      "接口/连接方式",
+      "包装清单"
+    ],
+    "home_kitchen": [
+      "品牌",
+      "材质",
+      "尺寸",
+      "容量/规格",
+      "包装清单"
+    ],
+    "apparel": [
+      "品牌",
+      "材质成分",
+      "尺码表",
+      "洗护说明"
+    ]
+  },
+  "bannedWords": {
+    "promotional": [
+      "free shipping",
+      "hot sale",
+      "limited time",
+      "bonus",
+      "big sale",
+      "clearance",
+      "best price",
+      "cheapest"
+    ],
+    "claims": [
+      "best seller",
+      "#1",
+      "no.1",
+      "top rated",
+      "guaranteed",
+      "risk free",
+      "100% quality",
+      "perfect"
+    ],
+    "restricted": [
+      "antibacterial",
+      "antimicrobial",
+      "anti-mold",
+      "pesticide",
+      "FDA approved",
+      "cure",
+      "heal",
+      "treats",
+      "medical grade"
+    ],
+    "restrictedNote": "restricted 组会触发平台类目审查（如抗菌宣称按农药类目审查、医疗宣称需认证），必须拦截或要求提供认证"
+  },
+  "complianceChecks": [
+    {
+      "id": "title_length",
+      "type": "length",
+      "field": "title",
+      "max": 200,
+      "severity": "error"
+    },
+    {
+      "id": "title_promotional",
+      "type": "banned_words",
+      "fields": [
+        "title"
+      ],
+      "dict": "promotional",
+      "severity": "error"
+    },
+    {
+      "id": "bullets_count",
+      "type": "count",
+      "field": "bullets",
+      "min": 5,
+      "max": 5,
+      "severity": "warn"
+    },
+    {
+      "id": "bullets_length",
+      "type": "length_each",
+      "field": "bullets",
+      "max": 500,
+      "severity": "error"
+    },
+    {
+      "id": "claims_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "bullets",
+        "description"
+      ],
+      "dict": "claims",
+      "severity": "error"
+    },
+    {
+      "id": "restricted_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "bullets",
+        "description"
+      ],
+      "dict": "restricted",
+      "severity": "warn"
+    },
+    {
+      "id": "main_image",
+      "type": "image_spec",
+      "field": "mainImage",
+      "minWidth": 1000,
+      "minHeight": 1000,
+      "background": "white",
+      "noText": true,
+      "noWatermark": true,
+      "noBorder": true,
+      "severity": "error"
+    },
+    {
+      "id": "category_attrs",
+      "type": "required_attrs",
+      "severity": "warn"
+    }
+  ],
+  "economics": {
+    "note": "economics 费率为公开文档整理的演示估算值（非实时），定价引擎直接消费；上架前以卖家后台实际费率复核。头程单价与汇率在引擎侧统一维护。",
+    "currency": "USD",
+    "commissionRate": 0.15,
+    "adTacosDefault": 0.15,
+    "returnRateDefault": 0.06,
+    "returnHandlingFee": 2.2,
+    "fulfillment": {
+      "type": "fba_tiers",
+      "tiers": [
+        {
+          "maxKg": 0.25,
+          "fee": 3.1
+        },
+        {
+          "maxKg": 0.5,
+          "fee": 3.7
+        },
+        {
+          "maxKg": 1.0,
+          "fee": 5.0
+        },
+        {
+          "maxKg": 2.0,
+          "fee": 6.6
+        },
+        {
+          "maxKg": 5.0,
+          "fee": 10.5
+        },
+        {
+          "maxKg": 9.0,
+          "fee": 14.5
+        }
+      ],
+      "monthlyStoragePerCubicMeter": 27.0
+    },
+    "vatRate": 0.0,
+    "dutyNote": "美区销售税由 Marketplace Facilitator 代扣代缴；301 关税视 HS 归类，demo 简化计入采购参考价"
+  }
+}

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>千岸 Copilot</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, "PingFang SC", sans-serif; background: #f8fafc; color: #1e293b; font-size: 13px; }
+    header { background: #0f172a; color: #fff; padding: 10px 14px; }
+    header h1 { font-size: 14px; font-weight: 600; }
+    header p { font-size: 11px; color: #94a3b8; margin-top: 2px; }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 12px 14px; }
+    button {
+      border: 0; border-radius: 10px; padding: 9px 6px; font-size: 12px; cursor: pointer;
+      background: #0ea5e9; color: #fff; font-weight: 500;
+    }
+    button.secondary { background: #fff; color: #475569; border: 1px solid #e2e8f0; }
+    button:disabled { opacity: .5; cursor: default; }
+    #status { margin: 0 14px 12px; padding: 10px 12px; border-radius: 10px; font-size: 12px; line-height: 1.6; display: none; }
+    #status.ok { display: block; background: #ecfdf5; color: #047857; }
+    #status.bad { display: block; background: #fef2f2; color: #b91c1c; }
+    #status.info { display: block; background: #eff6ff; color: #1d4ed8; }
+    footer { padding: 0 14px 14px; }
+    footer a { color: #0ea5e9; font-size: 12px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>千岸 Copilot</h1>
+    <p>卖家后台旁的合规体检 · 演示版</p>
+  </header>
+  <div class="actions">
+    <button id="btn-audit">体检当前表单</button>
+    <button id="btn-sample" class="secondary">填充示例</button>
+    <button id="btn-read" class="secondary">读取表单</button>
+    <button id="btn-open" class="secondary">打开完整工作台</button>
+  </div>
+  <div id="status"></div>
+  <footer><a href="http://localhost:3000/copilot" target="_blank">/copilot 演示页（对话式全流程）→</a></footer>
+  <script src="sidepanel.js"></script>
+</body>
+</html>

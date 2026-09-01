@@ -1,0 +1,8 @@
+{"ts": 1788241942.0804942, "sku": "SKU-DB8B560A", "listing_id": "ML-7f81d282", "platform": "amazon", "logical_hours": 9, "title_quality": 0.0, "impressions": 387, "clicks": 4, "ctr": 0.0103, "conversions": 0}
+{"ts": 1788241942.0804942, "sku": "QA-AM-B06615", "listing_id": "ML-40301449", "platform": "amazon", "logical_hours": 39, "title_quality": 0.35, "impressions": 1454, "clicks": 29, "ctr": 0.0199, "conversions": 1}
+{"ts": 1788241942.0804942, "sku": "QA-AM-BAD01", "listing_id": "ML-7c7abf39", "platform": "amazon", "logical_hours": 335, "title_quality": 0.0, "impressions": 12389, "clicks": 137, "ctr": 0.0111, "conversions": 5}
+{"ts": 1788241942.0804942, "sku": "QA-AM-TEST01", "listing_id": "ML-ae36836a", "platform": "amazon", "logical_hours": 336, "title_quality": 1.0, "impressions": 12401, "clicks": 485, "ctr": 0.0391, "conversions": 38}
+{"ts": 1788241961.002996, "sku": "SKU-DB8B560A", "listing_id": "ML-7f81d282", "platform": "amazon", "logical_hours": 12, "title_quality": 0.0, "impressions": 529, "clicks": 5, "ctr": 0.0095, "conversions": 0}
+{"ts": 1788241961.002996, "sku": "QA-AM-B06615", "listing_id": "ML-40301449", "platform": "amazon", "logical_hours": 42, "title_quality": 0.35, "impressions": 1586, "clicks": 32, "ctr": 0.0202, "conversions": 1}
+{"ts": 1788241961.002996, "sku": "QA-AM-BAD01", "listing_id": "ML-7c7abf39", "platform": "amazon", "logical_hours": 338, "title_quality": 0.0, "impressions": 12484, "clicks": 138, "ctr": 0.0111, "conversions": 5}
+{"ts": 1788241961.002996, "sku": "QA-AM-TEST01", "listing_id": "ML-ae36836a", "platform": "amazon", "logical_hours": 339, "title_quality": 1.0, "impressions": 12497, "clicks": 488, "ctr": 0.039, "conversions": 39}

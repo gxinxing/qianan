@@ -1,0 +1,78 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><title>千岸 QianAn - 系统架构图</title>
+<style>
+  body{font-family:-apple-system,'PingFang SC',sans-serif;background:#0f1419;color:#e6e6e6;margin:0;padding:40px;}
+  .wrap{max-width:1100px;margin:0 auto;}
+  h1{text-align:center;font-size:28px;margin-bottom:8px;background:linear-gradient(90deg,#4fc3f7,#ab47bc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+  .sub{text-align:center;color:#888;font-size:14px;margin-bottom:40px;}
+  .stage{background:#1a1f29;border:1px solid #2a3142;border-radius:12px;padding:20px;margin-bottom:20px;}
+  .stage-title{font-size:13px;color:#4fc3f7;text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;}
+  .row{display:flex;gap:14px;flex-wrap:wrap;}
+  .box{flex:1;min-width:150px;background:#222838;border-radius:8px;padding:14px;text-align:center;border:1px solid #333a4d;}
+  .box .icon{font-size:24px;margin-bottom:6px;}
+  .box .name{font-size:14px;font-weight:600;color:#fff;}
+  .box .desc{font-size:11px;color:#888;margin-top:4px;line-height:1.4;}
+  .accent{border-color:#4fc3f7;background:#1a2535;}
+  .accent2{border-color:#ab47bc;background:#2a1a35;}
+  .accent3{border-color:#ffa726;background:#352a1a;}
+  .arrow{text-align:center;color:#4fc3f7;font-size:20px;margin:6px 0;}
+  .platforms{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+  .platform{background:#1a2535;border:1px solid #4fc3f7;border-radius:8px;padding:12px;text-align:center;}
+  .platform .p-name{font-weight:700;color:#4fc3f7;}
+  .platform .p-lang{font-size:11px;color:#888;margin-top:4px;}
+</style></head><body><div class="wrap">
+<h1>千岸 QianAn · 系统架构图</h1>
+<div class="sub">一稿多岸的跨境上新 Agent — Simon Studio</div>
+
+<div class="stage">
+  <div class="stage-title">① 输入层 — 卖家只需一稿</div>
+  <div class="row">
+    <div class="box"><div class="icon">🖼️</div><div class="name">白底主图</div><div class="desc">一张商品图</div></div>
+    <div class="box"><div class="icon">📝</div><div class="name">中文卖点</div><div class="desc">一段文字描述</div></div>
+    <div class="box"><div class="icon">🌐</div><div class="name">目标平台/语言</div><div class="desc">可选，默认全平台</div></div>
+  </div>
+</div>
+
+<div class="arrow">↓</div>
+
+<div class="stage">
+  <div class="stage-title">② 多 Agent 编排层 — 百炼算力驱动</div>
+  <div class="row">
+    <div class="box accent"><div class="icon">🎯</div><div class="name">主控 Orchestrator</div><div class="desc">任务拆解 / 平台分发 / 结果聚合</div></div>
+  </div>
+  <div class="row" style="margin-top:14px;">
+    <div class="box accent2"><div class="icon">👁️</div><div class="name">商品理解 Agent</div><div class="desc">Qwen-VL 读懂类目/材质/受众</div></div>
+    <div class="box accent2"><div class="icon">📐</div><div class="name">规则引擎 Agent</div><div class="desc">查询目标平台规则库，输出约束</div></div>
+    <div class="box accent2"><div class="icon">✍️</div><div class="name">文案 Agent</div><div class="desc">多语言 Listing 本地化生成</div></div>
+    <div class="box accent2"><div class="icon">🎨</div><div class="name">视觉 Agent</div><div class="desc">文生图 + 模板渲染主图/A+</div></div>
+    <div class="box accent2"><div class="icon">✅</div><div class="name">合规体检 Agent</div><div class="desc">禁用词/字符/图片规范校验</div></div>
+  </div>
+</div>
+
+<div class="arrow">↓</div>
+
+<div class="stage">
+  <div class="stage-title">③ 输出层 — 多平台上架包（30 秒产出）</div>
+  <div class="platforms">
+    <div class="platform"><div class="p-name">Amazon</div><div class="p-lang">EN · 标题/A+/五点</div></div>
+    <div class="platform"><div class="p-name">速卖通</div><div class="p-lang">RU/ES · 多语言</div></div>
+    <div class="platform"><div class="p-name">Shopee</div><div class="p-lang">TH/ID · 主图合规</div></div>
+    <div class="platform"><div class="p-name">Lazada</div><div class="p-lang">多语 · 类目属性</div></div>
+    <div class="platform"><div class="p-name">TikTok Shop</div><div class="p-lang">短视频脚本</div></div>
+  </div>
+  <div class="row" style="margin-top:14px;">
+    <div class="box accent3"><div class="icon">📊</div><div class="name">合规体检报告</div><div class="desc">逐项过检，附整改建议</div></div>
+    <div class="box accent3"><div class="icon">📦</div><div class="name">一键导出</div><div class="desc">CSV / 图片包 / JSON</div></div>
+  </div>
+</div>
+
+<div class="stage" style="margin-top:30px;border-style:dashed;">
+  <div class="stage-title">底层能力 — 阿里云百炼平台（指定算力）</div>
+  <div class="row">
+    <div class="box">通义千问 Qwen-Max<br><span style="color:#888;font-size:11px;">多语言文案生成</span></div>
+    <div class="box">通义万相 Wanx<br><span style="color:#888;font-size:11px;">商品图文生图</span></div>
+    <div class="box">Qwen-VL<br><span style="color:#888;font-size:11px;">多模态商品理解</span></div>
+    <div class="box">OSS + FC<br><span style="color:#888;font-size:11px;">存储 + Serverless</span></div>
+  </div>
+</div>
+
+</div></body></html>

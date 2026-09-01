@@ -1,0 +1,94 @@
+{
+  "id": "eu-gpsr",
+  "name": "欧盟 GPSR 准入",
+  "version": "1.0.0",
+  "description": "欧盟《通用产品安全法规》(GPSR, 2024-12-13 起适用) 准入技能：为欧洲向平台追加禁词与必备段落检查，并注册 gpsr_access_check 准入检查工具，供规划器在目标市场含欧盟时调用。",
+  "source": "EUR-Lex GPSR (EU) 2023/988 公开条款整理（演示口径，上架前以官方最新文本复核）",
+  "overlay": {
+    "amazon": {
+      "bannedWords": {
+        "regulatory": [
+          "ce certified without testing",
+          "gpsr exempt"
+        ]
+      },
+      "complianceChecks": [
+        {
+          "id": "gpsr.regulatory_scan",
+          "type": "banned_words",
+          "fields": [
+            "title",
+            "bullets",
+            "description"
+          ],
+          "dict": "regulatory",
+          "severity": "error"
+        },
+        {
+          "id": "gpsr.responsible_person",
+          "type": "required_sections",
+          "field": "description",
+          "sections": [
+            "Responsible Person"
+          ],
+          "severity": "warn",
+          "note": "GPSR 要求欧盟境内责任人信息可查（演示口径）"
+        }
+      ]
+    },
+    "aliexpress": {
+      "bannedWords": {
+        "regulatory": [
+          "ce certified without testing",
+          "gpsr exempt"
+        ]
+      },
+      "complianceChecks": [
+        {
+          "id": "gpsr.regulatory_scan",
+          "type": "banned_words",
+          "fields": [
+            "title",
+            "bullets",
+            "description"
+          ],
+          "dict": "regulatory",
+          "severity": "error"
+        },
+        {
+          "id": "gpsr.responsible_person",
+          "type": "required_sections",
+          "field": "description",
+          "sections": [
+            "Responsible Person"
+          ],
+          "severity": "warn",
+          "note": "GPSR 要求欧盟境内责任人信息可查（演示口径）"
+        }
+      ]
+    }
+  },
+  "tools": [
+    {
+      "name": "gpsr_access_check",
+      "description": "检查商品在欧盟市场的 GPSR 准入要点（责任人信息、警示语、可追溯标识）。商品描述暗示销往欧盟时调用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "product_name": {
+            "type": "string",
+            "description": "商品名称"
+          },
+          "category": {
+            "type": "string",
+            "description": "类目"
+          }
+        },
+        "required": [
+          "product_name"
+        ]
+      },
+      "system": "你是欧盟 GPSR（通用产品安全法规，EU 2023/988）准入顾问。针对商品「{product_name}」（类目：{category}），输出三条准入要点：1) 欧盟境内责任人（Responsible Person）信息应如何在 Listing 中体现；2) 需要哪些安全警示语；3) 可追溯标识（型号/批次）要求。每条一句话，直接可执行，不要输出免责声明。"
+    }
+  ]
+}

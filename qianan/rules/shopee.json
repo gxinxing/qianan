@@ -1,0 +1,213 @@
+{
+  "schemaVersion": "rules.v1",
+  "platform": "shopee",
+  "displayName": "Shopee",
+  "demoDepth": "deep",
+  "updated": "2026-09-01",
+  "source": "Shopee Seller Centre 公开规范整理；上架前以目标站点最新官方文档复核",
+  "locales": [
+    "th-TH",
+    "id-ID",
+    "vi-VN",
+    "en-SG"
+  ],
+  "marketplaces": [
+    "TH",
+    "ID",
+    "VN",
+    "SG",
+    "MY",
+    "PH"
+  ],
+  "title": {
+    "maxLength": 120,
+    "recommendedLength": [
+      60,
+      110
+    ],
+    "formula": "品牌 + 核心词 + 产品类型 + 规格/属性（按目标语言习惯排序）",
+    "styleRules": [
+      "不使用特殊符号与 emoji",
+      "不使用竞品品牌词蹭流量",
+      "本地化：泰语/印尼语站点使用当地语言书写，非英文直译"
+    ],
+    "perLocale": true,
+    "keywordHint": "Shopee 站内搜索对标题关键词敏感，核心词前置，本地热搜词优先"
+  },
+  "description": {
+    "type": "rich_text",
+    "maxLength": 3000,
+    "structure": [
+      "卖点摘要",
+      "规格参数表",
+      "包装清单",
+      "售后说明"
+    ],
+    "forbiddenContent": [
+      "外部链接",
+      "二维码",
+      "联系方式（引流站外交易会被下架）"
+    ]
+  },
+  "mainImage": {
+    "minWidth": 800,
+    "minHeight": 800,
+    "recommendedWidth": 1000,
+    "aspectRatio": "1:1",
+    "noWatermark": true,
+    "noBorder": true,
+    "noCollage": true,
+    "noContactInfo": true,
+    "background": "clean",
+    "backgroundNote": "不强制纯白，但要求干净清晰；拼图、边框、水印直接违规"
+  },
+  "gallery": {
+    "maxImages": 9,
+    "note": "首图决定点击率；副图可加本地语言卖点标注"
+  },
+  "video": {
+    "supported": true,
+    "note": "Demo 阶段不生成，输出脚本建议"
+  },
+  "categoryAttributes": {
+    "electronics": [
+      "品牌",
+      "型号",
+      "保修类型",
+      "电压/插头标准（按站点）"
+    ],
+    "home_kitchen": [
+      "品牌",
+      "材质",
+      "尺寸",
+      "产地"
+    ],
+    "apparel": [
+      "品牌",
+      "材质",
+      "尺码对照（本地标准）"
+    ]
+  },
+  "bannedWords": {
+    "promotional": [
+      "cheapest",
+      "best price",
+      "free gift",
+      "100% refund",
+      "flash sale"
+    ],
+    "claims": [
+      "best",
+      "#1",
+      "guaranteed original",
+      "official store"
+    ],
+    "restricted": [
+      "cure",
+      "treat disease",
+      "whitening injection",
+      "slimming",
+      "medical",
+      "halal"
+    ],
+    "restrictedNote": "restricted 组在泰国/印尼站点监管严格（医疗、美白、瘦身宣称及清真认证），必须拦截",
+    "perLocale": {
+      "th-TH": [
+        "ราคาถูกที่สุด",
+        "ของแท้ 100%"
+      ],
+      "id-ID": [
+        "termurah",
+        "original 100%"
+      ]
+    }
+  },
+  "complianceChecks": [
+    {
+      "id": "title_length",
+      "type": "length",
+      "field": "title",
+      "max": 120,
+      "severity": "error"
+    },
+    {
+      "id": "title_locale",
+      "type": "locale_coverage",
+      "locales": [
+        "th-TH",
+        "id-ID"
+      ],
+      "severity": "warn"
+    },
+    {
+      "id": "description_length",
+      "type": "length",
+      "field": "description",
+      "max": 3000,
+      "severity": "error"
+    },
+    {
+      "id": "promotional_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "promotional",
+      "severity": "error"
+    },
+    {
+      "id": "claims_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "claims",
+      "severity": "error"
+    },
+    {
+      "id": "restricted_scan",
+      "type": "banned_words",
+      "fields": [
+        "title",
+        "description"
+      ],
+      "dict": "restricted",
+      "severity": "error"
+    },
+    {
+      "id": "main_image",
+      "type": "image_spec",
+      "field": "mainImage",
+      "minWidth": 800,
+      "minHeight": 800,
+      "background": "clean",
+      "noWatermark": true,
+      "noBorder": true,
+      "noCollage": true,
+      "severity": "error"
+    },
+    {
+      "id": "category_attrs",
+      "type": "required_attrs",
+      "severity": "warn"
+    }
+  ],
+  "economics": {
+    "note": "economics 费率为公开文档整理的演示估算值（非实时），定价引擎直接消费；上架前以卖家后台实际费率复核。头程单价与汇率在引擎侧统一维护。",
+    "currency": "USD",
+    "commissionRate": 0.08,
+    "adTacosDefault": 0.12,
+    "returnRateDefault": 0.04,
+    "returnHandlingFee": 1.0,
+    "fulfillment": {
+      "type": "per_order",
+      "fee": 1.2,
+      "note": "SLS 平台物流尾程按件估算"
+    },
+    "monthlyStoragePerCubicMeter": 15.0,
+    "vatRate": 0.0,
+    "dutyNote": "东南亚多站点，demo 统一以美元核算；印尼/泰跨境低值免税额度以内（demo 简化）"
+  }
+}

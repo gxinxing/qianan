@@ -1,0 +1,73 @@
+{
+  "version": "v1",
+  "platform": "shopee",
+  "displayName": "Shopee TH/ID",
+  "updated": "2025-09",
+  "source": "Shopee Seller Centre · Product Listing Guide",
+  "demoDepth": "deep",
+  "locales": ["th-TH", "id-ID", "vi-VN", "en-US"],
+  "marketplaces": ["shopee.co.th", "shopee.co.id", "shopee.vn"],
+  "title": {
+    "maxLength": 120,
+    "recommendedLength": [60, 100],
+    "formula": "Brand + Core Keyword + Key Feature + Specification",
+    "mustIncludeKeywords": false,
+    "perLocale": true
+  },
+  "bullets": {
+    "count": 5,
+    "maxLengthPer": 3000,
+    "style": "rich_text",
+    "note": "Shopee 描述支持富文本，bullet 点融入 description 中"
+  },
+  "description": {
+    "maxLength": 3000,
+    "type": "rich_text",
+    "note": "支持图文混排，emoji 适量使用。东南亚站点重视社交裂变文案"
+  },
+  "mainImage": {
+    "background": "white",
+    "minWidth": 800,
+    "minHeight": 800,
+    "noText": false,
+    "noWatermark": true,
+    "noBorder": true,
+    "productFillRatio": 0.80,
+    "note": "Shopee 各个站点有不同的图片本地化要求"
+  },
+  "categoryAttributes": {
+    "electronics": ["品牌", "型号", "电压", "功率", "材质", "颜色", "保修期", "产地"],
+    "home_kitchen": ["品牌", "材质", "容量", "尺寸", "颜色", "产地", "材质安全等级"],
+    "apparel": ["品牌", "材质", "尺码", "颜色", "款式", "季节", "产地"]
+  },
+  "bannedWords": {
+    "promotional": ["free shipping", "gratis ongkir", "diskon", "sale", "promo", "voucher"],
+    "claims": ["terbaik", "#1", "paling murah", "jaminan", "ampuh", "ajaib", "revolusi"],
+    "restricted": ["obat", "pil", "kesehatan", "medis", "resep dokter"],
+    "trademark": ["iphone (非授权)", "samsung (非授权)", "nike (非授权)"],
+    "localeId": ["palsu", "tiruan", "knockoff"],
+    "localeTh": ["ปลอม", "จำลอง", "ของปลอม"]
+  },
+  "complianceChecks": [
+    { "id": "shp-title-001", "type": "length", "severity": "error", "field": "title", "max": 120 },
+    { "id": "shp-title-002", "type": "banned_words", "severity": "error", "field": "title", "dict": "claims" },
+    { "id": "shp-title-003", "type": "banned_words", "severity": "error", "field": "title", "dict": "localeId" },
+    { "id": "shp-desc-001", "type": "length", "severity": "error", "field": "description", "max": 3000 },
+    { "id": "shp-desc-002", "type": "banned_words", "severity": "error", "field": "description", "dict": "promotional" },
+    { "id": "shp-img-001", "type": "image_spec", "severity": "error", "field": "mainImage", "minWidth": 800, "minHeight": 800 },
+    { "id": "shp-img-002", "type": "image_spec", "severity": "error", "field": "mainImage", "noWatermark": true },
+    { "id": "shp-attr-001", "type": "required_attrs", "severity": "warn", "field": "attributes" }
+  ],
+  "economics": {
+    "commissionRate": 0.04,
+    "adTacosDefault": 0.10,
+    "returnRateDefault": 0.05,
+    "returnHandlingFee": 0.80,
+    "fulfillment": {
+      "type": "standard",
+      "fee": 2.50
+    },
+    "vatRate": 0.07,
+    "dutyNote": "东南亚站点部分类目征收 VAT/消费税，当地税率各异"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "competitor-band",
+  "name": "竞品价格带连接器",
+  "version": "1.0.0",
+  "kind": "connector",
+  "description": "按类目返回主流平台竞品价格带与在售样例（演示数据）。选品建议与定价判断时调用；接入真实比价 API 后把 type 改为 http 即可上线。",
+  "source": "演示数据（Placeholder：拿到比价 API key 后切换为 http 连接器）",
+  "tools": [
+    {
+      "name": "get_competitor_band",
+      "type": "static",
+      "description": "获取类目竞品价格带（USD）与在售样例。评估市场带、判断定价空间时调用。",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "category": {"type": "string", "description": "类目：electronics / home_kitchen / apparel"}
+        }
+      },
+      "data": {
+        "electronics": {"currency": "USD", "price_min": 9.9, "price_max": 29.9, "samples": ["挂脖风扇 $14.9-24.9", "便携挂烫机 $19.9-29.9"]},
+        "home_kitchen": {"currency": "USD", "price_min": 6.9, "price_max": 19.9, "samples": ["折叠水杯 $8.9-13.9", "收纳三件套 $11.9-18.9"]},
+        "apparel": {"currency": "USD", "price_min": 5.9, "price_max": 15.9, "samples": ["防晒冰袖 $6.9-9.9", "运动腰包 $9.9-14.9"]}
+      }
+    }
+  ]
+}

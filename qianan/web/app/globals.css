@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: var(--font-sans);
+  --bg: #f2f5fb;
+  --surface: #ffffff;
+  --border: #cdd5e0;
+  --border-subtle: #e3e8f0;
+  --text-primary: #313844;
+  --text-secondary: #65768d;
+  --text-tertiary: #8090a8;
+  --brand: #336393;
+  --brand-deep: #0e2033;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-feature-settings: "tnum" 1, "cv05" 1;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display), "PingFang SC", "Noto Sans SC", sans-serif;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+::selection {
+  background: #bfd7f1;
+  color: #0e2033;
+}
+
+:focus-visible {
+  outline: 2px solid #427bb4;
+  outline-offset: 2px;
+}
+
+@layer components {
+  /* 等宽字体眉题：精密工具签名元素 */
+  .eyebrow {
+    @apply font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-ink-500;
+  }
+  /* 主按钮 */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-700 px-5 py-2.5
+      text-sm font-medium text-white shadow-sm transition duration-150
+      hover:bg-brand-800 active:translate-y-px disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-ink-200 bg-white
+      px-4 py-2.5 text-sm font-medium text-ink-700 shadow-xs transition duration-150
+      hover:border-ink-300 hover:bg-ink-50 active:translate-y-px;
+  }
+  /* 卡片：发丝边框 + 极浅投影 */
+  .card {
+    @apply rounded-xl bg-white shadow-xs ring-1 ring-ink-100;
+  }
+  /* 输入控件 */
+  .field {
+    @apply w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900
+      placeholder:text-ink-400 shadow-xs transition focus:border-brand-500 focus:outline-none
+      focus:ring-2 focus:ring-brand-100;
+  }
+  /* 规格说明书式数据单元 */
+  .spec-label {
+    @apply font-mono text-[10px] uppercase tracking-[0.08em] text-ink-400;
+  }
+  /* 分段选择器（Supabase 式控件） */
+  .segment {
+    @apply inline-flex items-center gap-0.5 rounded-lg bg-ink-100 p-0.5 ring-1 ring-ink-200/60;
+  }
+  .segment-item {
+    @apply rounded-md px-3 py-1.5 text-xs font-medium text-ink-500 transition duration-150
+      hover:text-ink-800;
+  }
+  .segment-item[data-on="true"] {
+    @apply bg-white text-ink-900 shadow-xs ring-1 ring-ink-200;
+  }
+}
+
+/* Agent Trace 面板（hero 深色区上的产品证明） */
+.trace-panel {
+  background: rgb(255 255 255 / 0.04);
+  border: 1px solid rgb(191 215 241 / 0.14);
+  box-shadow: 0 24px 48px rgb(0 0 0 / 0.35), inset 0 1px 0 rgb(255 255 255 / 0.06);
+  backdrop-filter: blur(8px);
+}
+.trace-row {
+  border-left: 2px solid transparent;
+}
+.trace-row[data-status="ok"] { border-left-color: #34d399; }
+.trace-row[data-status="run"] { border-left-color: #79a9dc; }
+.trace-row[data-status="wait"] { border-left-color: rgb(121 169 220 / 0.25); }
+
+/* 海图等深线纹理（深色 hero 用） */
+.contour-bg {
+  background-color: var(--brand-deep);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480' viewBox='0 0 480 480'%3E%3Cg fill='none' stroke='%23427bb4' stroke-opacity='0.18'%3E%3Cpath d='M-40 120c80-60 180-60 260 0s180 60 260 0'/%3E%3Cpath d='M-40 180c80-60 180-60 260 0s180 60 260 0' stroke-opacity='0.13'/%3E%3Cpath d='M-40 240c80-60 180-60 260 0s180 60 260 0'/%3E%3Cpath d='M-40 300c80-60 180-60 260 0s180 60 260 0' stroke-opacity='0.13'/%3E%3Cpath d='M-40 360c80-60 180-60 260 0s180 60 260 0'/%3E%3Cpath d='M-40 420c80-60 180-60 260 0s180 60 260 0' stroke-opacity='0.13'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+/* 细网格纹理（浅色区段用） */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, rgb(51 99 147 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(51 99 147 / 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

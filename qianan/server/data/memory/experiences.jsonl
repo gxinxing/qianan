@@ -1,0 +1,5 @@
+{"id": "dc616d06a3", "platform": "amazon", "category": "home_kitchen", "lesson": "amazon：修订 1 轮后合规通过，生成时预留合规余量", "check_id": "", "source_task": "memtest01", "hit_count": 19, "ts": 1788209792.544356}
+{"id": "0375644d70", "platform": "amazon", "category": "home_kitchen", "lesson": "amazon：修订 1 轮后合规通过，生成时预留合规余量", "check_id": "", "source_task": "reflect-mock-01", "hit_count": 17, "ts": 1788210091.965578}
+{"id": "567e22e284", "platform": "amazon", "category": "home_kitchen", "lesson": "遇到无依据的功效宣称时应删除，仅保留事实档案中的物理属性", "check_id": "", "source_task": "reflect-exag-01", "hit_count": 0, "ts": 1788210162.396513}
+{"id": "82561bbb59", "platform": "amazon", "category": "home_kitchen", "lesson": "遇到绝对化极限词及虚假承诺时应剔除，严格基于商品事实撰写", "check_id": "", "source_task": "reflect-exag-01", "hit_count": 16, "ts": 1788210162.397007}
+{"id": "73415f630d", "platform": "amazon", "category": "home_kitchen", "lesson": "遇到文案补充耐温或BPA-free等参数时，应确保事实档案有对应依据", "check_id": "", "source_task": "9ddc482fffcd", "hit_count": 0, "ts": 1788210472.016736}

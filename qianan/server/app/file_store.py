@@ -1,0 +1,144 @@
+"""生成结果的文件仓库：任务完成后把上架包落盘，供文件管理区 / 后台管理消费。
+
+目录结构：server/data/tasks/<task_id>/
+  task.json   任务元信息（商品名/平台/状态/自愈次数/合规摘要）
+  export.json 完整导出包（listing JSON + 各平台后台导入 CSV）
+  images/     各平台主图（下载到本地，避免 OSS 签名 URL 过期）
+"""
+from __future__ import annotations
+
+import json
+import shutil
+import threading
+import time
+import urllib.request
+from pathlib import Path
+
+from .import_files import build_import_files
+from .schemas import TaskRecord, TaskStatus
+
+DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "tasks"
+IMAGE_DIR_NAME = "images"
+
+
+def task_dir(task_id: str) -> Path:
+    return DATA_DIR / task_id
+
+
+def _meta(task: TaskRecord) -> dict:
+    listings = task.listings or []
+    return {
+        "task_id": task.task_id,
+        "product_name": task.request.product_name,
+        "platforms": list(task.request.platforms),
+        "status": task.status.value,
+        "stage": task.stage,
+        "error": task.error,
+        "created_at": task.created_at,
+        "done_at": time.time() if task.status == TaskStatus.done else None,
+        "platforms_done": [
+            {"platform": l.platform, "display_name": l.display_name, "passed": l.compliance_passed,
+             "revised_count": l.revised_count, "images": len(l.images)}
+            for l in listings
+        ],
+        "revised_total": sum(l.revised_count for l in listings),
+        "compliance_passed_total": sum(1 for l in listings if l.compliance_passed),
+    }
+
+
+def persist_task(task: TaskRecord) -> None:
+    """任务完成时落盘：task.json + export.json，图片异步下载。"""
+    if task.status != TaskStatus.done:
+        return
+    d = task_dir(task.task_id)
+    d.mkdir(parents=True, exist_ok=True)
+    (d / "task.json").write_text(
+        json.dumps(_meta(task), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    export = {
+        "product_name": task.request.product_name,
+        "understanding": task.understanding.model_dump() if task.understanding else None,
+        "listings": [
+            {**l.model_dump(), "import_files": build_import_files(task.request.product_name, l)}
+            for l in (task.listings or [])
+        ],
+        "trace": [e.model_dump() for e in (task.trace or [])],
+    }
+    (d / "export.json").write_text(json.dumps(export, ensure_ascii=False, indent=2), encoding="utf-8")
+    for listing in task.listings or []:
+        csv_map = build_import_files(task.request.product_name, listing)
+        for name, content in csv_map.items():
+            if content:
+                (d / name).write_text(content, encoding="utf-8")
+    threading.Thread(target=_download_images, args=(d, task), daemon=True).start()
+
+
+def _download_images(d: Path, task: TaskRecord) -> None:
+    img_dir = d / IMAGE_DIR_NAME
+    img_dir.mkdir(exist_ok=True)
+    for listing in task.listings or []:
+        for idx, url in enumerate(listing.images or []):
+            ext = Path(url.split("?")[0]).suffix or ".png"
+            target = img_dir / f"{listing.platform}_{idx + 1}{ext}"
+            if target.exists():
+                continue
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "qianan-file-store"})
+                with urllib.request.urlopen(req, timeout=20) as r, open(target, "wb") as f:
+                    shutil.copyfileobj(r, f)
+            except Exception:  # noqa: BLE001 —— 图片下载失败不影响文件管理主流程
+                target.unlink(missing_ok=True)
+
+
+def _scan_package(d: Path) -> dict | None:
+    meta_file = d / "task.json"
+    if not meta_file.exists():
+        return None
+    meta = json.loads(meta_file.read_text(encoding="utf-8"))
+    files: list[dict] = []
+    for p in sorted(d.rglob("*")):
+        if not p.is_file() or p.name == "task.json":
+            continue
+        rel = p.relative_to(d).as_posix()
+        kind = "image" if IMAGE_DIR_NAME in rel else ("csv" if p.suffix == ".csv" else "json")
+        files.append({"name": rel, "size": p.stat().st_size, "kind": kind})
+    meta["files"] = files
+    meta["total_size"] = sum(f["size"] for f in files)
+    return meta
+
+
+def list_packages() -> list[dict]:
+    if not DATA_DIR.exists():
+        return []
+    packages = []
+    for d in sorted(DATA_DIR.iterdir()):
+        if d.is_dir():
+            pkg = _scan_package(d)
+            if pkg:
+                packages.append(pkg)
+    packages.sort(key=lambda p: p.get("done_at") or p.get("created_at") or 0, reverse=True)
+    return packages
+
+
+def get_package(task_id: str) -> dict | None:
+    d = task_dir(task_id)
+    if not d.exists():
+        return None
+    return _scan_package(d)
+
+
+def delete_package(task_id: str) -> bool:
+    d = task_dir(task_id)
+    if not d.exists():
+        return False
+    shutil.rmtree(d, ignore_errors=True)
+    return True
+
+
+def resolve_file(task_id: str, rel: str) -> Path | None:
+    """把包内相对路径解析为绝对路径；越界（路径穿越）返回 None。"""
+    d = task_dir(task_id).resolve()
+    target = (d / rel).resolve()
+    if d not in target.parents:
+        return None
+    return target if target.is_file() else None
