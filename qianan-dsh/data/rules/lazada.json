@@ -1,0 +1,68 @@
+{
+  "version": "v1",
+  "platform": "lazada",
+  "displayName": "Lazada SEA",
+  "updated": "2025-09",
+  "source": "Lazada University · Seller Centre Guidelines",
+  "demoDepth": "reuse",
+  "locales": ["en-US", "th-TH", "id-ID", "vi-VN", "ms-MY"],
+  "marketplaces": ["shopee.co.th", "lazada.co.id", "lazada.vn", "lazada.com.my", "lazada.sg", "lazada.com.ph"],
+  "title": {
+    "maxLength": 128,
+    "recommendedLength": [60, 100],
+    "formula": "Brand + Core Keyword + Feature + Specification",
+    "mustIncludeKeywords": false,
+    "perLocale": true
+  },
+  "bullets": {
+    "count": 5,
+    "maxLengthPer": 3000,
+    "style": "rich_text"
+  },
+  "description": {
+    "maxLength": 3000,
+    "type": "rich_text"
+  },
+  "mainImage": {
+    "background": "white",
+    "minWidth": 500,
+    "minHeight": 500,
+    "noText": false,
+    "noWatermark": true,
+    "noBorder": true,
+    "productFillRatio": 0.75,
+    "note": "Lazada 最低要求 500x500，但建议用 800x800 以保证清晰度"
+  },
+  "categoryAttributes": {
+    "electronics": ["品牌", "型号", "电压", "功率", "材质", "颜色", "保修期", "产地"],
+    "home_kitchen": ["品牌", "材质", "容量", "尺寸", "颜色", "产地"],
+    "apparel": ["品牌", "材质", "尺码", "颜色", "款式", "季节", "产地"]
+  },
+  "bannedWords": {
+    "promotional": ["gratis", "promo", "diskon", "sale", "coupon", "voucher"],
+    "claims": ["terbaik", "paling murah", "jaminan mutu", "resmi", "original (若无授权)"],
+    "restricted": ["obat", "narkoba", "senjata", "ilegal"],
+    "trademark": ["apple (非授权)", "samsung (非授权)", "dior (非授权)"]
+  },
+  "complianceChecks": [
+    { "id": "laz-title-001", "type": "length", "severity": "error", "field": "title", "max": 128 },
+    { "id": "laz-title-002", "type": "banned_words", "severity": "error", "field": "title", "dict": "claims" },
+    { "id": "laz-desc-001", "type": "length", "severity": "error", "field": "description", "max": 3000 },
+    { "id": "laz-desc-002", "type": "banned_words", "severity": "error", "field": "description", "dict": "promotional" },
+    { "id": "laz-img-001", "type": "image_spec", "severity": "error", "field": "mainImage", "minWidth": 500, "minHeight": 500 },
+    { "id": "laz-attr-001", "type": "required_attrs", "severity": "warn", "field": "attributes" },
+    { "id": "laz-bullet-001", "type": "count", "severity": "warn", "field": "bullets", "min": 3, "max": 5 }
+  ],
+  "economics": {
+    "commissionRate": 0.04,
+    "adTacosDefault": 0.10,
+    "returnRateDefault": 0.06,
+    "returnHandlingFee": 0.90,
+    "fulfillment": {
+      "type": "standard",
+      "fee": 2.80
+    },
+    "vatRate": 0.06,
+    "dutyNote": "Lazada 部分站点征收 SST/GST，费率因国家而异"
+  }
+}

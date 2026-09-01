@@ -1,0 +1,174 @@
+{
+  "version": "v1",
+  "platform": "amazon",
+  "displayName": "Amazon",
+  "updated": "2025-09",
+  "source": "Amazon Seller Central · Product Listing Requirements",
+  "demoDepth": "deep",
+  "locales": ["en-US", "en-GB", "ja-JP"],
+  "marketplaces": ["amazon.com", "amazon.co.uk", "amazon.co.jp"],
+  "title": {
+    "maxLength": 200,
+    "recommendedLength": [150, 180],
+    "formula": "Brand + Core Keyword + Differentiator + Material/Feature + Use Case",
+    "mustIncludeKeywords": true,
+    "caseStyle": "sentence_case"
+  },
+  "bullets": {
+    "count": 5,
+    "minCount": 3,
+    "maxLengthPer": 500,
+    "style": "symbol_started",
+    "orderHint": ["feature", "benefit", "spec", "use_case", "brand"]
+  },
+  "description": {
+    "maxLength": 3000,
+    "type": "html_enhanced",
+    "minLength": 200
+  },
+  "aPlus": {
+    "modules": ["品牌故事", "卖点对比", "场景图", "技术参数表"],
+    "requireApproval": true,
+    "maxModules": 7,
+    "recommendedModules": ["headline", "grid", "compare", "story"],
+    "primaryLanguage": "en-US"
+  },
+  "mainImage": {
+    "background": "white",
+    "minWidth": 1000,
+    "minHeight": 1000,
+    "noText": true,
+    "noWatermark": true,
+    "noBorder": true,
+    "productFillRatio": 0.85,
+    "acceptedFormats": ["JPEG", "PNG", "GIF (no animation)"]
+  },
+  "additionalImages": {
+    "recommendedCount": 6,
+    "maxCount": 9,
+    "infoGraphics": true,
+    "lifestyleImages": true,
+    "sizeComparison": true
+  },
+  "categoryAttributes": {
+    "electronics": ["品牌", "型号", "电压", "功率", "材质", "颜色", "尺寸", "重量", "产地", "认证"],
+    "home_kitchen": ["品牌", "型号", "材质", "容量", "尺寸", "颜色", "产地", "认证"],
+    "apparel": ["品牌", "材质", "尺码", "颜色", "款式", "产地"],
+    "beauty": ["品牌", "功效", "肤质", "容量", "成分", "产地"],
+    "sports": ["品牌", "型号", "材质", "尺寸", "颜色", "重量", "产地"],
+    "toys": ["品牌", "型号", "材质", "适用年龄", "安全认证", "产地"]
+  },
+  "bannedWords": {
+    "promotional": ["sale", "free shipping", "discount", "promotion", "coupon", "deal", "limited time", "clearance", "bargain"],
+    "claims": ["best", "#1", "top", "guarantee", "guaranteed", "proven", "miracle", "revolutionary", "breakthrough", "#1 ranked", "#1 seller", "#1 rated", "number one"],
+    "misleading": ["100% waterproof", "fda approved", "clinically proven", "doctor recommended", "organic certified (除非有证书)", "eco-friendly (须有证明)"],
+    "offensive": [],
+    "restricted": ["diet pill", "weight loss drug", "medical device", "prescription", "FDA approved", "cancer", "viagra"],
+    "trademark": ["apple (非授权)", "samsung (非授权)", "google (非授权)", "nike (非授权)", "adidas (非授权)"]
+  },
+  "complianceChecks": [
+    {
+      "id": "amz-title-001",
+      "type": "length",
+      "severity": "error",
+      "field": "title",
+      "message": "标题超过 200 字符限制",
+      "max": 200
+    },
+    {
+      "id": "amz-title-002",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "title",
+      "message": "标题命中禁用词",
+      "dict": "claims",
+      "fields": ["title"]
+    },
+    {
+      "id": "amz-title-003",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "title",
+      "message": "标题含促销用语",
+      "dict": "promotional",
+      "fields": ["title"]
+    },
+    {
+      "id": "amz-bullet-001",
+      "type": "count",
+      "severity": "error",
+      "field": "bullets",
+      "message": "五点描述数量不足（至少 3 条）",
+      "min": 3
+    },
+    {
+      "id": "amz-bullet-002",
+      "type": "length_each",
+      "severity": "error",
+      "field": "bullets",
+      "message": "单条五点描述超过 500 字符",
+      "max": 500
+    },
+    {
+      "id": "amz-bullet-003",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "title",
+      "message": "五点描述命中禁用词",
+      "dict": "claims",
+      "fields": ["bullets"]
+    },
+    {
+      "id": "amz-desc-001",
+      "type": "length",
+      "severity": "warn",
+      "field": "description",
+      "message": "描述过短（建议 ≥200 字符）",
+      "max": 3000
+    },
+    {
+      "id": "amz-img-001",
+      "type": "image_spec",
+      "severity": "error",
+      "field": "mainImage",
+      "message": "主图尺寸不足（需 ≥1000×1000）",
+      "minWidth": 1000,
+      "minHeight": 1000,
+      "background": "white"
+    },
+    {
+      "id": "amz-img-002",
+      "type": "banned_words",
+      "severity": "warn",
+      "field": "description",
+      "message": "描述含促销用语",
+      "dict": "promotional",
+      "fields": ["description", "bullets"]
+    },
+    {
+      "id": "amz-attr-001",
+      "type": "required_attrs",
+      "severity": "warn",
+      "field": "attributes",
+      "message": "缺少必填类目属性"
+    }
+  ],
+  "economics": {
+    "commissionRate": 0.15,
+    "adTacosDefault": 0.10,
+    "returnRateDefault": 0.08,
+    "returnHandlingFee": 0.62,
+    "fulfillment": {
+      "type": "fba_tiers",
+      "tiers": [
+        { "maxKg": 0.25, "fee": 3.32 },
+        { "maxKg": 0.5, "fee": 3.88 },
+        { "maxKg": 1.0, "fee": 5.06 },
+        { "maxKg": 2.0, "fee": 5.75 }
+      ],
+      "monthlyStoragePerCubicMeter": 27.01
+    },
+    "vatRate": 0.0,
+    "dutyNote": "美国站不收 VAT；进口关税依 HTS 编码另计"
+  }
+}

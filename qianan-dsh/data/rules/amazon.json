@@ -1,0 +1,79 @@
+{
+  "version": "v1",
+  "platform": "amazon",
+  "displayName": "Amazon US (Deep Dive)",
+  "updated": "2025-09",
+  "source": "Amazon Seller Central · Product Listing Requirements",
+  "demoDepth": "deep",
+  "locales": ["en-US"],
+  "marketplaces": ["amazon.com"],
+  "title": {
+    "maxLength": 200,
+    "recommendedLength": [150, 180],
+    "formula": "Brand + Core Keyword + Differentiator + Material/Feature + Use Case",
+    "mustIncludeKeywords": true
+  },
+  "bullets": {
+    "count": 5,
+    "maxLengthPer": 500,
+    "style": "symbol_started"
+  },
+  "description": {
+    "maxLength": 3000,
+    "type": "html_enhanced"
+  },
+  "aPlus": {
+    "modules": ["品牌故事", "卖点对比", "场景图", "技术参数表"],
+    "requireApproval": true,
+    "maxModules": 7
+  },
+  "mainImage": {
+    "background": "white",
+    "minWidth": 1000,
+    "minHeight": 1000,
+    "noText": true,
+    "noWatermark": true,
+    "noBorder": true,
+    "productFillRatio": 0.85
+  },
+  "categoryAttributes": {
+    "electronics": ["品牌", "型号", "电压", "功率", "材质", "颜色", "尺寸", "重量", "产地", "认证"],
+    "home_kitchen": ["品牌", "型号", "材质", "容量", "尺寸", "颜色", "产地", "认证"],
+    "apparel": ["品牌", "材质", "尺码", "颜色", "款式", "产地"]
+  },
+  "bannedWords": {
+    "promotional": ["sale", "free shipping", "discount", "promotion", "coupon", "deal"],
+    "claims": ["best", "#1", "top", "guarantee", "proven", "miracle", "revolutionary", "breakthrough"],
+    "restricted": ["diet pill", "weight loss", "cancer", "medical", "FDA approved (除非有证书)"],
+    "trademark": ["apple (非授权)", "samsung (非授权)", "google (非授权)"],
+    "restrictedNote": "含促销语气（打折/免邮/优惠券）一律拒审；绝对化用语（best/#1）触发 error"
+  },
+  "complianceChecks": [
+    { "id": "amz-title-001", "type": "length", "severity": "error", "field": "title" },
+    { "id": "amz-title-002", "type": "banned_words", "severity": "error", "field": "title" },
+    { "id": "amz-title-003", "type": "length_each", "severity": "error", "field": "bullets" },
+    { "id": "amz-img-001", "type": "image_spec", "severity": "error", "field": "mainImage" },
+    { "id": "amz-desc-001", "type": "length", "severity": "error", "field": "description" },
+    { "id": "amz-attr-001", "type": "required_attrs", "severity": "error", "field": "attributes" },
+    { "id": "amz-bullet-001", "type": "count", "severity": "error", "field": "bullets" },
+    { "id": "amz-bullet-002", "type": "banned_words", "severity": "error", "field": "bullets" }
+  ],
+  "economics": {
+    "commissionRate": 0.15,
+    "adTacosDefault": 0.10,
+    "returnRateDefault": 0.08,
+    "returnHandlingFee": 0.62,
+    "fulfillment": {
+      "type": "fba_tiers",
+      "tiers": [
+        { "maxKg": 0.25, "fee": 3.32 },
+        { "maxKg": 0.5, "fee": 3.88 },
+        { "maxKg": 1.0, "fee": 5.06 },
+        { "maxKg": 2.0, "fee": 5.75 }
+      ],
+      "monthlyStoragePerCubicMeter": 27.01
+    },
+    "vatRate": 0.0,
+    "dutyNote": "美国站不上收 VAT；进口关税依 HTS 编码另计"
+  }
+}

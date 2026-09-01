@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>千岸 QianAn · 提交幻灯片</title>
+<style>
+  :root{
+    --ink:#1d1d1f; --sub:#5b5b60; --line:#e6e6e8; --bg:#ffffff;
+    --tint:#f6f6f4; --accent:#0a7d4b; --accent-d:#065f37;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+  body{background:#eee;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue",Arial,sans-serif;color:var(--ink)}
+  .slide{
+    width:1920px;height:1080px;background:var(--bg);
+    padding:110px 150px;position:relative;overflow:hidden;
+    display:flex;flex-direction:column;
+  }
+  .slide + .slide{margin-top:24px}
+
+  /* 顶部小标识 */
+  .eyebrow{font-size:20px;font-weight:600;color:var(--accent);letter-spacing:.04em;margin-bottom:18px}
+  .pageno{position:absolute;right:60px;bottom:50px;font-size:18px;color:#bbb;font-variant-numeric:tabular-nums;letter-spacing:.05em}
+  .brand-tag{position:absolute;left:60px;bottom:50px;font-size:18px;color:#bbb;letter-spacing:.05em}
+
+  /* 字号放大到 1920×1080 */
+  h1.title{font-size:96px;font-weight:800;line-height:1.1;letter-spacing:-.015em;margin-bottom:28px}
+  h2.section{font-size:62px;font-weight:800;line-height:1.15;letter-spacing:-.01em;margin-bottom:34px}
+  h3{font-size:30px;font-weight:700;margin-bottom:12px;line-height:1.3}
+  .lead{font-size:34px;line-height:1.5;color:var(--ink);max-width:1500px;margin-bottom:10px}
+  .muted{color:var(--sub)}
+  p{font-size:26px;line-height:1.6}
+  strong{font-weight:600}
+
+  /* 封面 */
+  .cover{justify-content:center}
+  .cover .sub{font-size:38px;color:var(--sub);margin-top:24px;line-height:1.5}
+  .cover .meta{margin-top:72px;display:flex;gap:24px 64px;font-size:26px;color:var(--sub);flex-wrap:wrap}
+  .cover .meta b{color:var(--ink);font-weight:600}
+  .cover .pill{display:inline-block;font-size:22px;color:var(--accent);font-weight:600;letter-spacing:.04em;margin-bottom:32px;padding:8px 22px;border:1.5px solid var(--accent);border-radius:999px}
+
+  /* 数据统计 */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;background:var(--line);border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin-top:24px}
+  .stat{background:var(--bg);padding:44px 44px}
+  .stat .n{font-size:64px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums}
+  .stat .n .u{font-size:32px;color:var(--sub);font-weight:500;margin-left:4px}
+  .stat .l{font-size:22px;color:var(--sub);margin-top:16px;line-height:1.5}
+
+  /* 表格 */
+  table{width:100%;border-collapse:collapse;font-size:24px;margin-top:16px}
+  th,td{text-align:left;padding:20px 22px;border-bottom:1.5px solid var(--line);vertical-align:top;line-height:1.45}
+  th{font-weight:700;color:var(--sub);font-size:21px;border-bottom:2.5px solid var(--ink);background:transparent;text-transform:none}
+  td:first-child,th:first-child{font-weight:700;color:var(--sub);width:200px}
+  tbody td{color:var(--ink)}
+  tbody td:not(:first-child){font-weight:400}
+
+  /* 5W */
+  .w5{border:1.5px solid var(--line);border-radius:10px;overflow:hidden;margin-top:8px}
+  .w5-row{display:grid;grid-template-columns:260px 1fr;border-bottom:1.5px solid var(--line);align-items:stretch}
+  .w5-row:last-child{border-bottom:0}
+  .w5-key{background:var(--tint);padding:30px 36px;display:flex;flex-direction:column;justify-content:center;border-right:1.5px solid var(--line)}
+  .w5-key .w{font-size:30px;font-weight:800;color:var(--ink)}
+  .w5-key .q{font-size:21px;color:var(--accent);font-weight:700;margin-bottom:6px;letter-spacing:.04em}
+  .w5-val{padding:30px 40px;font-size:27px;line-height:1.55}
+  .w5-val b{font-weight:700}
+
+  /* 功能列表 */
+  .funcs{display:grid;grid-template-columns:1fr 1fr;gap:26px 48px;margin-top:16px}
+  .func{display:flex;gap:22px;align-items:flex-start}
+  .func .idx{font-size:30px;font-weight:800;color:var(--accent);min-width:50px;line-height:1.3}
+  .func .txt{font-size:25px;line-height:1.5}
+  .func .txt b{font-weight:700;display:block;margin-bottom:4px}
+
+  /* 价值链 */
+  .funnel{margin-top:8px;border:1.5px solid var(--line);border-radius:10px;overflow:hidden}
+  .step{display:grid;grid-template-columns:80px 1fr 240px;gap:24px;padding:26px 36px;border-bottom:1.5px solid var(--line);font-size:26px;align-items:center}
+  .step:last-child{border-bottom:0}
+  .step .i{font-size:32px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums}
+  .step .b b{font-weight:700}
+  .step .r{color:var(--sub);text-align:right;font-size:23px;font-variant-numeric:tabular-nums}
+
+  /* 四象限（谁/为何/为何现在/为何我们）*/
+  .quad{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;margin-top:16px;flex:1}
+  .qcell{border:1.5px solid var(--line);border-radius:10px;padding:34px 38px;background:var(--tint)}
+  .qcell h3{color:var(--accent);font-size:27px;margin-bottom:12px}
+  .qcell p{font-size:23px;line-height:1.55;color:var(--ink)}
+  .qcell p b{font-weight:700}
+
+  /* 技术选型表 */
+  .tech-table td:first-child{width:280px}
+
+  /* 可行性四块 */
+  .proof{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:24px;margin-top:16px;flex:1}
+  .pcell{border-left:5px solid var(--accent);padding:28px 36px;background:var(--tint);border-radius:0 10px 10px 0}
+  .pcell h3{font-size:27px;margin-bottom:10px}
+  .pcell p{font-size:22px;line-height:1.55;color:var(--sub)}
+
+  /* callout */
+  .callout{border-left:6px solid var(--accent);background:var(--tint);padding:32px 40px;border-radius:0 10px 10px 0;font-size:27px;line-height:1.6;margin-top:auto}
+  .callout b{font-weight:700}
+
+  /* 让内容垂直撑满或顶住 */
+  .grow{flex:1}
+  .foot-line{margin-top:auto;font-size:20px;color:var(--sub);border-top:1.5px solid var(--line);padding-top:24px}
+</style>
+</head>
+<body>
+
+<!-- ============ SLIDE 1 · 封面 ============ -->
+<section class="slide cover" id="s1">
+  <span class="pill">创意初赛方案 · 场景一 AI 智能上新</span>
+  <h1 class="title">千岸 QianAn</h1>
+  <div class="sub">把同一个商品，铺到全球每一个平台的上架规范里。<br>卖家给一张白底图 + 一段中文卖点，30 秒拿到五平台合规上架包。</div>
+  <div class="meta">
+    <span>团队 <b>Simon Studio</b></span>
+    <span>赛道 <b>AI 智能上新</b></span>
+    <span>队长 <b>星星</b></span>
+    <span>2025-08-25</span>
+  </div>
+  <div class="brand-tag">QIANAN · ONE DRAFT, MANY SHORES</div>
+  <div class="pageno">01 / 07</div>
+</section>
+
+<!-- ============ SLIDE 2 · 5W 概览 ============ -->
+<section class="slide" id="s2">
+  <div class="eyebrow">方案概览</div>
+  <h2 class="section">用 5W 把这个生意讲清楚</h2>
+  <div class="w5 grow">
+    <div class="w5-row"><div class="w5-key"><div class="q">WHY</div><div class="w">为什么做</div></div><div class="w5-val">跨境卖家上架一个新品到多平台，要把同一个商品反复重做成符合每个平台、每种语言规范的上架素材——一套外包 <b>¥1000–3300、3–7 天</b>，铺 5 个站点成本直接乘 5。高频、强规则、必须本地化的隐性大成本。</div></div>
+    <div class="w5-row"><div class="w5-key"><div class="q">WHAT</div><div class="w">做什么</div></div><div class="w5-val">把「同一商品」翻译成「多平台合规版本」的 AI Agent。输入白底图 + 中文卖点，30 秒输出 Amazon / 速卖通 / Shopee / Lazada / TikTok Shop 五平台上架包 + 合规报告。<b>差异化不在「生成」，在「多平台规则引擎」</b>。</div></div>
+    <div class="w5-row"><div class="w5-key"><div class="q">WHO</div><div class="w">给谁用</div></div><div class="w5-val"><b>中小跨境卖家</b>（中国数百万，缺设计资源）、<b>品牌大卖</b>（SKU 多上新频次高）、<b>跨境 ISV / ERP</b>（可集成为上架模块）。付费方是卖家，按次 ¥9.9–29.9 或订阅 ¥199/月，对标原外包价省 90%+。</div></div>
+    <div class="w5-row"><div class="w5-key"><div class="q">WHEN</div><div class="w">何时用</div></div><div class="w5-val">卖家每次上新、或把已有商品铺到新平台 / 新语种站点时调用。<b>行业时机</b>：2025 年百炼多语言 LLM + 文生图 + 视觉理解成熟到可商用，同时中国卖家从「单平台铺货」转向「多平台品牌出海」。</div></div>
+    <div class="w5-row"><div class="w5-key"><div class="q">WHERE</div><div class="w">在哪落地</div></div><div class="w5-val">技术上落在<b>阿里云百炼平台</b>（主办方指定算力：Qwen-Max / Wanx / Qwen-VL）；场景上天然服务<b>阿里国际系</b>（速卖通、Lazada）的多平台出海——别家 SaaS 没做深、且主办方天然对口的护城河。</div></div>
+  </div>
+  <div class="brand-tag">千岸 QianAn · Simon Studio</div>
+  <div class="pageno">02 / 07</div>
+</section>
+
+<!-- ============ SLIDE 3 · 问题与数据 ============ -->
+<section class="slide" id="s3">
+  <div class="eyebrow">一、问题</div>
+  <h2 class="section">铺一个新品到全球，现在是「几周三万块」</h2>
+  <p class="lead">跨境卖家最大的隐性成本不是货、不是物流，而是<strong>把同一个商品反复重做成符合每个平台、每种语言规范的上架素材</strong>。这是高频、强规则、必须本地化的工序，也是卖家最愿意为 AI 付费解决的环节。</p>
+  <div class="stats grow">
+    <div class="stat"><div class="n">¥1k–3.3k<span class="u">/款</span></div><div class="l">一套 A+ / 详情页素材外包价<br><span style="color:#999">来源 CSDN / 什么值得买</span></div></div>
+    <div class="stat"><div class="n">3–7<span class="u">天</span></div><div class="l">单款素材生产周期<br><span style="color:#999">不含合规反复修改</span></div></div>
+    <div class="stat"><div class="n">× 5</div><div class="l">铺 5 个站点，成本直接乘 5<br><span style="color:#999">中小卖家铺不起</span></div></div>
+    <div class="stat"><div class="n">12<span class="u">%</span></div><div class="l">新手选品成功率<br><span style="color:#999">规则踩雷下架是主因</span></div></div>
+  </div>
+  <div class="foot-line">三层原因：① 平台规则各不相同且经常变　② 多语言靠机翻，转化差还会下架　③ 素材生产卡住上新节奏，长尾市场失守</div>
+  <div class="brand-tag">千岸 QianAn · Simon Studio</div>
+  <div class="pageno">03 / 07</div>
+</section>
+
+<!-- ============ SLIDE 4 · 5 平台规则对照表（核心证据）============ -->
+<section class="slide" id="s4">
+  <div class="eyebrow">二、核心证据</div>
+  <h2 class="section">五个平台，五套完全不同的规则</h2>
+  <p class="lead">这张表是我们整理的真实差异——也是千岸「多平台规则引擎」要解决的核心问题。<strong>把同一商品改写成符合每个平台规范的版本，这件事没人做深。</strong></p>
+  <table class="grow">
+    <thead><tr><th>维度</th><th>Amazon</th><th>速卖通</th><th>Shopee</th><th>Lazada</th><th>TikTok Shop</th></tr></thead>
+    <tbody>
+      <tr><td>标题字数</td><td>≤200 字符，埋 A10 词</td><td>≤128，多语言</td><td>≤120，各站点不同</td><td>≤255，按类目</td><td>短，重关键词</td></tr>
+      <tr><td>主图规范</td><td>白底、无文字水印</td><td>允许少量文字</td><td><strong>禁水印 / 边框</strong></td><td>白底为主</td><td>可场景化</td></tr>
+      <tr><td>详情形态</td><td>A+ 模块（需审核）</td><td>详情模板</td><td>图文描述</td><td>类目属性必填</td><td><strong>短视频脚本</strong></td></tr>
+      <tr><td>本地化</td><td>英语为主</td><td>俄 / 西 / 葡</td><td>泰 / 印尼 / 越</td><td>东南亚多语</td><td>英语 + 本地</td></tr>
+      <tr><td>高频踩雷</td><td>敏感词下架</td><td>属性漏填</td><td>主图违规</td><td>属性不全</td><td>资质缺失</td></tr>
+    </tbody>
+  </table>
+  <div class="brand-tag">千岸 QianAn · Simon Studio</div>
+  <div class="pageno">04 / 07</div>
+</section>
+
+<!-- ============ SLIDE 5 · 方案五项功能 ============ -->
+<section class="slide" id="s5">
+  <div class="eyebrow">三、方案</div>
+  <h2 class="section">卖家给「一稿」，剩下交给多 Agent 系统</h2>
+  <div class="funcs grow">
+    <div class="func"><div class="idx">①</div><div class="txt"><b>一稿输入，多平台产出</b>自动产出五平台各自合规的上架包：主图组、详情页 / A+、Listing 文案。</div></div>
+    <div class="func"><div class="idx">②</div><div class="txt"><b>多平台规则引擎（核心差异化）</b>内置规则库，把同一商品改写成符合每个平台规范的版本——区别于市面单平台工具。</div></div>
+    <div class="func"><div class="idx">③</div><div class="txt"><b>多语言本地化（非直译）</b>基于百炼多语言大模型，改写成符合目标市场购物习惯的文案，自动校验合规词。</div></div>
+    <div class="func"><div class="idx">④</div><div class="txt"><b>视觉规范生成</b>基于百炼文生图，按各平台高转化模板生成场景主图、对比图、卖点图，A+ 模块自动排版。</div></div>
+    <div class="func"><div class="idx">⑤</div><div class="txt"><b>合规预检与一键导出</b>提交前体检禁用词、字符超限、图片规范、类目属性，通过后导出可直接导入的格式。</div></div>
+    <div class="func"><div class="idx">★</div><div class="txt"><b>差异化护城河</b>「规则引擎」+「设计师视觉」双护城河；阿里国际多平台场景天然对口主办方。</div></div>
+  </div>
+  <div class="callout"><b>我们的差异化，不在「生成」，在「规则」。</b>市面上 Helium 10、Jungle Scout、亚马逊官方 AI 都在做 Listing 生成，纯生成我们输定了。千岸做的是「规则翻译层」——这件事没人做深，且阿里国际的多平台场景正是主场。</div>
+  <div class="brand-tag">千岸 QianAn · Simon Studio</div>
+  <div class="pageno">05 / 07</div>
+</section>
+
+<!-- ============ SLIDE 6 · 商业逻辑（价值链 + 四象限）============ -->
+<section class="slide" id="s6">
+  <div class="eyebrow">四、商业逻辑</div>
+  <h2 class="section">钱从哪里来，价值到哪里去</h2>
+  <div class="funnel">
+    <div class="step"><div class="i">1</div><div class="b"><b>输入</b>：卖家上传一张白底图 + 一段中文卖点</div><div class="r">成本 ≈ ¥0</div></div>
+    <div class="step"><div class="i">2</div><div class="b"><b>理解</b>：Agent 读懂商品类目、材质、受众、核心卖点</div><div class="r">Qwen-VL</div></div>
+    <div class="step"><div class="i">3</div><div class="b"><b>适配</b>：规则引擎查五平台约束，文案与视觉 Agent 并行生产</div><div class="r">5 平台并行</div></div>
+    <div class="step"><div class="i">4</div><div class="b"><b>校验</b>：合规 Agent 逐项过检，给出整改建议</div><div class="r">目标 0 违规</div></div>
+    <div class="step"><div class="i">5</div><div class="b"><b>交付</b>：五平台 × 多语言完整上架包 + 合规报告，一键导出</div><div class="r">30 秒</div></div>
+    <div class="step"><div class="i">6</div><div class="b"><b>变现</b>：卖家省下数千元与数天，付几十块按次 / 订阅费</div><div class="r">三方共赢</div></div>
+  </div>
+  <div class="quad">
+    <div class="qcell"><h3>谁付费</h3><p>中国数百万跨境卖家，每人每月上新数款到数十款。对标单款素材 ¥1000–3300 外包价，千岸按次 ¥9.9–29.9 / 订阅 ¥199 月，<b>卖家省 90%+ 成本</b>。</p></div>
+    <div class="qcell"><h3>谁受益</h3><p>卖家降本提速铺更多平台；平台拿到更多合规、本地化良好的商品；海外消费者买到描述准确的本地化商品。<b>三方共赢</b>。</p></div>
+    <div class="qcell"><h3>为什么是现在</h3><p>2025 年百炼多语言 LLM + 文生图 + 视觉理解成熟到可商用；同时中国卖家从「单平台铺货」转向「多平台品牌出海」。<b>需求与技术相遇</b>。</p></div>
+    <div class="qcell"><h3>为什么是我们</h3><p>队长游戏视觉设计师出身 + 十几个 AI Agent / CLI 项目落地。<b>设计师审美 + Agent 工程化</b>双能力同时具备的团队不多。</p></div>
+  </div>
+  <div class="brand-tag">千岸 QianAn · Simon Studio</div>
+  <div class="pageno">06 / 07</div>
+</section>
+
+<!-- ============ SLIDE 7 · 技术方案 ============ -->
+<section class="slide" id="s7">
+  <div class="eyebrow">五、技术方案</div>
+  <h2 class="section">百炼算力驱动，多 Agent 编排</h2>
+  <p class="lead" style="margin-bottom:24px">主控 Agent 拆解任务，调度五个专家 Agent 并行工作，全程调用阿里云百炼平台的多语言与多模态能力。<strong>卖家自有商品图与卖点，无需爬取平台数据，没有 ToS 风险。</strong></p>
+  <table class="tech-table grow" style="font-size:26px">
+    <thead><tr><th style="width:320px">层</th><th style="width:680px">选型</th><th>理由</th></tr></thead>
+    <tbody style="line-height:1.5">
+      <tr><td>模型能力</td><td>百炼：Qwen-Max 多语言 / Wanx 文生图 / Qwen-VL 视觉</td><td>主办方指定算力；多语言与多模态齐全</td></tr>
+      <tr><td>Agent 编排</td><td>自研轻量编排（团队既有 harness）或 LangGraph</td><td>团队 Agent 框架经验丰富，工程化有保障</td></tr>
+      <tr><td>前端 / 后端</td><td>Next.js + TS + Tailwind　/　FastAPI</td><td>上传→生成→展示需要表现力；轻量适配 Agent 编排</td></tr>
+      <tr><td>存储部署</td><td>对象存储 OSS + 函数计算 FC</td><td>阿里云一体化，契合主办方生态</td></tr>
+      <tr><td>规则库</td><td>人工整理 + LLM 辅助提取，存为结构化 JSON</td><td>本方案核心资产；不爬平台数据，合规</td></tr>
+    </tbody>
+  </table>
+  <div class="callout" style="margin-top:24px"><b>多 Agent 流程：</b>商品理解 → 规则匹配 → 文案生成 + 视觉生成（并行）→ 合规体检 → 聚合导出。<b>无需自训模型，2 周内可跑出可运行 Demo。</b></div>
+  <div class="brand-tag">千岸 QianAn · Simon Studio</div>
+  <div class="pageno">07 / 08</div>
+</section>
+
+<!-- ============ SLIDE 8 · 可行性 ============ -->
+<section class="slide" id="s8">
+  <div class="eyebrow">六、可行性</div>
+  <h2 class="section">这不是 PPT，这是我们做得出来的</h2>
+  <p class="lead" style="margin-bottom:24px">团队的既有项目覆盖本方案所需的全部技术能力——多 Agent 编排、多模态理解、图像 / 视频 / 音乐生成、前端可视化。<strong>2 周复赛期完全可控。</strong></p>
+  <div class="proof">
+    <div class="pcell"><h3>① Agent 编排（最强项）</h3><p>14+ 个公开 Agent / CLI 项目（deepseek-harness-tui、esp32-flash-rescue、design-fde-cli）。Agent 框架选型与工程化是团队最强项，<b>直接作为多 Agent 编排底座</b>。</p></div>
+    <div class="pcell"><h3>② 视觉与前端</h3><p>队长游戏视觉设计师出身。game-vision-ai、ASCII-music、kandong-demo 等项目印证<b>设计师级审美与前端落地能力</b>。</p></div>
+    <div class="pcell"><h3>③ 多模态 AI</h3><p>novel-writing、minimax-music、short-video-shot-analysis、multimodal-rag、tiktok_ai_desk 等，<b>覆盖文案 / 图像 / 视频 / 音乐生成与多模态理解</b>。</p></div>
+    <div class="pcell"><h3>④ 交付节奏</h3><p>近期连续参赛（WorkBuddy、AMD Radeon、StepX Neo、HackerHouse、movie-ticket-bot），48 小时极限交付流程熟练，<b>两周复赛期完全可控</b>。</p></div>
+  </div>
+  <div class="brand-tag">千岸 QianAn · Simon Studio</div>
+  <div class="pageno">08 / 08</div>
+</section>
+
+</body>
+</html>

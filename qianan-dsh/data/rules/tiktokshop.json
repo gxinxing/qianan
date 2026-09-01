@@ -1,0 +1,72 @@
+{
+  "version": "v1",
+  "platform": "tiktokshop",
+  "displayName": "TikTok Shop US",
+  "updated": "2025-09",
+  "source": "TikTok Shop Seller Centre · Product Guidelines",
+  "demoDepth": "simple",
+  "locales": ["en-US"],
+  "marketplaces": ["tiktok.com/us"],
+  "title": {
+    "maxLength": 155,
+    "recommendedLength": [80, 130],
+    "formula": "Hook + Product Name + Key Benefit",
+    "mustIncludeKeywords": false
+  },
+  "bullets": {
+    "count": 3,
+    "maxLengthPer": 200,
+    "style": "short_punchy",
+    "note": "TikTok Shop 文案偏短视频脚本风格，简短有力"
+  },
+  "description": {
+    "maxLength": 2000,
+    "type": "plain_text_short"
+  },
+  "videoScript": {
+    "maxDuration": 60,
+    "format": "hook (0-3s) → product demo (3-20s) → benefit callout (20-45s) → CTA (45-60s)",
+    "note": "TikTok Shop 核心是短视频内容，商品卡文案配合视频脚本"
+  },
+  "mainImage": {
+    "background": "solid_color",
+    "minWidth": 1080,
+    "minHeight": 1080,
+    "noText": false,
+    "noWatermark": true,
+    "noBorder": true,
+    "productFillRatio": 0.70,
+    "note": "1:1 比例，简洁品牌色或纯色背景。TikTok Shop 允许带产品功能文字"
+  },
+  "categoryAttributes": {
+    "electronics": ["品牌", "型号", "电压", "功率", "材质", "颜色", "产地"],
+    "home_kitchen": ["品牌", "材质", "容量", "尺寸", "颜色", "产地"],
+    "apparel": ["品牌", "材质", "尺码", "颜色", "款式", "产地"]
+  },
+  "bannedWords": {
+    "promotional": ["limited time offer", "act now", "click here", "limited stock"],
+    "claims": ["#1", "best seller (未证明)", "viral", "guarantee", "miracle"],
+    "restricted": ["violence", "adult", "weapon", "drug", "fda (未批准)"],
+    "trademark": ["iphone (非授权)", "nike (非授权)", "gucci (非授权)"]
+  },
+  "complianceChecks": [
+    { "id": "tik-title-001", "type": "length", "severity": "error", "field": "title", "max": 155 },
+    { "id": "tik-title-002", "type": "banned_words", "severity": "error", "field": "title", "dict": "claims" },
+    { "id": "tik-desc-001", "type": "length", "severity": "error", "field": "description", "max": 2000 },
+    { "id": "tik-img-001", "type": "image_spec", "severity": "error", "field": "mainImage", "minWidth": 1080, "minHeight": 1080 },
+    { "id": "tik-attr-001", "type": "required_attrs", "severity": "warn", "field": "attributes" },
+    { "id": "tik-bullet-001", "type": "count", "severity": "warn", "field": "bullets", "min": 2, "max": 3 }
+  ],
+  "economics": {
+    "commissionRate": 0.05,
+    "adTacosDefault": 0.15,
+    "returnRateDefault": 0.10,
+    "returnHandlingFee": 1.50,
+    "fulfillment": {
+      "type": "standard",
+      "fee": 3.20
+    },
+    "vatRate": 0.0,
+    "dutyNote": "美国站不上收 VAT；进口关税依 HTS 编码另计"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "id": "fx-live",
+  "name": "实时汇率连接器",
+  "version": "1.0.0",
+  "kind": "connector",
+  "description": "接入开放汇率 API（open.er-api.com），提供 USD/CNY 实时汇率。安装后单位经济测算自动切换为实时汇率，工作台显示「实时汇率」徽标。",
+  "source": "https://open.er-api.com/v6/latest/USD（免费公开接口，无需 key）",
+  "tools": [
+    {
+      "name": "get_fx_usd_cny",
+      "type": "http",
+      "description": "获取 USD/CNY 实时汇率（返回纯数字，如 7.1623）。成本测算、定价建议前调用。",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      },
+      "url": "https://open.er-api.com/v6/latest/USD",
+      "method": "GET",
+      "response_path": "rates.CNY"
+    }
+  ]
+}

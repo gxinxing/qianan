@@ -1,0 +1,171 @@
+{
+  "version": "v1",
+  "platform": "shopee",
+  "displayName": "Shopee",
+  "updated": "2025-09",
+  "source": "Shopee Seller Center · Listing Guidelines & Localization Requirements",
+  "demoDepth": "deep",
+  "locales": ["th-TH", "id-ID", "vi-VN", "en-SG", "ms-MY"],
+  "marketplaces": ["shopee.co.th", "shopee.co.id", "shopee.vn", "shopee.sg", "shopee.com.my"],
+  "title": {
+    "maxLength": 120,
+    "recommendedLength": [60, 100],
+    "formula": "Product Name + Key Feature + Variant/Spec",
+    "mustIncludeKeywords": true,
+    "perLocale": true,
+    "caseStyle": "sentence_case",
+    "separator": " | "
+  },
+  "bullets": {
+    "count": 0,
+    "style": "none",
+    "note": "Shopee 无独立五点描述；卖点融入描述段落"
+  },
+  "description": {
+    "maxLength": 3000,
+    "type": "rich_text",
+    "minLength": 100,
+    "supportsHtml": true,
+    "htmlTagsAllowed": ["p", "br", "b", "strong", "ul", "ol", "li", "span"],
+    "structuredSections": ["产品介绍", "核心卖点", "规格参数", "包装清单", "售后说明"]
+  },
+  "aPlus": {
+    "modules": ["详细描述模板", "卖点展示", "参数表格", "使用场景"],
+    "requireApproval": false,
+    "maxModules": 10,
+    "primaryLanguage": "th-TH"
+  },
+  "mainImage": {
+    "background": "white_or_lifestyle",
+    "minWidth": 800,
+    "minHeight": 800,
+    "noText": false,
+    "noWatermark": true,
+    "noBorder": true,
+    "productFillRatio": 0.80,
+    "acceptedFormats": ["JPEG", "PNG", "WebP"],
+    "maxFileSizeKB": 2000,
+    "ratio1v1": true
+  },
+  "additionalImages": {
+    "recommendedCount": 5,
+    "maxCount": 9,
+    "infoGraphics": true,
+    "lifestyleImages": true,
+    "sizeComparison": true
+  },
+  "categoryAttributes": {
+    "electronics": ["品牌", "型号", "颜色", "存储容量", "屏幕尺寸", "电池容量", "产地"],
+    "home_kitchen": ["品牌", "材质", "容量", "尺寸", "颜色", "产地"],
+    "apparel": ["品牌", "材质", "尺码", "颜色", "款式", "季节", "产地"],
+    "beauty": ["品牌", "功效", "肤质", "容量", "成分", "产地"],
+    "sports": ["品牌", "材质", "尺寸", "重量", "颜色", "产地"],
+    "mother_baby": ["品牌", "适用年龄", "材质", "尺寸", "产地"],
+    "pet_supplies": ["品牌", "适用动物", "材质", "尺寸", "产地"]
+  },
+  "bannedWords": {
+    "promotional": ["sale", "free shipping", "discount", "promotion", "coupon", "deal"],
+    "claims": ["100%", "semboyan halal", "BPOM (未经认证)", "halal (未认证)", "#1", "best", "top", "guarantee", "guaranteed", "number 1"],
+    "misleading": ["original (非授权)", "authentic (非授权)", "resi (虚假快递单)"],
+    "offensive": ["粗俗用语", "宗教敏感词", "政治敏感词"],
+    "restricted": ["仿冒品牌", "假货", "A 类药品", "武器", "烟草", "成人用品"],
+    "trademark": ["apple (非授权)", "samsung (非授权)", "nike (非授权)", "adidas (非授权)"],
+    "shopeeSpecific": [
+      "外部联系方式（WhatsApp/Line/微信/LINE）",
+      "引导站外交易的链接",
+      "虚假库存",
+      "预付定金卖家（非 Shopee 认证服务）"
+    ]
+  },
+  "complianceChecks": [
+    {
+      "id": "shp-title-001",
+      "type": "length",
+      "severity": "error",
+      "field": "title",
+      "message": "标题超过 120 字符限制",
+      "max": 120
+    },
+    {
+      "id": "shp-title-002",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "title",
+      "message": "标题命中禁用词",
+      "dict": "claims",
+      "fields": ["title"]
+    },
+    {
+      "id": "shp-title-003",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "title",
+      "message": "标题含外部联系方式",
+      "dict": "shopeeSpecific",
+      "fields": ["title", "description"]
+    },
+    {
+      "id": "shp-desc-001",
+      "type": "length",
+      "severity": "error",
+      "field": "description",
+      "message": "描述超过 3000 字符限制",
+      "max": 3000
+    },
+    {
+      "id": "shp-desc-002",
+      "type": "required_sections",
+      "severity": "warn",
+      "field": "description",
+      "message": "描述缺少必备段落",
+      "sections": ["产品介绍", "规格"]
+    },
+    {
+      "id": "shp-img-001",
+      "type": "image_spec",
+      "severity": "error",
+      "field": "mainImage",
+      "message": "主图尺寸不足（需 ≥800×800）",
+      "minWidth": 800,
+      "minHeight": 800
+    },
+    {
+      "id": "shp-img-002",
+      "type": "banned_words",
+      "severity": "error",
+      "field": "description",
+      "message": "主图或描述含水印",
+      "dict": "shopeeSpecific",
+      "fields": ["title", "description"]
+    },
+    {
+      "id": "shp-attr-001",
+      "type": "required_attrs",
+      "severity": "warn",
+      "field": "attributes",
+      "message": "缺少必填类目属性"
+    },
+    {
+      "id": "shp-locale-001",
+      "type": "locale_coverage",
+      "severity": "warn",
+      "field": "locales",
+      "message": "多语言覆盖不足",
+      "locales": ["th-TH", "id-ID", "vi-VN"]
+    }
+  ],
+  "economics": {
+    "commissionRate": 0.022,
+    "commissionNote": "普通类目约 2%；具体依类目而定",
+    "adTacosDefault": 0.08,
+    "returnRateDefault": 0.05,
+    "returnHandlingFee": 0.0,
+    "fulfillment": {
+      "type": "shopee_logistics",
+      "note": "Shopee Logistics (SLS) 按重量阶梯定价，各地区不同"
+    },
+    "vatRate": 0.07,
+    "vatNote": "泰国 7% VAT；印尼 11% VAT；越南 10% VAT；各站点不同",
+    "dutyNote": "Shopee 平台部分站点包税，具体依物流方案"
+  }
+}

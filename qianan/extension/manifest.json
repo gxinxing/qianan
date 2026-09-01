@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "千岸 QianAn Copilot",
+  "version": "0.1.0",
+  "description": "千岸：卖家后台旁的合规体检与上架 Copilot（演示）",
+  "permissions": ["sidePanel"],
+  "background": { "service_worker": "background.js" },
+  "action": { "default_title": "打开千岸 Copilot 侧边栏" },
+  "side_panel": { "default_path": "sidepanel.html" },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "https://sellercentral.amazon.com/*",
+        "https://*.amazon.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
