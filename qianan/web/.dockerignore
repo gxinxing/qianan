@@ -1,0 +1,29 @@
+# —— 依赖 / 构建产物（容器内重新安装与构建）——
+node_modules
+.next
+.next.trash-*
+out
+
+# —— 版本控制 / IDE / 系统文件 ——
+.git
+.gitignore
+.vscode
+.idea
+.DS_Store
+
+# —— 日志 ——
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# —— 环境变量：秘密不进镜像（NEXT_PUBLIC_* 用 build ARG 传入）——
+.env
+.env.*
+
+# —— Docker / 文档 / 缓存 ——
+Dockerfile
+.dockerignore
+docker-compose*.yml
+README.md
+tsconfig.tsbuildinfo

@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "projectId": "qianan-hackathon",
+  "functions": [
+    {
+      "name": "qianan-api",
+      "runtime": "Python3.10",
+      "source": "../qianan/server/deploy_pkg",
+      "timeout": 120,
+      "envVariables": {
+        "BAILIAN_API_KEY": "${env.BAILIAN_API_KEY}",
+        "QIANAN_MOCK": "1",
+        "BAILIAN_BASE_URL": "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
+        "QIANAN_TEXT_MODEL": "qwen3.7-max",
+        "QIANAN_IMAGE_MODEL": "qwen-image-2.0",
+        "QIANAN_VL_MODEL": ""
+      }
+    }
+  ],
+  "hosting": {
+    "public": "../qianan/web/.next",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "rewrites": [
+      { "source": "/api/**", "function": "qianan-api" },
+      { "source": "**", "destination": "/index.html" }
+    ]
+  }
+}

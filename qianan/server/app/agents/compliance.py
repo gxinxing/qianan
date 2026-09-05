@@ -9,6 +9,7 @@ import base64
 import io
 import re
 import urllib.request
+from urllib.parse import urlparse
 
 from PIL import Image
 
@@ -18,11 +19,23 @@ _WORD_CACHE: dict[str, re.Pattern] = {}
 _IMG_CACHE: dict[str, tuple[int, int, bool]] = {}
 
 
+def _validate_url(src: str) -> None:
+    """防止 SSRF：只允许 https:// 外部 URL，拒绝 file:/// ftp:// 等内网/危险协议。"""
+    parsed = urlparse(src)
+    if parsed.scheme not in ("https", ""):
+        raise ValueError(f"不安全的 URL scheme: {parsed.scheme or '相对路径'}（仅允许 https）")
+    if parsed.hostname and any(
+        parsed.hostname.startswith(p) for p in ("127.", "10.", "172.", "192.168.", "[::1]")
+    ):
+        raise ValueError(f"禁止访问内网地址: {parsed.hostname}")
+
+
 def _open_image(src: str) -> Image.Image:
     """URL 或 data URI → PIL Image（侧边栏表单场景图片以内联 base64 传来）。"""
     if src.startswith("data:"):
         _, _, payload = src.partition("base64,")
         return Image.open(io.BytesIO(base64.b64decode(payload))).convert("RGB")
+    _validate_url(src)
     req = urllib.request.Request(src, headers={"User-Agent": "qianan-compliance"})
     with urllib.request.urlopen(req, timeout=15) as resp:
         return Image.open(io.BytesIO(resp.read())).convert("RGB")

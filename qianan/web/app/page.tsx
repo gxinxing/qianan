@@ -26,6 +26,13 @@ const IDEA_CATEGORIES = [
   { key: "apparel", name: "服饰配饰" },
 ];
 
+const LAUNCH_FLOW = [
+  { no: "01", title: "商品事实", desc: "图片 / 文档提取，标记证据与缺口" },
+  { no: "02", title: "平台适配", desc: "标题、属性、图片按渠道规则生成" },
+  { no: "03", title: "合规预检", desc: "禁用词、字段、尺寸问题自动修复" },
+  { no: "04", title: "发布回执", desc: "提交后台并返回链接，失败可重试" },
+];
+
 const CAPABILITIES = [
   {
     no: "01",
@@ -245,6 +252,38 @@ const ARTIFACTS = [
   { key: "compliance", en: "COMPLIANCE", name: "合规报告", desc: "38 项体检结果与自愈留痕", Mock: MockCompliance },
 ];
 
+/** 原始文件大小上限：10MB（超限直接提示，不做压缩）。 */
+const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Canvas 压缩：最长边 ≤ maxEdge、JPEG 质量 quality。
+ * 透明区域填白（电商主图白底规范），压缩失败由调用方回退原图。
+ */
+function compressImage(dataUrl: string, maxEdge = 1600, quality = 0.85): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, maxEdge / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        reject(new Error("canvas 2d context unavailable"));
+        return;
+      }
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => reject(new Error("image decode failed"));
+    img.src = dataUrl;
+  });
+}
+
 export default function HomePage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -266,12 +305,28 @@ export default function HomePage() {
 
   const onFile = (file: File | undefined) => {
     if (!file) return;
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError(`图片过大（${(file.size / 1024 / 1024).toFixed(1)}MB），请上传 10MB 以内的图片`);
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const result = String(reader.result);
-      setImageBase64(result.split(",")[1] || "");
-      setPreview(result);
+      // 压缩（最长边 ≤1600px、JPEG 0.85）后再走现有 base64 流程，避免大图撑爆请求体
+      compressImage(result)
+        .then((compressed) => {
+          setImageBase64(compressed.split(",")[1] || "");
+          setPreview(compressed);
+          setError("");
+        })
+        .catch(() => {
+          // 压缩失败（如图片解码异常）：回退原图，保证流程可用
+          setImageBase64(result.split(",")[1] || "");
+          setPreview(result);
+          setError("");
+        });
     };
+    reader.onerror = () => setError("图片读取失败，请换一张试试");
     reader.readAsDataURL(file);
   };
 
@@ -326,8 +381,8 @@ export default function HomePage() {
 
   const submit = async () => {
     setError("");
-    if (!productName.trim() && !sellingPoints.trim()) {
-      setError("先描述一下你的商品，或点下方样例商品快速体验");
+    if (!productName.trim() && !sellingPoints.trim() && !imageBase64) {
+      setError("上传一张商品图，或填写商品名称 / 卖点，即可生成上架包");
       return;
     }
     if (!platforms.length) {
@@ -337,8 +392,8 @@ export default function HomePage() {
     setLoading(true);
     try {
       const { task_id } = await createTask({
-        product_name: productName.trim() || sellingPoints.trim().slice(0, 20),
-        selling_points: sellingPoints.trim() || productName.trim(),
+        product_name: productName.trim(),
+        selling_points: sellingPoints.trim(),
         category,
         image_base64: imageBase64 || undefined,
         platforms,
@@ -431,16 +486,19 @@ export default function HomePage() {
           <div className="mt-4 flex flex-col gap-4 sm:flex-row">
             <div
               onClick={() => fileRef.current?.click()}
-              className="group flex h-28 w-full shrink-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed border-ink-300 bg-ink-50 text-center transition hover:border-brand-500 hover:bg-brand-50 sm:h-32 sm:w-32"
+              className="group flex h-28 w-full shrink-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed border-brand-400/50 bg-brand-50/40 text-center transition hover:border-brand-500 hover:bg-brand-50 sm:h-36 sm:w-36"
             >
               {preview ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={preview} alt="商品图" className="h-full w-full object-cover" />
               ) : (
                 <>
-                  <span className="font-mono text-lg text-ink-300 transition group-hover:text-brand-500">+</span>
-                  <span className="mt-1 px-2 text-[11px] leading-4 text-ink-400">
-                    拖入或点击上传商品图
+                  <span className="font-mono text-2xl text-brand-400 transition group-hover:text-brand-500">+</span>
+                  <span className="mt-1 px-2 text-[11px] font-medium leading-4 text-brand-600">
+                    拖入 / 点击上传商品图
+                  </span>
+                  <span className="mt-0.5 px-2 text-[10px] leading-3 text-ink-400">
+                    一张图即可出包
                   </span>
                 </>
               )}
@@ -496,8 +554,27 @@ export default function HomePage() {
             </div>
 
             <button onClick={submit} disabled={loading} className="btn-primary">
-              {loading ? "提交中…" : `生成 ${platforms.length} 平台上架包 →`}
+              {loading ? "创建任务中…" : `开始上架任务 · ${platforms.length} 平台 →`}
             </button>
+          </div>
+
+          <div className="mt-4 rounded-lg bg-ink-50/70 px-3.5 py-3 ring-1 ring-ink-100">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-medium text-ink-700">提交后会进入可追踪的上架工作台</p>
+              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-400">INPUT → RECEIPT</span>
+            </div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-4">
+              {LAUNCH_FLOW.map((step, i) => (
+                <div key={step.no} className="relative flex gap-2.5 rounded-md bg-white px-2.5 py-2 ring-1 ring-ink-100">
+                  <span className="font-mono text-[10px] font-semibold text-brand-600">{step.no}</span>
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-ink-800">{step.title}</p>
+                    <p className="mt-0.5 text-[10px] leading-4 text-ink-400">{step.desc}</p>
+                  </div>
+                  {i < LAUNCH_FLOW.length - 1 && <span className="absolute -right-2.5 top-1/2 hidden text-ink-300 sm:block">›</span>}
+                </div>
+              ))}
+            </div>
           </div>
 
           {error && <p className="mt-3 text-sm text-red-600">{error}</p>}

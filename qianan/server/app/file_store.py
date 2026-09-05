@@ -8,17 +8,35 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import threading
 import time
 import urllib.request
 from pathlib import Path
+from urllib.parse import urlparse
 
 from .import_files import build_import_files
 from .schemas import TaskRecord, TaskStatus
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "tasks"
+# 云函数等只读文件系统部署：用 QIANAN_DATA_DIR 把任务包落到可写目录（如 /tmp/qianan-data）
+_DATA_DIR_ENV = os.getenv("QIANAN_DATA_DIR", "")
+if _DATA_DIR_ENV:
+    DATA_DIR = Path(_DATA_DIR_ENV)
+else:
+    DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "tasks"
 IMAGE_DIR_NAME = "images"
+
+
+def _validate_download_url(url: str) -> None:
+    """防止 SSRF：只允许 https:// 和 mock:// 图片地址。"""
+    parsed = urlparse(url)
+    if parsed.scheme not in ("https", "mock"):
+        raise ValueError(f"不安全的图片 URL scheme: {parsed.scheme or '无'}（仅允许 https）")
+    if parsed.hostname and any(
+        parsed.hostname.startswith(p) for p in ("127.", "10.", "172.16.", "172.17.", "172.18.", "172.19.", "172.20.", "172.21.", "172.22.", "172.23.", "172.24.", "172.25.", "172.26.", "172.27.", "172.28.", "172.29.", "172.30.", "172.31.", "192.168.", "[::1]")
+    ):
+        raise ValueError(f"禁止访问内网图片地址: {parsed.hostname}")
 
 
 def task_dir(task_id: str) -> Path:
@@ -63,6 +81,9 @@ def persist_task(task: TaskRecord) -> None:
             for l in (task.listings or [])
         ],
         "trace": [e.model_dump() for e in (task.trace or [])],
+        "plan": task.plan.model_dump() if task.plan else None,
+        "memory_recall": [m.model_dump() for m in (task.memory_recall or [])],
+        "reflections": [r.model_dump() for r in (task.reflections or [])],
     }
     (d / "export.json").write_text(json.dumps(export, ensure_ascii=False, indent=2), encoding="utf-8")
     for listing in task.listings or []:
@@ -83,6 +104,7 @@ def _download_images(d: Path, task: TaskRecord) -> None:
             if target.exists():
                 continue
             try:
+                _validate_download_url(url)
                 req = urllib.request.Request(url, headers={"User-Agent": "qianan-file-store"})
                 with urllib.request.urlopen(req, timeout=20) as r, open(target, "wb") as f:
                     shutil.copyfileobj(r, f)

@@ -14,7 +14,7 @@ import re
 from .. import memory_store
 from ..agent_core.trace import record
 from ..bailian.client import BailianLike
-from ..schemas import PlatformListing, TaskRecord, Understanding
+from ..schemas import AgentReflection, PlatformListing, TaskRecord, Understanding
 
 logger = logging.getLogger(__name__)
 
@@ -58,6 +58,7 @@ async def _reflect_one(
             lesson=lesson[:80],
             source_task=task.task_id,
         )
+        task.reflections.append(AgentReflection(platform=platform, lesson=lesson[:120]))
         record(task, "reflect", f"self_reflect[{platform}]", "蒸馏教训", lesson[:60])
 
 
@@ -73,6 +74,7 @@ def _remember_template(task: TaskRecord, listing: PlatformListing) -> None:
         lesson=lesson,
         source_task=task.task_id,
     )
+    task.reflections.append(AgentReflection(platform=listing.platform, lesson=lesson[:120]))
     record(task, "reflect", f"self_reflect[{listing.platform}]", "模板蒸馏", lesson[:60])
 
 

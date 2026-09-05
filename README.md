@@ -14,7 +14,7 @@
 |---|---|
 | Backend | FastAPI + Python 3.10 + Pydantic v2 |
 | AI 模型 | 阿里云百炼平台（Qwen-Max 多语言 + Wanx 文生图 + Qwen-VL 视觉理解） |
-| Frontend | Next.js 14 + TypeScript + Tailwind CSS |
+| Frontend | Next.js 15 + TypeScript + Tailwind CSS |
 | Agent 编排 | 自研轻量框架（tool loop + function calling） |
 | 部署 | 阿里云函数计算 FC / 轻量应用服务器 + Vercel（前端） |
 
@@ -40,8 +40,8 @@ qianan/
 │   │   ├── task_store.py    # 内存任务存储
 │   │   ├── file_store.py    # 生成结果文件仓库
 │   │   └── ...
+│   ├── rules/               # 5 平台规则 JSON（由根 qianan/rules 同步，make sync-rules）
 │   ├── data/
-│   │   ├── rules/           # 5 平台规则 JSON（待补全）
 │   │   ├── tasks/           # 任务产物（运行时生成）
 │   │   └── skills/          # 已安装技能（规则补丁 + 工具扩展）
 │   ├── requirements.txt

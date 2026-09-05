@@ -6,10 +6,24 @@
 from __future__ import annotations
 
 import json
+import os
 from functools import lru_cache
 from pathlib import Path
 
-RULES_DIR = Path(__file__).resolve().parents[2] / "rules"
+
+def _resolve_rules_dir() -> Path:
+    """定位 rules 目录：env 优先，其次向上回退两级探测（本地=server 上级，云函数=/var/user）。"""
+    env = os.getenv("QIANAN_RULES_DIR", "")
+    if env:
+        return Path(env)
+    here = Path(__file__).resolve()
+    for cand in (here.parents[2] / "rules", here.parents[1] / "rules"):
+        if cand.is_dir():
+            return cand
+    return here.parents[1] / "rules"
+
+
+RULES_DIR = _resolve_rules_dir()
 
 
 def _with_overlay(platform: str, rules: dict) -> dict:

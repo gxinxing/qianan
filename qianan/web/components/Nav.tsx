@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useAuth } from "./AuthProvider";
 
 const LINKS = [
   { href: "/", label: "首页" },
@@ -13,9 +14,47 @@ const LINKS = [
   { href: "/admin", label: "后台管理" },
 ];
 
+function UserMenu() {
+  const { user, ready, signOut } = useAuth();
+  const router = useRouter();
+
+  if (!ready) {
+    return <span className="ml-3 hidden h-7 w-16 animate-pulse rounded-full bg-ink-100 lg:block" />;
+  }
+
+  if (!user) {
+    return (
+      <Link
+        href="/login"
+        className="ml-3 hidden rounded-full bg-brand-800 px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:bg-brand-700 lg:block"
+      >
+        登录
+      </Link>
+    );
+  }
+
+  return (
+    <div className="ml-3 hidden items-center gap-2 lg:flex">
+      <span className="rounded-full bg-ink-50 px-2.5 py-1 font-mono text-[11px] text-ink-500">
+        {user.username || user.uid}
+      </span>
+      <button
+        onClick={async () => {
+          await signOut();
+          router.replace("/login");
+        }}
+        className="rounded-full border border-ink-200 px-2.5 py-1 text-[12px] text-ink-500 transition hover:bg-ink-50"
+      >
+        退出
+      </button>
+    </div>
+  );
+}
+
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { user, ready } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/85 backdrop-blur">
@@ -51,9 +90,7 @@ export default function Nav() {
               </Link>
             );
           })}
-          <span className="ml-3 hidden rounded-full border border-ink-200 px-2.5 py-1 font-mono text-[10px] uppercase tracking-[0.08em] text-ink-400 lg:block">
-            复赛 Demo
-          </span>
+          <UserMenu />
         </div>
 
         {/* 移动端：当前页标识 + 菜单按钮 */}
@@ -98,6 +135,29 @@ export default function Nav() {
                 </Link>
               );
             })}
+            <div className="col-span-2 mt-1 border-t border-ink-100 pt-2">
+              {ready && user ? (
+                <button
+                  onClick={async () => {
+                    const { signOut } = useAuth();
+                    await signOut();
+                    setOpen(false);
+                    window.location.href = "/login";
+                  }}
+                  className="w-full rounded-md bg-ink-50 px-3 py-2.5 text-[13px] text-ink-600"
+                >
+                  退出登录（{user.username || user.uid}）
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className="block rounded-md bg-brand-800 px-3 py-2.5 text-center text-[13px] font-medium text-white"
+                >
+                  登录 / 注册
+                </Link>
+              )}
+            </div>
           </div>
         </div>
       )}

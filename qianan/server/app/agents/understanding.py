@@ -32,9 +32,19 @@ TEXT_PROMPT = """商品名称：{product_name}
 
 请基于以上信息推断并输出 JSON。"""
 
-VISION_PROMPT = """商品卖点（卖家描述）：{selling_points}
+VISION_PROMPT = """商品名称：{product_name}
+卖家补充描述（可为空，留空则完全看图推断）：{selling_points}
 
-请结合商品图片和卖点描述，输出 JSON。"""
+请观察图片识别主体商品（忽略杂乱背景、杂物、人手等干扰），结合以上信息，严格输出 JSON（不要 markdown 代码块、不要多余文字）：
+{{
+  "category": "商品类目，从 electronics / home_kitchen / apparel 中选一个",
+  "product_type": "产品类型（英文短语，如 portable blender）",
+  "material": "主要材质（英文，未知则留空字符串）",
+  "attributes": {{"关键属性": "值"}},
+  "selling_points": ["卖点1（英文短语）", "卖点2", "卖点3"],
+  "target_audience": "目标受众（英文）",
+  "keywords": ["核心搜索关键词（英文，5-8个）"]
+}}"""
 
 
 class ProductUnderstandingAgent:
@@ -48,7 +58,11 @@ class ProductUnderstandingAgent:
         if self.client.supports_vision and image_ref:
             try:
                 raw = await asyncio.to_thread(
-                    self.client.vision, image_ref, VISION_PROMPT.format(selling_points=req.selling_points)
+                    self.client.vision,
+                    image_ref,
+                    VISION_PROMPT.format(
+                        product_name=req.product_name, selling_points=req.selling_points or "（无）"
+                    ),
                 )
                 return self._parse(raw, req)
             except Exception as exc:  # noqa: BLE001
@@ -58,7 +72,9 @@ class ProductUnderstandingAgent:
             self.client.chat,
             SYSTEM,
             TEXT_PROMPT.format(
-                product_name=req.product_name, category=req.category, selling_points=req.selling_points
+                product_name=req.product_name,
+                category=req.category,
+                selling_points=req.selling_points or "（无，请基于商品名称推断）",
             ),
         )
         return self._parse(raw, req)

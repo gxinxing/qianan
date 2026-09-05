@@ -7,6 +7,7 @@ import {
   publishShotUrl,
   publishTask,
 } from "@/lib/api";
+import { useTaskPolling } from "@/lib/useTaskPolling";
 
 /** 执行器动作的展示元信息（与 publisher 的 steps[] action 对齐）。 */
 const ACTION_LABEL: Record<string, string> = {
@@ -51,26 +52,37 @@ export default function PublishPanel({
   const [error, setError] = useState("");
   const [traceOpen, setTraceOpen] = useState(true);
 
-  const refresh = useCallback(async () => {
-    try {
-      const { jobs } = await fetchPublishJobs(taskId);
-      const mine = jobs.filter((j) => j.platform === platform);
-      setJob(mine[0] || null);
-    } catch {
-      /* 后端暂不可达：下轮再试 */
-    }
+  /** 拉取本平台最新发布任务；失败时抛出，由初始加载 / 轮询 hook 决定如何提示。 */
+  const fetchJob = useCallback(async (): Promise<PublishJob | null> => {
+    const { jobs } = await fetchPublishJobs(taskId);
+    return jobs.filter((j) => j.platform === platform)[0] || null;
   }, [taskId, platform]);
 
+  // 初次进入面板：拉一次现有任务（失败静默，不影响面板展示）
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    fetchJob()
+      .then(setJob)
+      .catch(() => {
+        /* 后端暂不可达：等待后续动作 */
+      });
+  }, [fetchJob]);
 
-  // 执行中每 1.5s 轮询，直至 live / failed
-  useEffect(() => {
-    if (!job || (job.status !== "queued" && job.status !== "running")) return;
-    const t = setTimeout(refresh, 1500);
-    return () => clearTimeout(t);
-  }, [job, refresh]);
+  const running = job?.status === "queued" || job?.status === "running";
+
+  // 执行中每 1.5s 轮询，直至 live / failed；失败指数退避，连续 20 次失败后停止并提示
+  useTaskPolling({
+    fetchFn: fetchJob,
+    interval: 1500,
+    immediate: false,
+    backoff: "exponential",
+    maxAttempts: 20,
+    enabled: running,
+    onUpdate: setJob,
+    isDone: (j) => !!j && (j.status === "live" || j.status === "failed"),
+    onError: (e, gaveUp) => {
+      if (gaveUp) setError(`后端连接持续失败，已暂停执行状态刷新：${String(e)}`);
+    },
+  });
 
   async function onPublish() {
     setBusy(true);
@@ -88,7 +100,6 @@ export default function PublishPanel({
   }
 
   const st = job ? STATUS_META[job.status] : null;
-  const running = job?.status === "queued" || job?.status === "running";
 
   return (
     <div className="card p-6">
@@ -167,6 +178,11 @@ export default function PublishPanel({
               <p className="text-sm font-medium text-red-600">上架失败（已重试 {job.attempts - 1} 次）</p>
               <p className="mt-1 break-all font-mono text-[11px] leading-5 text-red-500">{job.last_error}</p>
             </div>
+          )}
+
+          {/* 轮询超限提示：后端持续不可达时，执行状态不再自动刷新 */}
+          {error && job.status !== "failed" && (
+            <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-xs leading-5 text-red-600">{error}</p>
           )}
 
           {/* 执行留痕 */}

@@ -1,0 +1,29 @@
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# —— app/ 存量 lint 债务的逐文件豁免（不改 app 源码，详见测试报告）——
+# 其中 main.py / auth.py / skill_store.py 正由另一代理并行修改，仅做配置级忽略以避免冲突。
+"app/agent_core/registry.py" = ["F401"]                        # 存量：field 未用 import
+"app/agents/compliance.py" = ["E741"]                          # 存量：l 变量名（locale 列表推导）
+"app/agents/copywriting.py" = ["E501"]                         # 存量：长 prompt 行
+"app/agents/evolution.py" = ["E501", "I001"]                   # 存量：长行 + import 排序
+"app/agents/ideation.py" = ["E501"]                             # 存量：长行
+"app/agents/reflection.py" = ["E741"]                           # 存量：l 变量名
+"app/agents/understanding.py" = ["E501"]                       # 存量：长行
+"app/agents/visual.py" = ["E501"]                              # 存量：长 prompt 行
+"app/auth.py" = ["F401"]                                       # 另一代理在改：Any 未用 import
+"app/file_store.py" = ["E501", "E741"]                         # 存量：长行 + l 变量名
+"app/import_files.py" = ["E741", "I001"]                       # 存量：l 变量名 + import 排序
+"app/main.py" = ["E501", "E741", "F401", "I001"]               # 另一代理在改：长行/l/未用 import/排序
+"app/orchestrator.py" = ["E501", "F401", "F541", "I001"]       # 存量：长行/未用 import/空 f-string/排序
+"app/publisher/mock_browser.py" = ["E501"]                     # 存量：长行
+"app/publisher/store.py" = ["E501"]                            # 存量：长行
+"app/skill_store.py" = ["F401"]                                # 另一代理在改：os 未用 import
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

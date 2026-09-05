@@ -29,12 +29,12 @@ class IdeationSuggestion(BaseModel):
 class GenerateRequest(BaseModel):
     """一稿输入：一张白底主图 + 中文卖点。"""
 
-    product_name: str = Field(..., description="商品名称")
-    selling_points: str = Field(..., description="中文卖点描述")
+    product_name: str = Field(default="", max_length=200, description="商品名称（≤200 字符，可空=完全看图识别）")
+    selling_points: str = Field(default="", max_length=2000, description="卖点描述（≤2000 字符，可空=纯看图识别）")
     category: str = Field(default="home_kitchen", description="类目: electronics / home_kitchen / apparel")
-    image_url: Optional[str] = Field(default=None, description="商品图公网 URL（与 image_base64 二选一）")
-    image_base64: Optional[str] = Field(default=None, description="商品图 base64（与 image_url 二选一）")
-    platforms: list[str] = Field(default_factory=lambda: list(ALL_PLATFORMS))
+    image_url: Optional[str] = Field(default=None, description="商品图公网 URL（仅 https）")
+    image_base64: Optional[str] = Field(default=None, max_length=20_000_000, description="商品图 base64（≤20MB）")
+    platforms: list[str] = Field(default_factory=lambda: list(ALL_PLATFORMS), max_length=10)
 
 
 class AuditRequest(BaseModel):
@@ -86,6 +86,36 @@ class TraceEvent(BaseModel):
     status: str = "ok"  # ok / error / fallback
 
 
+class TaskPlan(BaseModel):
+    """⓪ 规划 Agent 的决策产物。
+
+    持久化而非只留痕，是为了让"自主规划"可被回放：策略由模型在调研工具
+    （竞品价格带 / 准入合规 / 平台热搜）之后自主决定，而非硬编码流水线。
+    """
+
+    strategy: str = ""
+    heal_budget: int = 1
+    focus: str = ""
+    research_tools: list[str] = Field(default_factory=list, description="规划前自主调研所调用的工具名")
+    decided_by: str = "planner"  # planner = 模型决策 / fallback = 回退默认计划
+
+
+class MemoryLesson(BaseModel):
+    """被召回并注入文案提示词的一条历史教训（长期记忆的证据单元）。"""
+
+    lesson: str = ""
+    platform: str = ""
+    hit_count: int = 0  # 该教训历史被注入次数 —— 跨任务复用强度的直接证据
+    source_task: str = ""
+
+
+class AgentReflection(BaseModel):
+    """⑥ 反思 Agent 蒸馏出的新教训，将写入长期记忆供后续任务复用。"""
+
+    platform: str = ""
+    lesson: str = ""
+
+
 class Feedback(BaseModel):
     """人对单平台上架包的显式反馈：喂给记忆库与进化 Agent（SFT 数据积累）。"""
 
@@ -131,8 +161,14 @@ class TaskRecord(BaseModel):
     understanding: Optional[Understanding] = None
     listings: list[PlatformListing] = Field(default_factory=list)
     trace: list[TraceEvent] = Field(default_factory=list)
+    # —— 四项 Agentic 能力的结构化证据（供前端回放，不止于日志流）——
+    plan: Optional[TaskPlan] = None                              # 自主规划
+    memory_recall: list[MemoryLesson] = Field(default_factory=list)  # 长期记忆
+    reflections: list[AgentReflection] = Field(default_factory=list)  # 反思迭代
     error: Optional[str] = None
     created_at: float = Field(default_factory=time.time)
+    #: 归属租户：CloudBase access_token 换出的 uid（匿名 = "anonymous"）
+    owner_uid: str = ""
 
 
 # ---------- 上架执行（PRD v0.3） ----------
