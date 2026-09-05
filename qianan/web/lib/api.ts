@@ -1,4 +1,24 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+import { getAccessToken } from "./cloudbase";
+
+export const API_BASE =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_API_BASE ||
+  "http://localhost:8000";
+
+/** 包装 fetch：自动带上 CloudBase 登录态的 access_token，供后端多租户隔离。 */
+const _nativeFetch: typeof fetch =
+  typeof window !== "undefined" && window.fetch
+    ? window.fetch.bind(window)
+    : (function () {
+        return undefined;
+      } as unknown as typeof fetch);
+
+export async function qfetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const headers = new Headers(init.headers || undefined);
+  const token = getAccessToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  return _nativeFetch(input, { ...init, headers });
+}
 
 export interface IdeationSuggestion {
   product_name: string;
@@ -55,6 +75,29 @@ export interface TraceEvent {
   status: string; // ok / error / fallback
 }
 
+/** ⓪ 自主规划：规划 Agent 的决策产物（含规划前自主调研所调用的工具）。 */
+export interface TaskPlan {
+  strategy: string;
+  heal_budget: number;
+  focus: string;
+  research_tools: string[];
+  decided_by: string; // planner = 模型决策 / fallback = 回退默认
+}
+
+/** ③ 长期记忆：被召回并注入提示词的历史教训，hit_count 为其跨任务复用次数。 */
+export interface MemoryLesson {
+  lesson: string;
+  platform: string;
+  hit_count: number;
+  source_task: string;
+}
+
+/** ④ 反思迭代：本次任务蒸馏出的新教训，已写入记忆库供后续任务复用。 */
+export interface AgentReflection {
+  platform: string;
+  lesson: string;
+}
+
 export interface TaskDetail {
   task_id: string;
   status: "queued" | "running" | "done" | "failed";
@@ -68,6 +111,10 @@ export interface TaskDetail {
   } | null;
   listings: PlatformListing[];
   trace?: TraceEvent[];
+  // —— 四项 Agentic 能力的结构化证据 ——
+  plan?: TaskPlan | null;
+  memory_recall?: MemoryLesson[];
+  reflections?: AgentReflection[];
   error?: string | null;
 }
 
@@ -114,7 +161,7 @@ async function json(res: Response) {
 }
 
 export async function createTask(input: GenerateInput) {
-  const res = await fetch(`${API_BASE}/api/generate`, {
+  const res = await qfetch(`${API_BASE}/api/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -123,7 +170,7 @@ export async function createTask(input: GenerateInput) {
 }
 
 export async function fetchTask(taskId: string) {
-  return json(await fetch(`${API_BASE}/api/tasks/${taskId}`)) as Promise<TaskDetail>;
+  return json(await qfetch(`${API_BASE}/api/tasks/${taskId}`)) as Promise<TaskDetail>;
 }
 
 export interface AuditDraft {
@@ -143,7 +190,7 @@ export interface AuditResult {
 }
 
 export async function auditDraft(draft: AuditDraft) {
-  const res = await fetch(`${API_BASE}/api/audit`, {
+  const res = await qfetch(`${API_BASE}/api/audit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(draft),
@@ -196,7 +243,7 @@ export interface PlatformRule {
 }
 
 export async function fetchRules() {
-  return json(await fetch(`${API_BASE}/api/rules`)) as Promise<Record<string, PlatformRule>>;
+  return json(await qfetch(`${API_BASE}/api/rules`)) as Promise<Record<string, PlatformRule>>;
 }
 
 export interface CompetitorBand {
@@ -216,7 +263,7 @@ export interface IdeationResult {
 }
 
 export async function requestIdeation(market: string, category: string) {
-  const res = await fetch(`${API_BASE}/api/ideation`, {
+  const res = await qfetch(`${API_BASE}/api/ideation`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ market, category }),
@@ -225,7 +272,7 @@ export async function requestIdeation(market: string, category: string) {
 }
 
 export async function fetchTrends(market = "us") {
-  return json(await fetch(`${API_BASE}/api/trends?market=${market}`)) as Promise<{
+  return json(await qfetch(`${API_BASE}/api/trends?market=${market}`)) as Promise<{
     market: string;
     trends: string[];
     trend_source: "live" | "none" | string;
@@ -276,7 +323,7 @@ export interface EconomicsResult {
 }
 
 export async function runEconomics(input: EconomicsInput) {
-  const res = await fetch(`${API_BASE}/api/economics`, {
+  const res = await qfetch(`${API_BASE}/api/economics`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(input),
@@ -289,7 +336,7 @@ export function exportUrl(taskId: string) {
 }
 
 export async function submitFeedback(taskId: string, platform: string, rating: number, comment = "") {
-  const res = await fetch(`${API_BASE}/api/feedback`, {
+  const res = await qfetch(`${API_BASE}/api/feedback`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ task_id: taskId, platform, rating, comment }),
@@ -375,15 +422,15 @@ export interface AgentOverview {
 }
 
 export async function fetchAgentOverview() {
-  return json(await fetch(`${API_BASE}/api/agent`)) as Promise<AgentOverview>;
+  return json(await qfetch(`${API_BASE}/api/agent`)) as Promise<AgentOverview>;
 }
 
 export async function fetchSkillRegistry() {
-  return json(await fetch(`${API_BASE}/api/skills/registry`)) as Promise<{ registry: SkillRegistryEntry[] }>;
+  return json(await qfetch(`${API_BASE}/api/skills/registry`)) as Promise<{ registry: SkillRegistryEntry[] }>;
 }
 
 export async function installSkill(source: string) {
-  const res = await fetch(`${API_BASE}/api/skills/install`, {
+  const res = await qfetch(`${API_BASE}/api/skills/install`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ source }),
@@ -392,22 +439,98 @@ export async function installSkill(source: string) {
 }
 
 export async function uninstallSkill(skillId: string) {
-  const res = await fetch(`${API_BASE}/api/skills/${skillId}`, { method: "DELETE" });
+  const res = await qfetch(`${API_BASE}/api/skills/${skillId}`, { method: "DELETE" });
   return json(res) as Promise<{ ok: boolean; skill_id: string }>;
 }
 
 export async function fetchProposals() {
-  return json(await fetch(`${API_BASE}/api/agent/proposals`)) as Promise<{ proposals: EvolutionProposal[] }>;
+  return json(await qfetch(`${API_BASE}/api/agent/proposals`)) as Promise<{ proposals: EvolutionProposal[] }>;
 }
 
 export async function evolveNow() {
-  const res = await fetch(`${API_BASE}/api/agent/evolve`, { method: "POST" });
+  const res = await qfetch(`${API_BASE}/api/agent/evolve`, { method: "POST" });
   return json(res) as Promise<{ result: { generated: number; proposal?: EvolutionProposal; reason?: string } }>;
 }
 
 export async function decideProposal(id: string, action: "approve" | "reject" | "rollback") {
-  const res = await fetch(`${API_BASE}/api/agent/proposals/${id}/${action}`, { method: "POST" });
+  const res = await qfetch(`${API_BASE}/api/agent/proposals/${id}/${action}`, { method: "POST" });
   return json(res) as Promise<{ ok: boolean; detail: string }>;
+}
+
+// ---------- 评测集（Evals：合规规则与历史事故的回归测试） ----------
+
+export interface CaseItem {
+  id: string;
+  name: string;
+  passed: boolean;
+  skipped: boolean;
+  expect: string;
+  got: string;
+  note: string;
+}
+
+export interface SuiteItem {
+  name: string;
+  desc: string;
+  cases: CaseItem[];
+}
+
+export interface EvalsReport {
+  generated_at: number | null;
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+  duration_ms: number;
+  suites: SuiteItem[];
+}
+
+export async function fetchEvals() {
+  return json(await qfetch(`${API_BASE}/api/evals`)) as Promise<EvalsReport>;
+}
+
+export async function runEvals() {
+  const res = await qfetch(`${API_BASE}/api/evals/run`, { method: "POST" });
+  return json(res) as Promise<EvalsReport>;
+}
+
+export interface ValidateDraftPayload {
+  platform: string;
+  category?: string;
+  title?: string;
+  bullets?: string[];
+  description?: string;
+  attributes?: Record<string, string>;
+  images?: string[];
+}
+
+export interface ValidateDraftIssue {
+  check_id: string;
+  field: string;
+  severity: string;
+  message: string;
+}
+
+export interface ValidateDraftResult {
+  passed: boolean;
+  issues: ValidateDraftIssue[];
+}
+
+/** 草稿合规体检：POST /api/audit，归一化为 { passed, issues }（passed = 无 error 级问题）。 */
+export async function validateDraft(payload: ValidateDraftPayload): Promise<ValidateDraftResult> {
+  const res = await qfetch(`${API_BASE}/api/audit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await json(res) as AuditResult;
+  const issues = (data.issues || []).map((i) => ({
+    check_id: i.check_id ?? "",
+    field: i.field,
+    severity: i.severity,
+    message: i.message,
+  }));
+  return { passed: issues.every((i) => i.severity !== "error"), issues };
 }
 
 export function zipUrl(taskId: string) {
@@ -415,24 +538,24 @@ export function zipUrl(taskId: string) {
 }
 
 export async function fetchFiles() {
-  return json(await fetch(`${API_BASE}/api/files`)) as Promise<{ packages: PackageInfo[] }>;
+  return json(await qfetch(`${API_BASE}/api/files`)) as Promise<{ packages: PackageInfo[] }>;
 }
 
 export async function fetchPackage(taskId: string) {
-  return json(await fetch(`${API_BASE}/api/files/${taskId}`)) as Promise<PackageInfo>;
+  return json(await qfetch(`${API_BASE}/api/files/${taskId}`)) as Promise<PackageInfo>;
 }
 
 export async function deletePackage(taskId: string) {
-  const res = await fetch(`${API_BASE}/api/files/${taskId}`, { method: "DELETE" });
+  const res = await qfetch(`${API_BASE}/api/files/${taskId}`, { method: "DELETE" });
   return json(res) as Promise<{ ok: boolean; task_id: string }>;
 }
 
 export async function fetchAdminStats() {
-  return json(await fetch(`${API_BASE}/api/admin/stats`)) as Promise<AdminStats>;
+  return json(await qfetch(`${API_BASE}/api/admin/stats`)) as Promise<AdminStats>;
 }
 
 export async function fetchAdminTasks() {
-  return json(await fetch(`${API_BASE}/api/admin/tasks`)) as Promise<{
+  return json(await qfetch(`${API_BASE}/api/admin/tasks`)) as Promise<{
     tasks: {
       task_id: string;
       product_name: string;
@@ -480,7 +603,7 @@ export interface PublishJob {
 }
 
 export async function publishTask(taskId: string, platform: string) {
-  const res = await fetch(`${API_BASE}/api/publish`, {
+  const res = await qfetch(`${API_BASE}/api/publish`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ task_id: taskId, platform, approved: true }),
@@ -490,7 +613,7 @@ export async function publishTask(taskId: string, platform: string) {
 
 export async function fetchPublishJobs(taskId?: string) {
   const q = taskId ? `?task_id=${encodeURIComponent(taskId)}` : "";
-  return json(await fetch(`${API_BASE}/api/publish/jobs${q}`)) as Promise<{ jobs: PublishJob[] }>;
+  return json(await qfetch(`${API_BASE}/api/publish/jobs${q}`)) as Promise<{ jobs: PublishJob[] }>;
 }
 
 export function publishShotUrl(jobId: string, filename: string) {
@@ -522,7 +645,7 @@ export interface MetricsOverview {
 }
 
 export async function fetchMetricsOverview() {
-  return json(await fetch(`${API_BASE}/api/metrics`)) as Promise<MetricsOverview>;
+  return json(await qfetch(`${API_BASE}/api/metrics`)) as Promise<MetricsOverview>;
 }
 
 export function mockLiveUrl(listingId: string) {

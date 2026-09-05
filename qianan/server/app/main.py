@@ -8,15 +8,19 @@ import asyncio
 import io
 import json
 import logging
+import os
 import re
 import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import unquote
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from fastapi.responses import FileResponse, Response
 
+from . import auth as cbauth
 from .agents.compliance import ComplianceAgent
 from .agents import evolution
 from .agents.ideation import IdeationAgent
@@ -46,6 +50,7 @@ from .schemas import (
     TaskRecord,
     TaskStatus,
 )
+from . import task_store
 from .task_store import create_task, delete_task, get_task, list_tasks
 
 logging.basicConfig(level=logging.INFO)
@@ -65,18 +70,83 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="千岸 QianAn API", version="0.1.0", lifespan=lifespan)
 
+# 允许的来源：本地开发 + CloudBase 静态托管（含自定义域名与预览域名）
+# 额外来源用 QIANAN_CORS_ORIGINS 逗号分隔追加
+_BASE_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "https://ai-native-d5gfb0dm2a28d1fe9-1419921079.tcloudbaseapp.com",
+]
+_EXTRA_ORIGINS = [o.strip() for o in os.getenv("QIANAN_CORS_ORIGINS", "").split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
-    allow_origin_regex=r"chrome-extension://.*",
+    allow_origins=_BASE_ORIGINS + _EXTRA_ORIGINS,
+    allow_origin_regex=r"https://[a-z0-9-]+\.(tcloudbaseapp\.com|tcloudbase\.com|cloudbase\.net|app\.tcloudbase\.com)",
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition"],
+    max_age=86400,
 )
 
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "mock": _client.is_mock if _client else None}
+    return {
+        "status": "ok",
+        "mock": _client.is_mock if _client else None,
+        "auth": {
+            "ready": cbauth.auth_ready(),
+            "require_auth": cbauth.REQUIRE_AUTH,
+        },
+    }
+
+
+@app.get("/api/me")
+async def me(user: dict = Depends(cbauth.current_user)):
+    """当前身份。uid 来自自包含 JWT，前端改不了 —— 多租户的信任根。"""
+    return {
+        "uid": cbauth.uid_of(user),
+        "name": user.get("name") or "",
+        "username": user.get("username") or "",
+        "authenticated": bool(user.get("authenticated")),
+        "tenancy": "self-jwt",
+    }
+
+
+class AuthCredentials(BaseModel):
+    username: str
+    password: str
+
+
+def _auth_response(u: dict) -> dict:
+    token = cbauth.issue_token(u["uid"], u["username"])
+    return {
+        "token": token,
+        "uid": u["uid"],
+        "username": u["username"],
+        # 兼容前端 AuthProvider.toUser(session.session.user)
+        "session": {"user": {"id": u["uid"], "username": u["username"], "name": u["username"]}},
+    }
+
+
+@app.post("/api/auth/register")
+async def api_register(body: AuthCredentials):
+    """注册新租户（自包含账号存储）。"""
+    try:
+        u = cbauth.create_user(body.username, body.password)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return _auth_response(u)
+
+
+@app.post("/api/auth/login")
+async def api_login(body: AuthCredentials):
+    """登录已注册租户，返回 JWT。"""
+    u = cbauth.authenticate(body.username, body.password)
+    if not u:
+        raise HTTPException(status_code=401, detail="用户名或密码错误")
+    return _auth_response(u)
 
 
 @app.get("/api/rules")
@@ -121,6 +191,56 @@ async def audit(req: AuditRequest):
     }
 
 
+# ---------- 评测集（Evals：合规规则与历史事故的回归测试） ----------
+
+EVALS_REPORT = Path(__file__).resolve().parents[1] / "data" / "evals" / "report.json"
+
+_EMPTY_EVALS_REPORT = {
+    "generated_at": None,
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0,
+    "duration_ms": 0,
+    "suites": [],
+}
+
+
+@app.get("/api/evals")
+async def evals_report():
+    """最新评测报告快照；报告未生成时返回空结构（前端展示空态，不 404）。"""
+    if not EVALS_REPORT.is_file():
+        return dict(_EMPTY_EVALS_REPORT)
+    return json.loads(EVALS_REPORT.read_text(encoding="utf-8"))
+
+
+@app.post("/api/evals/run")
+async def evals_run(user: dict = Depends(cbauth.require_user)):
+    """跑一轮评测（python -m evals.run），返回新生成的报告内容。"""
+    cwd = Path(__file__).resolve().parents[1]
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "/usr/bin/python3",
+            "-m",
+            "evals.run",
+            cwd=str(cwd),
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        _, stderr = await asyncio.wait_for(proc.communicate(), timeout=120)
+    except asyncio.TimeoutError as exc:
+        proc.kill()
+        raise HTTPException(status_code=500, detail="评测运行超时（>120s）") from exc
+    if proc.returncode != 0:
+        raise HTTPException(
+            status_code=500,
+            detail=f"评测运行失败(exit={proc.returncode}): {stderr.decode('utf-8', 'replace')[-2000:]}",
+        )
+    if not EVALS_REPORT.is_file():
+        raise HTTPException(status_code=500, detail="评测运行完成但未产出 report.json")
+    return json.loads(EVALS_REPORT.read_text(encoding="utf-8"))
+
+
 @app.post("/api/ideation")
 async def ideation(req: IdeationRequest):
     """选品灵感：市场 + 类目 → 3 条可一键上架的商品建议。
@@ -154,8 +274,35 @@ async def trends(market: str = "us"):
 
 
 @app.post("/api/generate")
-async def generate(req: GenerateRequest):
-    task = create_task(req)
+async def generate(req: GenerateRequest, user: dict = Depends(cbauth.require_user)):
+    # 浏览器上传的 base64 图 → 先上公网临时图床 → 交给 AI 网关以 URL 消费
+    # （聚合网关图片任务拒绝超大 data URL body：nginx 413；localhost URL 网关又无法回访）
+    if req.image_base64 and not req.image_url:
+        import base64 as _b64
+
+        from . import uploader
+
+        try:
+            raw = req.image_base64.split(",", 1)[-1]
+            data = _b64.b64decode(raw)
+            req.image_url = uploader.upload_bytes(data)
+            logger.info("商品图已上传公网图床: %s", req.image_url[:80])
+        except Exception as exc:  # noqa: BLE001 —— 上传失败保留 base64，VL/视觉路径自行容错
+            logger.warning("商品图上传公网失败，回退 base64 直传: %s", exc)
+    task = create_task(req, owner_uid=cbauth.uid_of(user))
+    logger.info("任务 %s 归属租户 %s", task.task_id, task.owner_uid)
+    # 云函数环境：同步跑完 pipeline 后返回完整结果（SCF 无后台进程）
+    if os.getenv("TENCENT_SCF"):
+        from app.orchestrator import run_pipeline
+        from app.file_store import persist_task
+        await run_pipeline(task, get_client())
+        if task.status == TaskStatus.done:
+            try:
+                persist_task(task)
+            except Exception:  # noqa: BLE001
+                logger.exception("SCF persist task failed")
+        return task.model_dump()
+    # 正常模式：异步后台跑
     asyncio.create_task(_run_and_persist(task))
     return {"task_id": task.task_id}
 
@@ -183,8 +330,10 @@ async def _maybe_evolve() -> None:
 
 
 @app.get("/api/tasks/{task_id}")
-async def task_detail(task_id: str, request: Request):
+async def task_detail(task_id: str, request: Request, user: dict = Depends(cbauth.current_user)):
     """任务详情（内存优先，重启后从文件仓库兜底还原）；已落盘的主图替换为本地 URL。"""
+    if not task_store.visible_to(task_id, cbauth.uid_of(user)):
+        raise HTTPException(status_code=404, detail="task not found")
     task = get_task(task_id)
     if task is not None:
         data = task.model_dump()
@@ -213,6 +362,9 @@ def _task_from_disk(task_id: str) -> dict | None:
         "understanding": export.get("understanding"),
         "listings": export.get("listings", []),
         "trace": export.get("trace", []),
+        "plan": export.get("plan"),
+        "memory_recall": export.get("memory_recall", []),
+        "reflections": export.get("reflections", []),
         "error": None,
         "created_at": 0,
     }
@@ -235,8 +387,10 @@ def _localize_listing_images(task_id: str, listings: list[dict], base: str) -> N
 
 
 @app.get("/api/tasks/{task_id}/export")
-async def export(task_id: str):
+async def export(task_id: str, user: dict = Depends(cbauth.current_user)):
     """一键导出上架包：listing JSON + 各平台后台导入 CSV（Amazon flat file / Shopee 批量上传模板）。"""
+    if not task_store.visible_to(task_id, cbauth.uid_of(user)):
+        raise HTTPException(status_code=404, detail="task not found")
     task = get_task(task_id)
     if task is not None:
         listings = []
@@ -331,7 +485,7 @@ def _publish_snapshot(task_id: str, platform: str) -> dict:
 
 
 @app.post("/api/publish")
-async def publish(req: PublishRequest):
+async def publish(req: PublishRequest, user: dict = Depends(cbauth.require_user)):
     """确认上架：approved 显式置真才放行（硬闸口，严禁无人值守上架）。
 
     校验通过 → 建 PublishJob → 后台跑执行器（Playwright 驱动 mock 后台，
@@ -339,6 +493,8 @@ async def publish(req: PublishRequest):
     """
     if not req.approved:
         raise HTTPException(status_code=422, detail="上架必须经用户显式确认（approved=true）")
+    if not task_store.visible_to(req.task_id, cbauth.uid_of(user)):
+        raise HTTPException(status_code=404, detail="task not found")
     snapshot = _publish_snapshot(req.task_id, req.platform)
     job = publish_store.create_job(req.task_id, req.platform, "mock_browser", snapshot["sku"])
     asyncio.create_task(publish_runner.run_publish(job["job_id"], snapshot))
@@ -346,7 +502,7 @@ async def publish(req: PublishRequest):
 
 
 @app.get("/api/publish/jobs")
-async def publish_jobs(task_id: str = ""):
+async def publish_jobs(task_id: str = "", user: dict = Depends(cbauth.require_user)):
     """上架任务列表（新在前）；带 task_id 时只看该任务的上架记录。"""
     jobs = publish_store.list_jobs()
     if task_id:
@@ -355,7 +511,7 @@ async def publish_jobs(task_id: str = ""):
 
 
 @app.get("/api/publish/jobs/{job_id}")
-async def publish_job_detail(job_id: str):
+async def publish_job_detail(job_id: str, user: dict = Depends(cbauth.require_user)):
     """job 详情：状态机 + steps[] 留痕（动作/细节/截图文件名）。"""
     job = publish_store.get_job(job_id)
     if job is None:
@@ -365,10 +521,14 @@ async def publish_job_detail(job_id: str):
 
 @app.get("/api/publish/jobs/{job_id}/shots/{filename}")
 async def publish_job_shot(job_id: str, filename: str):
-    """留痕截图下载（防路径穿越：只允许裸文件名）。"""
-    if "/" in filename or ".." in filename:
+    """留痕截图下载（防路径穿越：URL 解码后仍只允许裸文件名/裸 job_id，且拒绝反斜杠）。"""
+    name = unquote(filename)
+    if "/" in name or "\\" in name or ".." in name or "\x00" in name:
         raise HTTPException(status_code=422, detail="非法文件名")
-    path = publish_store.job_dir(job_id) / "shots" / filename
+    jid = unquote(job_id)
+    if "/" in jid or "\\" in jid or ".." in jid or "\x00" in jid:
+        raise HTTPException(status_code=422, detail="非法 job_id")
+    path = publish_store.job_dir(jid) / "shots" / name
     if not path.is_file():
         raise HTTPException(status_code=404, detail="screenshot not found")
     return FileResponse(path, media_type="image/png")
@@ -377,13 +537,13 @@ async def publish_job_shot(job_id: str, filename: str):
 # ---------- 指标回流（PRD v0.3 · Feature 3：数据飞轮回流段） ----------
 
 @app.post("/api/metrics/collect")
-async def metrics_collect():
+async def metrics_collect(user: dict = Depends(cbauth.require_user)):
     """手动触发一轮回流：全部 live listing 当前快照落 metrics.jsonl（幂等）。"""
     return {"collected": collector.collect_once()}
 
 
 @app.get("/api/metrics")
-async def metrics_overview():
+async def metrics_overview(user: dict = Depends(cbauth.require_user)):
     """经营数据总览：惰性回流一轮 → 每 sku 最新快照 + 异常标记 + 关联上架 job。"""
     collector.collect_once()
     job_by_sku: dict[str, dict] = {}
@@ -403,7 +563,7 @@ async def metrics_overview():
 
 
 @app.get("/api/metrics/{sku}")
-async def metrics_history(sku: str):
+async def metrics_history(sku: str, user: dict = Depends(cbauth.require_user)):
     """单 sku 回流时间线（画 CTR/曝光曲线用）。"""
     rows = collector.history(sku)
     if not rows:
@@ -414,13 +574,17 @@ async def metrics_history(sku: str):
 # ---------- 文件管理区 ----------
 
 @app.get("/api/files")
-async def files_list():
-    """文件仓库：已完成任务的导出包列表（磁盘持久化，重启不丢）。"""
-    return {"packages": list_packages()}
+async def files_list(user: dict = Depends(cbauth.current_user)):
+    """文件仓库：当前租户可见的导出包列表（磁盘持久化，重启不丢）。"""
+    uid = cbauth.uid_of(user)
+    packages = [p for p in list_packages() if task_store.visible_to(str(p.get("task_id", "")), uid)]
+    return {"packages": packages, "uid": uid}
 
 
 @app.get("/api/files/{task_id}")
-async def files_detail(task_id: str):
+async def files_detail(task_id: str, user: dict = Depends(cbauth.current_user)):
+    if not task_store.visible_to(task_id, cbauth.uid_of(user)):
+        raise HTTPException(status_code=404, detail="package not found")
     pkg = get_package(task_id)
     if pkg is None:
         raise HTTPException(status_code=404, detail="package not found")
@@ -428,8 +592,13 @@ async def files_detail(task_id: str):
 
 
 @app.get("/api/files/{task_id}/download/{filename:path}")
-async def files_download(task_id: str, filename: str):
-    """下载包内文件（export.json / 平台 CSV / 主图）。"""
+async def files_download(task_id: str, filename: str, user: dict = Depends(cbauth.current_user)):
+    """下载包内文件（export.json / 平台 CSV / 主图）。
+
+    <img> / <a download> 带不了 Authorization，支持 ?access_token= 兜底。
+    """
+    if not task_store.visible_to(task_id, cbauth.uid_of(user)):
+        raise HTTPException(status_code=404, detail="file not found")
     path = resolve_file(task_id, filename)
     if path is None:
         raise HTTPException(status_code=404, detail="file not found")
@@ -437,8 +606,10 @@ async def files_download(task_id: str, filename: str):
 
 
 @app.get("/api/files/{task_id}/zip")
-async def files_zip(task_id: str):
+async def files_zip(task_id: str, user: dict = Depends(cbauth.current_user)):
     """整包下载：export.json + 各平台导入 CSV + 主图打成一个 zip。"""
+    if not task_store.visible_to(task_id, cbauth.uid_of(user)):
+        raise HTTPException(status_code=404, detail="package not found")
     d = task_dir(task_id)
     if not d.is_dir():
         raise HTTPException(status_code=404, detail="package not found")
@@ -455,7 +626,7 @@ async def files_zip(task_id: str):
 
 
 @app.delete("/api/files/{task_id}")
-async def files_delete(task_id: str):
+async def files_delete(task_id: str, user: dict = Depends(cbauth.require_user)):
     """删除导出包（磁盘文件 + 内存任务记录）。"""
     delete_task(task_id)
     if not delete_package(task_id):
@@ -465,8 +636,8 @@ async def files_delete(task_id: str):
 
 # ---------- 后台管理 ----------
 
-def _merged_tasks() -> list[dict]:
-    """内存任务 + 磁盘文件包合并（后端重启后任务列表不丢）。"""
+def _merged_tasks(uid: str = "") -> list[dict]:
+    """内存任务 + 磁盘文件包合并（后端重启后任务列表不丢），按租户过滤。"""
     merged = [
         {
             "task_id": t.task_id,
@@ -476,17 +647,20 @@ def _merged_tasks() -> list[dict]:
             "platforms": list(t.request.platforms),
             "created_at": t.created_at,
             "error": t.error,
+            "owner_uid": t.owner_uid,
             "listings": [
                 {"passed": l.compliance_passed, "revised_count": l.revised_count, "images": len(l.images)}
                 for l in t.listings
             ],
             "source": "memory",
         }
-        for t in list_tasks()
+        for t in (list_tasks(uid) if uid else list_tasks())
     ]
     known = {t["task_id"] for t in merged}
     for pkg in list_packages():
         if pkg["task_id"] in known:
+            continue
+        if uid and not task_store.visible_to(str(pkg["task_id"]), uid):
             continue
         merged.append(
             {
@@ -495,6 +669,7 @@ def _merged_tasks() -> list[dict]:
                 "status": "done",
                 "stage": "完成",
                 "platforms": pkg["platforms"],
+                "owner_uid": task_store.owner_of(str(pkg["task_id"])) or "",
                 "created_at": pkg.get("created_at", 0),
                 "error": None,
                 "listings": [
@@ -508,9 +683,9 @@ def _merged_tasks() -> list[dict]:
 
 
 @app.get("/api/admin/stats")
-async def admin_stats():
-    """后台概览：任务量/状态分布/平台分布/合规与自愈指标。"""
-    merged = _merged_tasks()
+async def admin_stats(user: dict = Depends(cbauth.current_user)):
+    """后台概览：任务量/状态分布/平台分布/合规与自愈指标（仅统计当前租户）。"""
+    merged = _merged_tasks(cbauth.uid_of(user))
     by_status = {"queued": 0, "running": 0, "done": 0, "failed": 0}
     by_platform: dict[str, int] = {}
     passed = 0
@@ -542,9 +717,9 @@ async def admin_stats():
 
 
 @app.get("/api/admin/tasks")
-async def admin_tasks(limit: int = 20):
-    """后台任务列表（内存 + 磁盘，最近优先）。"""
-    merged = _merged_tasks()
+async def admin_tasks(limit: int = 20, user: dict = Depends(cbauth.current_user)):
+    """后台任务列表（内存 + 磁盘，最近优先），仅列当前租户。"""
+    merged = _merged_tasks(cbauth.uid_of(user))
     merged.sort(key=lambda t: t["created_at"], reverse=True)
     return {
         "tasks": [
@@ -555,6 +730,7 @@ async def admin_tasks(limit: int = 20):
                 "stage": t["stage"],
                 "platforms": t["platforms"],
                 "created_at": t["created_at"],
+                "owner_uid": t.get("owner_uid", ""),
                 "revised_total": sum(l["revised_count"] for l in t["listings"]),
                 "passed_total": sum(1 for l in t["listings"] if l["passed"]),
                 "listing_total": len(t["listings"]),
@@ -569,7 +745,7 @@ async def admin_tasks(limit: int = 20):
 # ---------- Agent 记忆与反馈 ----------
 
 @app.post("/api/feedback")
-async def submit_feedback(fb: Feedback):
+async def submit_feedback(fb: Feedback, user: dict = Depends(cbauth.require_user)):
     """人类反馈：对单平台上架包打分（1=好评 / -1=差评），喂给记忆库与进化分析。"""
     if fb.rating not in (1, -1):
         raise HTTPException(status_code=422, detail="rating 只能为 1 或 -1")
@@ -578,7 +754,7 @@ async def submit_feedback(fb: Feedback):
 
 
 @app.get("/api/agent/training-data")
-async def training_data():
+async def training_data(user: dict = Depends(cbauth.require_user)):
     """SFT 训练对导出：赛期内不做真微调，先把反馈数据按训练格式积累。"""
     return {"pairs": memory_store.export_training_data()}
 
@@ -628,8 +804,8 @@ async def skills_registry():
 
 
 @app.post("/api/skills/install")
-async def skills_install(body: dict):
-    """从 file:// 或 https:// 拉取技能清单 → 白名单校验 → 落盘生效（规则 overlay + 工具注册）。"""
+async def skills_install(body: dict, user: dict = Depends(cbauth.require_user)):
+    """从 https:// 或注册表目录内 file:// 拉取技能清单 → 白名单校验 → 落盘生效（规则 overlay + 工具注册）。"""
     source = str(body.get("source", "")).strip()
     if not source:
         raise HTTPException(status_code=422, detail="缺少 source")
@@ -644,7 +820,7 @@ async def skills_install(body: dict):
 
 
 @app.delete("/api/skills/{skill_id}")
-async def skills_uninstall(skill_id: str):
+async def skills_uninstall(skill_id: str, user: dict = Depends(cbauth.require_user)):
     """卸载：删文件 + 注销工具 + 规则库缓存失效（规则还原为源）。"""
     if not skill_store.uninstall(skill_id):
         raise HTTPException(status_code=404, detail="技能未安装")
@@ -660,7 +836,7 @@ async def proposals_list():
 
 
 @app.post("/api/agent/evolve")
-async def evolve_now():
+async def evolve_now(user: dict = Depends(cbauth.require_user)):
     """手动触发一轮进化分析：读记忆+差评，产出提案待人工审批（不自动生效）。"""
     try:
         return {"result": await evolution.evolve(_client)}
@@ -669,7 +845,7 @@ async def evolve_now():
 
 
 @app.post("/api/agent/proposals/{pid}/approve")
-async def proposal_approve(pid: str):
+async def proposal_approve(pid: str, user: dict = Depends(cbauth.require_user)):
     """批准即应用：prompt 补丁写提示词新版本，规则补丁写 overlay（均可回滚）。"""
     ok, detail = evolution.approve(pid)
     if not ok:
@@ -678,7 +854,7 @@ async def proposal_approve(pid: str):
 
 
 @app.post("/api/agent/proposals/{pid}/reject")
-async def proposal_reject(pid: str):
+async def proposal_reject(pid: str, user: dict = Depends(cbauth.require_user)):
     ok, detail = evolution.reject(pid)
     if not ok:
         raise HTTPException(status_code=400, detail=detail)
@@ -686,7 +862,7 @@ async def proposal_reject(pid: str):
 
 
 @app.post("/api/agent/proposals/{pid}/rollback")
-async def proposal_rollback(pid: str):
+async def proposal_rollback(pid: str, user: dict = Depends(cbauth.require_user)):
     """回滚已生效提案：提示词还原上一版本 / 规则补丁移除。"""
     ok, detail = evolution.rollback(pid)
     if not ok:

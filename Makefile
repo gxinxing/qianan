@@ -1,4 +1,4 @@
-.PHONY: help install install-server install-web dev dev-server dev-web test-smoke test-api check-types docker-up docker-down clean lint lint-server lint-web
+.PHONY: help install install-server install-web dev dev-server dev-web test-smoke test-api check-types sync-rules docker-up docker-down clean lint lint-server lint-web
 
 help:
 	@echo "千岸 QianAn - 开发命令"
@@ -12,7 +12,9 @@ help:
 	@echo "  make test-smoke    - 百炼 API 冒烟测试"
 	@echo "  make test-api      - 后端 API 集成测试"
 	@echo "  make check-types   - TypeScript 类型检查"
+	@echo "  make sync-rules    - 同步规则库（qianan/rules → server/cloudfunctions/deploy_pkg）"
 	@echo "  make lint          - 全量 Lint"
+	@echo "  make lint-server   - 后端语法检查（compileall 编译整个 app 包）"
 	@echo "  make docker-up     - Docker 一键启动"
 	@echo "  make docker-down   - Docker 停止"
 	@echo "  make clean         - 清理构建产物"
@@ -42,10 +44,13 @@ test-api:
 check-types:
 	cd qianan/web && npx tsc --noEmit
 
+sync-rules:
+	python qianan/scripts/sync_rules.py
+
 lint: lint-server lint-web
 
 lint-server:
-	cd qianan/server && python -m py_compile app/main.py app/orchestrator.py app/schemas.py
+	cd qianan/server && python -m compileall app -q
 
 lint-web:
 	cd qianan/web && npm run lint 2>/dev/null || echo "lint 脚本未配置"

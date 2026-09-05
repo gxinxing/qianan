@@ -1,0 +1,11 @@
+# 千岸 QianAn - 腾讯云函数 SCF 部署依赖
+# 安装方式: pip install -r scf_requirements.txt -t ./deploy_pkg/
+fastapi>=0.111
+uvicorn[standard]>=0.30
+pydantic>=2.7
+python-multipart>=0.0.9
+httpx>=0.27
+requests>=2.31
+python-dotenv>=1.0
+Pillow>=10.0
+nest-asyncio>=1.6

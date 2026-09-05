@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 import threading
+import os
 import time
 import uuid
 from pathlib import Path
@@ -24,7 +25,20 @@ from ..schemas import ALL_PLATFORMS
 
 logger = logging.getLogger(__name__)
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "evolution"
+
+def _resolve_evolution_dir() -> Path:
+    """定位 data/evolution：env 优先，其次向上回退两级探测（兼容云函数只读布局）。"""
+    env = os.getenv("QIANAN_EVOLUTION_DIR", "")
+    if env:
+        return Path(env)
+    here = Path(__file__).resolve()
+    for cand in (here.parents[2] / "data" / "evolution", here.parents[1] / "data" / "evolution"):
+        if cand.is_dir():
+            return cand
+    return here.parents[1] / "data" / "evolution"
+
+
+DATA_DIR = _resolve_evolution_dir()
 PROPOSALS_FILE = DATA_DIR / "proposals.jsonl"
 OVERLAYS_DIR = DATA_DIR / "overlays"
 

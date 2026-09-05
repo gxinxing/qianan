@@ -1,156 +1,173 @@
 {
-  "schemaVersion": "rules.v1",
+  "version": "v1",
   "platform": "aliexpress",
-  "displayName": "AliExpress 速卖通",
-  "demoDepth": "reuse",
-  "updated": "2026-09-01",
-  "source": "AliExpress 卖家后台公开规范整理；上架前以最新官方文档复核",
-  "locales": [
-    "en-US",
-    "ru-RU",
-    "es-ES",
-    "pt-BR",
-    "fr-FR"
-  ],
-  "marketplaces": [
-    "Global"
-  ],
+  "displayName": "AliExpress Global",
+  "updated": "2025-09",
+  "source": "AliExpress Seller Center · Product Posting Guidelines",
+  "demoDepth": "deep",
+  "locales": ["en", "ru", "es", "fr", "pt", "ar", "id", "th"],
+  "marketplaces": ["aliexpress.com", "aliexpress.ru", "aliexpress.es"],
   "title": {
     "maxLength": 128,
-    "recommendedLength": [
-      60,
-      128
-    ],
-    "formula": "核心关键词 + 产品类型 + 属性（平台搜索以关键词匹配为主，关键词尽量占满）",
-    "styleRules": [
-      "关键词堆叠需自然可读",
-      "不使用品牌侵权词",
-      "不使用全大写与特殊符号"
-    ],
-    "keywordHint": "速卖通标题是搜索流量核心，充分利用 128 字符"
+    "recommendedLength": [80, 110],
+    "formula": "Brand + Product Name + Core Feature + Material + Quantity/Pack",
+    "mustIncludeKeywords": true,
+    "caseStyle": "title_case",
+    "separator": ", "
+  },
+  "bullets": {
+    "count": 0,
+    "style": "none",
+    "note": "AliExpress 无独立五点；卖点融入 description 中的 features 段落"
   },
   "description": {
-    "type": "modular_html",
-    "maxLength": 65535,
-    "structure": [
-      "产品概述",
-      "参数表",
-      "细节图",
-      "包装与物流"
-    ],
-    "note": "使用官方模块化描述编辑器"
+    "maxLength": 5000,
+    "type": "rich_text",
+    "minLength": 300,
+    "supportsHtml": true,
+    "htmlTagsAllowed": ["p", "br", "b", "strong", "ul", "ol", "li", "table", "tr", "td", "th", "img", "span", "div"],
+    "structuredSections": ["产品概述", "核心功能", "规格参数表", "包装清单", "使用说明", "售后政策", "品牌故事"]
+  },
+  "aPlus": {
+    "modules": ["详情展示模板", "卖点展示", "参数表格", "使用场景", "品牌故事"],
+    "requireApproval": false,
+    "maxModules": 12,
+    "primaryLanguage": "en",
+    "note": "AliExpress 用产品详情模板（Detail Template），模块化方式类似 A+"
   },
   "mainImage": {
+    "background": "white_recommended",
     "minWidth": 800,
     "minHeight": 800,
-    "recommendedWidth": 1000,
-    "aspectRatio": "1:1",
-    "background": "white",
-    "backgroundNote": "建议白底，部分会场活动强制白底",
+    "noText": false,
     "noWatermark": true,
-    "noBorder": true
+    "noBorder": true,
+    "productFillRatio": 0.80,
+    "acceptedFormats": ["JPEG", "PNG", "WebP"],
+    "maxFileSizeKB": 5000,
+    "ratio1v1": true
   },
-  "gallery": {
-    "maxImages": 6,
-    "note": "副图可包含尺寸表与场景图"
+  "additionalImages": {
+    "recommendedCount": 5,
+    "maxCount": 15,
+    "infoGraphics": true,
+    "lifestyleImages": true,
+    "sizeComparison": true,
+    "certificateImages": true
   },
   "categoryAttributes": {
-    "electronics": [
-      "品牌",
-      "型号",
-      "认证（CE/FCC）",
-      "插头标准"
-    ],
-    "home_kitchen": [
-      "品牌",
-      "材质",
-      "尺寸"
-    ],
-    "apparel": [
-      "品牌",
-      "材质",
-      "尺码（国际码对照）"
-    ]
+    "electronics": ["品牌", "型号", "颜色", "存储容量", "屏幕尺寸", "电池容量", "操作系统", "产地"],
+    "home_kitchen": ["品牌", "材质", "容量", "尺寸", "颜色", "产地", "是否含锅具"],
+    "apparel": ["品牌", "材质", "尺码", "颜色", "款式", "季节", "产地", "袖长"],
+    "beauty": ["品牌", "功效", "肤质", "容量", "成分", "产地", "保质期"],
+    "sports": ["品牌", "材质", "尺寸", "重量", "颜色", "产地"],
+    "jewelry": ["材质", "宝石类型", "工艺", "尺寸", "颜色", "产地"],
+    "toys": ["品牌", "材质", "适用年龄", "安全认证", "产地", "功能"],
+    "automotive": ["品牌", "车型", "材质", "颜色", "产地", "安装方式"]
   },
   "bannedWords": {
-    "promotional": [
-      "cheapest",
-      "free shipping",
-      "big sale"
-    ],
-    "claims": [
-      "best",
-      "#1",
-      "guaranteed"
-    ],
-    "restricted": [
-      "replica",
-      "AAA",
-      "fake",
-      "1:1 copy",
-      "cure",
-      "medical"
-    ],
-    "restrictedNote": "restricted 组涉及仿牌与医疗宣称，属平台高压线"
+    "promotional": ["sale", "free shipping", "discount", "promotion", "coupon", "deal", "clearance", "limited offer"],
+    "claims": ["best", "top", "#1", "top-rated", "#1 ranked", "number one", "number 1", "world's best", "amazing", "incredible", "unbelievable"],
+    "misleading": ["100% original (非授权)", "authentic guaranteed", "official authorized (非授权)", " patented", "trademarked (非授权)"],
+    "offensive": ["粗俗用语", "宗教冒犯", "种族歧视"],
+    "restricted": ["仿冒品", "侵权产品", "品牌 A 货", "盗版", "火药", "毒品", "管制刀具", "成人用品"],
+    "trademark": ["apple (非授权)", "samsung (非授权)", "nike (非授权)", "adidas (非授权)", "louis vuitton (非授权)"],
+    "aliexpressSpecific": [
+      "外部联系方式（TG/WhatsApp/Line）",
+      "引导买家站外交易",
+      "价格虚标后划线价",
+      "虚假评分/评论引导"
+    ]
   },
   "complianceChecks": [
     {
-      "id": "title_length",
+      "id": "ali-title-001",
       "type": "length",
+      "severity": "error",
       "field": "title",
-      "max": 128,
-      "severity": "error"
+      "message": "标题超过 128 字符限制",
+      "max": 128
     },
     {
-      "id": "promotional_scan",
+      "id": "ali-title-002",
       "type": "banned_words",
-      "fields": [
-        "title",
-        "description"
-      ],
-      "dict": "promotional",
-      "severity": "warn"
+      "severity": "error",
+      "field": "title",
+      "message": "标题命中禁用词/绝对化用语",
+      "dict": "claims",
+      "fields": ["title"]
     },
     {
-      "id": "restricted_scan",
+      "id": "ali-title-003",
       "type": "banned_words",
-      "fields": [
-        "title",
-        "description"
-      ],
-      "dict": "restricted",
-      "severity": "error"
+      "severity": "error",
+      "field": "title",
+      "message": "标题含站外导流信息",
+      "dict": "aliexpressSpecific",
+      "fields": ["title", "description"]
     },
     {
-      "id": "main_image",
+      "id": "ali-desc-001",
+      "type": "length",
+      "severity": "error",
+      "field": "description",
+      "message": "描述超过 5000 字符限制",
+      "max": 5000
+    },
+    {
+      "id": "ali-desc-002",
+      "type": "required_sections",
+      "severity": "warn",
+      "field": "description",
+      "message": "描述缺少必备段落",
+      "sections": ["产品概述", "规格"]
+    },
+    {
+      "id": "ali-img-001",
       "type": "image_spec",
+      "severity": "error",
       "field": "mainImage",
+      "message": "主图尺寸不足（需 ≥800×800）",
       "minWidth": 800,
-      "minHeight": 800,
-      "background": "white",
-      "noWatermark": true,
-      "severity": "error"
+      "minHeight": 800
     },
     {
-      "id": "category_attrs",
+      "id": "ali-img-002",
+      "type": "banned_words",
+      "severity": "warn",
+      "field": "description",
+      "message": "描述含促销用语",
+      "dict": "promotional",
+      "fields": ["description", "title"]
+    },
+    {
+      "id": "ali-attr-001",
       "type": "required_attrs",
-      "severity": "warn"
+      "severity": "warn",
+      "field": "attributes",
+      "message": "缺少必填类目属性"
+    },
+    {
+      "id": "ali-locale-001",
+      "type": "locale_coverage",
+      "severity": "info",
+      "field": "locales",
+      "message": "多语言覆盖建议",
+      "locales": ["en", "ru", "es"]
     }
   ],
   "economics": {
-    "note": "economics 费率为公开文档整理的演示估算值（非实时），定价引擎直接消费；上架前以卖家后台实际费率复核。头程单价与汇率在引擎侧统一维护。",
-    "currency": "USD",
-    "commissionRate": 0.06,
-    "adTacosDefault": 0.1,
-    "returnRateDefault": 0.05,
-    "returnHandlingFee": 1.0,
+    "commissionRate": 0.05,
+    "commissionNote": "普通类目约 5%（依类目 3%-8% 浮动）",
+    "adTacosDefault": 0.12,
+    "returnRateDefault": 0.12,
+    "returnHandlingFee": 0.0,
     "fulfillment": {
-      "type": "per_order",
-      "fee": 1.5,
-      "note": "菜鸟无忧物流尾程按件估算"
+      "type": "aliexpress_choice",
+      "note": "AliExpress Choice（菜鸟仓发货）买家包邮，佣金另计"
     },
-    "monthlyStoragePerCubicMeter": 15.0,
-    "vatRate": 0.2,
-    "dutyNote": "欧区 IOSS：≤150€ 订单平台代扣 VAT（demo 按 20% 计），卖家收款为含税价折净"
+    "vatRate": 0.0,
+    "vatNote": "平台不代收 VAT；发货国出口税 + 目的地进口税买家负责",
+    "dutyNote": "部分站点有平台保障服务，依具体物流方案"
   }
 }

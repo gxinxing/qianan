@@ -1,30 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // 生产环境输出独立部署包（FC / Vercel / Docker）
+  // Docker 部署：standalone 产物（server.js + 最小 node_modules），
+  // 由根 docker-compose.yml 的 frontend 服务运行（见 qianan/web/Dockerfile）
   output: "standalone",
 
-  // 开发环境本地代理：前端 3000 → 后端 8000，避免 CORS
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000"}/api/:path*`,
-      },
-    ];
-  },
-
-  // 图片优化：允许外部图床（百炼返回的图片 URL）
+  // 图片用原生 <img> 加载（已允许外部图床），无需图片优化服务
   images: {
-    remotePatterns: [
-      {
-        protocol: "https",
-        hostname: "**",
-      },
-    ],
+    unoptimized: true,
+    remotePatterns: [{ protocol: "https", hostname: "**" }],
   },
-
-  // 构建时静态导出排除（所有页面都是 dynamic，不需要排除）
 };
 
 export default nextConfig;

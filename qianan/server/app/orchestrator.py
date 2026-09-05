@@ -26,7 +26,14 @@ from .agents.understanding import ProductUnderstandingAgent
 from .agents.visual import VisualAgent
 from .bailian.client import BailianLike, resolve_image_ref
 from . import memory_store, skill_store
-from .schemas import PlatformListing, TaskRecord, TaskStatus
+from .schemas import (
+    AgentReflection,
+    MemoryLesson,
+    PlatformListing,
+    TaskPlan,
+    TaskRecord,
+    TaskStatus,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +59,7 @@ async def plan_task(task: TaskRecord, client: BailianLike) -> dict:
     req = task.request
     if client.is_mock:
         plan = _default_plan()
+        task.plan = TaskPlan(decided_by="fallback", **plan)
         record(task, "plan", "planner", f"{len(req.platforms)} 平台 · mock", "默认计划 · heal_budget=1")
         return plan
 
@@ -83,8 +91,11 @@ async def plan_task(task: TaskRecord, client: BailianLike) -> dict:
     if len(tools) > 1:
         user += "\n已安装技能工具：" + "、".join(t.name for t in tools[1:])
 
+    research: list[str] = []
+
     def plan_event(name, args, out):
         if name != "submit_plan":  # submit_plan 在循环结束后单独留痕
+            research.append(name)
             record(task, "plan", name, json.dumps(args, ensure_ascii=False)[:60], out[:120])
 
     res = await run_tool_loop(
@@ -93,6 +104,7 @@ async def plan_task(task: TaskRecord, client: BailianLike) -> dict:
     )
     if res["fallback"] or not captured:
         plan = _default_plan()
+        task.plan = TaskPlan(decided_by="fallback", research_tools=research, **plan)
         record(
             task, "plan", "planner", user[:80],
             f"回退默认计划（{res['reason'] or '模型未提交'}）", "fallback",
@@ -107,6 +119,7 @@ async def plan_task(task: TaskRecord, client: BailianLike) -> dict:
         "heal_budget": max(0, min(HEAL_MAX_ROUNDS, budget)),
         "focus": str(captured.get("focus", ""))[:200],
     }
+    task.plan = TaskPlan(decided_by="planner", research_tools=research, **plan)
     record(
         task, "plan", "submit_plan", f"{len(req.platforms)} 平台",
         f"策略={plan['strategy'] or '—'} · heal_budget={plan['heal_budget']}",
@@ -236,12 +249,34 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
         compliance = ComplianceAgent()
         heal_deadline = time.monotonic() + HEAL_WALL_CLOCK_S
 
+        # 细粒度进度：每个平台拆成 文案 / 主图 / 合规 三阶段，避免进度条长时间卡在 30%
+        n_plat = len(req.platforms)
+        total_subs = n_plat * 3
+        done_subs = 0
+
+        def _advance(name: str, phase: str) -> None:
+            nonlocal done_subs
+            done_subs += 1
+            task.progress = round(0.3 + 0.7 * (done_subs / total_subs), 3)
+            task.stage = f"为 {name} {phase}"
+
         async def build_one(platform: str):
             rules = rules_map[platform]
-            task.stage = f"生成 {rules.get('displayName', platform)} 上架包"
+            name = rules.get("displayName", platform)
+            task.stage = f"为 {name} 生成文案"
             memories = memory_store.recall(platform, req.category, k=3)
             if memories:
                 memory_store.mark_hit([m["id"] for m in memories])
+                # 结构化留存：带历史命中次数，前端可直接展示"这条教训被复用过 N 次"
+                task.memory_recall.extend(
+                    MemoryLesson(
+                        lesson=str(m.get("lesson", ""))[:120],
+                        platform=platform,
+                        hit_count=int(m.get("hit_count", 0)),
+                        source_task=str(m.get("source_task", "")),
+                    )
+                    for m in memories
+                )
                 record(
                     task, "build", f"recall_memory[{platform}]", req.category,
                     "；".join(str(m.get("lesson", ""))[:24] for m in memories)[:120],
@@ -249,12 +284,19 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
             listing = await copy_agent.run(
                 req, understanding, platform, rules, focus=plan.get("focus", ""), memories=memories
             )
-            await visual_agent.run(understanding, listing, rules, image_ref)
+            _advance(name, "生成主图")
+            try:
+                await visual_agent.run(understanding, listing, rules, image_ref)
+            except Exception as exc:  # noqa: BLE001 —— 图片上游渠道不可用时不阻塞该平台文案包
+                logger.warning("平台 %s 图片生成失败: %s", platform, exc)
+                record(task, "build", f"image_gen[{platform}]", "主图生成", f"失败（网关渠道不可用）: {exc}", "error")
+            _advance(name, "自检合规")
             listing = await _heal_listing(
                 task, client, copy_agent, compliance, listing, rules, req.category,
                 budget=plan.get("heal_budget", 1),
                 deadline_left=heal_deadline - time.monotonic(),
             )
+            _advance(name, "已就绪")
             return listing
 
         task.listings = await asyncio.gather(*(build_one(p) for p in req.platforms))

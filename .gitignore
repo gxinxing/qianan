@@ -29,3 +29,60 @@ qianan/server/.env
 .DS_Store
 Thumbs.db
 *.log
+
+# ===== AI 工具本地配置目录（各类 Agent/IDE 工具的私有配置，不入库）=====
+.adal/
+.agents/
+.augment/
+.bob/
+.claude/
+.codebuddy/
+.codely-cli/
+.commandcode/
+.continue/
+.cortex/
+.crush/
+.factory/
+.goose/
+.iflow/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.trae/
+.vibe/
+.windsurf/
+.workbuddy/
+.zencoder/
+/skills/
+
+# ===== 环境变量备份（可能含真实密钥，严禁入库）=====
+.env.bak*
+
+# ===== 运行时数据（服务器运行产生的 jsonl；data/skills、data/evals 等代码性资产不受影响）=====
+qianan/server/data/*.jsonl
+qianan/server/data/evolution/*.jsonl
+qianan/server/data/memory/*.jsonl
+qianan/server/data/metrics/*.jsonl
+qianan/server/data/mock_seller/*.jsonl
+qianan/server/data/publish/*.jsonl
+
+# ===== 会话迁移记录（AI 对话导出，不入库）=====
+会话记录*.md
+
+# ===== SCF/部署构建产物（可由 SCF_DEPLOY.md 重建，不入库）=====
+qianan/server/deploy_pkg/
+qianan/server/deploy.zip
+qianan/server/cloudfunctions/
+
+# ===== 发布执行留痕（运行时产物）=====
+qianan/server/data/publish/pub-*/

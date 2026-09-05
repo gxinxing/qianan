@@ -5,7 +5,7 @@
 - http：声明式外部 API 连接器——url 模板 + 参数映射 + 响应取值，真实发 HTTP；
 - static：内置数据表原样返回（演示「拿到 key 后换 http 即可」的占位连接器）。
 
-安装流程：fetch（file:// 或 https://）→ 白名单校验 → 落盘 installed/ →
+安装流程：fetch（https://，或注册表白名单目录内的 file://）→ 白名单校验 → 落盘 installed/ →
 规则 overlay 由 rules_store 在读取时合并（不改 rules/*.json 源），
 tools 段注册进 agent_core.registry，规划器即可调用。
 卸载即删文件 + 注销工具 + cache_clear，规则库还原。
@@ -42,18 +42,24 @@ _HTTP_TOOL_TIMEOUT = 8
 
 
 def fetch_manifest(source: str) -> dict:
-    """从 file:// 路径或 https:// URL 拉取技能清单。"""
+    """拉取技能清单：https:// 远端，或 file:// 本地路径（必须位于注册表白名单目录内）。
+
+    安全边界：不接受任意 file:// / 裸绝对路径（否则等于开放任意文件读取）——
+    本地来源先 resolve 再校验必须落在 data/skills/registry/ 之下，其余协议一律拒绝。
+    """
     parsed = urlparse(source)
-    if parsed.scheme in ("file", "") or source.startswith("/"):
-        path = Path(parsed.path if parsed.scheme == "file" else source)
-        if not path.is_file():
-            raise ValueError(f"技能文件不存在: {source}")
-        return json.loads(path.read_text(encoding="utf-8"))
     if parsed.scheme == "https":
         resp = requests.get(source, timeout=_FETCH_TIMEOUT)
         resp.raise_for_status()
         return resp.json()
-    raise ValueError(f"不支持的技能来源（仅支持 file:// 或 https://）: {source}")
+    if parsed.scheme == "file":
+        path = Path(parsed.path).resolve()
+        if REGISTRY_DIR.resolve() not in path.parents:
+            raise ValueError(f"file:// 来源越界（仅允许 {REGISTRY_DIR} 目录内）: {source}")
+        if not path.is_file():
+            raise ValueError(f"技能文件不存在: {source}")
+        return json.loads(path.read_text(encoding="utf-8"))
+    raise ValueError(f"不支持的技能来源（仅支持 https:// 或注册表目录内 file://）: {source}")
 
 
 def validate_manifest(m: dict) -> list[str]:

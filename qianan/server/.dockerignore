@@ -1,0 +1,37 @@
+# ======================================================================
+# qianan/server 构建上下文裁剪（docker build context = ./qianan/server）
+# 目标：密钥、部署产物、运行时数据、本地环境一律不进镜像。
+# 注意：dockerignore 模式锚定在上下文根，需要递归匹配子目录时用 **/ 前缀。
+# ======================================================================
+
+# ---- 密钥 / 环境文件：运行时由 compose 只读挂载 /app/.env，绝不进镜像 ----
+.env*
+!.env.example
+.env.bak.0904
+
+# ---- 部署产物 / 云函数包：与镜像运行无关，且体积大 ----
+deploy.zip
+deploy_pkg/
+cloudfunctions/
+
+# ---- 运行时任务数据：data/ 由 compose 卷挂载提供 ----
+data/tasks/
+
+# ---- 本地虚拟环境 / Python 缓存 / 编译产物（含嵌套目录）----
+.venv/
+venv/
+**/__pycache__/
+**/*.py[cod]
+**/*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# ---- Node / 前端残留（防御性）----
+**/node_modules/
+
+# ---- 日志（含嵌套目录）----
+**/*.log
+
+# ---- 版本库 / 系统杂项 ----
+.git/
+**/.DS_Store
