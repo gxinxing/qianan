@@ -47,6 +47,8 @@ BASE_URL = os.getenv(
 )
 TEXT_MODEL = os.getenv("QIANAN_TEXT_MODEL", "qwen3.7-max")
 IMAGE_MODEL = os.getenv("QIANAN_IMAGE_MODEL", "qwen-image-2.0")
+#: 直连式图像网关（如 TokenDance seedream）的出图尺寸；部分模型有最小像素要求（如 ≥1920×1920）
+IMAGE_SIZE = os.getenv("QIANAN_IMAGE_SIZE", "1024x1024")
 VL_MODEL = os.getenv("QIANAN_VL_MODEL", "")  # 留空 = 网关无 VL 模型
 TIMEOUT = 180
 # —— HTTP 重试：百炼网关偶发 429/5xx/超时抖动，避免整条 pipeline 因此直接失败 ——
@@ -195,11 +197,12 @@ class BailianClient:
         return data["choices"][0]["message"]
 
     def image_gen(self, prompt: str, model: str | None = None, ref_image: str | None = None) -> str:
-        """图片生成，兼容两类网关：
+        """图片生成，兼容三类网关：
 
-        1. apimart.ai 等 OpenAI 兼容聚合网关：POST /images/generations 提交异步
+        1. apimart.ai 等任务式网关：POST /images/generations 提交异步
            T2I 任务 → 轮询 GET /tasks/{id}（支持 image_url 参考图 = 以图改图）。
-        2. 官方 token-plan（DashScope compatible-mode）：/images/generations 不可用，
+        2. TokenDance 等直连式网关：/images/generations 同步返回 data[].url。
+        3. 官方 token-plan（DashScope compatible-mode）：/images/generations 不可用，
           须走 /chat/completions + content 列表 [{"text":...}, {"image": ref}]；
           该方法失败时自动回退该路径。
         """
@@ -227,7 +230,7 @@ class BailianClient:
 
     def _async_image_gen(self, prompt: str, model: str, ref_image: str | None) -> str:
         """异步任务式图片生成（apimart 等聚合网关），含提交与轮询。"""
-        payload: dict = {"model": model, "prompt": prompt, "n": 1, "size": "1024x1024"}
+        payload: dict = {"model": model, "prompt": prompt, "n": 1, "size": IMAGE_SIZE}
         if ref_image:
             payload["image_url"] = ref_image
         resp = requests.post(
@@ -237,6 +240,14 @@ class BailianClient:
             data = resp.json()
         except ValueError as exc:
             raise _AsyncImageUnsupported(f"images/generations 非 JSON: {exc}") from exc
+        if resp.status_code == 200 and "task_id" not in json.dumps(data, ensure_ascii=False):
+            # 直连式网关（如 TokenDance seedream）：同步返回 data[].url，无任务轮询
+            items = data.get("data") or []
+            first = items[0] if isinstance(items, list) and items else None
+            url = first.get("url") if isinstance(first, dict) else None
+            if url:
+                return url
+            raise RuntimeError(f"直连式图片生成返回中未找到 URL: {str(data)[:200]}")
         if resp.status_code != 200 or "task_id" not in json.dumps(data, ensure_ascii=False):
             # 网关无该路由（如官方 token-plan）或任务提交失败
             err = str(data)[:200] if resp.status_code not in (404, 405) else "route not found"
