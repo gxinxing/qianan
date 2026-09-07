@@ -64,8 +64,16 @@ class VisualAgent:
             points="; ".join(understanding.selling_points[:3]) or "high quality",
             image_rules=image_rules or "白底、主体突出",
         )
-        url = await asyncio.to_thread(self.client.image_gen, text_prompt)
-        listing.images.append(url)
+        try:
+            url = await asyncio.to_thread(self.client.image_gen, text_prompt)
+            listing.images.append(url)
+            return
+        except Exception as exc:  # noqa: BLE001 —— 文生图也失败时用原图兜底，保证交付物永远有主图
+            logger.warning("文生图也失败（%s），回退原图占位: %s", listing.platform, exc)
+            if image_ref:
+                listing.images.append(image_ref)
+                return
+            raise
 
 
 def _image_brief(rules: dict) -> str:

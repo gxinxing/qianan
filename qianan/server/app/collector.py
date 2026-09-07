@@ -16,8 +16,9 @@ import time
 from pathlib import Path
 
 from . import mock_seller
+from .paths import writable_dir
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "metrics"
+DATA_DIR = writable_dir("data", "metrics")
 METRICS_FILE = DATA_DIR / "metrics.jsonl"
 
 CTR_ANOMALY_BASELINE = 0.02  # CTR 异常基线（跌破即视为标题/卖点不吸引）

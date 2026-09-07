@@ -12,6 +12,7 @@ import uuid
 from pathlib import Path
 from typing import Optional
 
+from .paths import writable_file
 from .schemas import GenerateRequest, TaskRecord
 
 logger = logging.getLogger(__name__)
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 _TASKS: dict[str, TaskRecord] = {}
 
 #: 归属关系的持久化文件（与 file_store 的 data/tasks 同级）
-_OWNERS_FILE = Path(__file__).resolve().parents[1] / "data" / "owners.json"
+_OWNERS_FILE = writable_file("data", "owners.json")
 _OWNERS: dict[str, str] = {}
 _OWNERS_LOADED = False
 

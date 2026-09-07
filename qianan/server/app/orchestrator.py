@@ -225,10 +225,16 @@ async def _heal_listing(
 
 async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
     req = task.request
+    abl = req.ablation  # Optional[AblationConfig], None = 完整管线
     task.status = TaskStatus.running
     try:
         # ⓪ Agent 规划
-        plan = await plan_task(task, client)
+        if abl and abl.disable_plan:
+            plan = _default_plan()
+            task.plan = TaskPlan(decided_by="ablated", **plan)
+            record(task, "plan", "planner", "ABLATED", "规划阶段已消融 · 使用默认计划", "ablated")
+        else:
+            plan = await plan_task(task, client)
         task.progress = 0.08
 
         # ① 商品理解
@@ -264,7 +270,8 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
             rules = rules_map[platform]
             name = rules.get("displayName", platform)
             task.stage = f"为 {name} 生成文案"
-            memories = memory_store.recall(platform, req.category, k=3)
+            use_memory = not (abl and abl.disable_memory)
+            memories = memory_store.recall(platform, req.category, k=3) if use_memory else []
             if memories:
                 memory_store.mark_hit([m["id"] for m in memories])
                 # 结构化留存：带历史命中次数，前端可直接展示"这条教训被复用过 N 次"
@@ -291,18 +298,27 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
                 logger.warning("平台 %s 图片生成失败: %s", platform, exc)
                 record(task, "build", f"image_gen[{platform}]", "主图生成", f"失败（网关渠道不可用）: {exc}", "error")
             _advance(name, "自检合规")
-            listing = await _heal_listing(
-                task, client, copy_agent, compliance, listing, rules, req.category,
-                budget=plan.get("heal_budget", 1),
-                deadline_left=heal_deadline - time.monotonic(),
-            )
+            if abl and abl.disable_heal:
+                # 消融：跳过自愈，仅跑一次合规体检（结果页仍可见合规状态）
+                compliance.run(listing, rules, req.category)
+                record(task, "heal", f"run_compliance_check[{platform}]", listing.display_name,
+                       f"消融模式 · {len(listing.compliance)} 项提示（不自愈）", "ablated")
+            else:
+                listing = await _heal_listing(
+                    task, client, copy_agent, compliance, listing, rules, req.category,
+                    budget=plan.get("heal_budget", 1),
+                    deadline_left=heal_deadline - time.monotonic(),
+                )
             _advance(name, "已就绪")
             return listing
 
         task.listings = await asyncio.gather(*(build_one(p) for p in req.platforms))
 
         # ⑥ 评审 Agent 反思：对比事实档案与输出，蒸馏教训入记忆（失败回退模板）
-        await self_reflect(task, client)
+        if abl and abl.disable_reflect:
+            record(task, "reflect", "self_reflect", "ABLATED", "反思阶段已消融 · 不回写记忆", "ablated")
+        else:
+            await self_reflect(task, client)
 
         task.stage = "完成"
         task.progress = 1.0

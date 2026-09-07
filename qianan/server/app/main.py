@@ -59,42 +59,52 @@ logger = logging.getLogger(__name__)
 _client = None
 
 
+def _get_client_cached():
+    """懒加载百炼客户端：uvicorn 走 lifespan 预热；SCF Event 路径无 lifespan，首次调用兜底。"""
+    global _client
+    if _client is None:
+        _client = get_client()
+        skill_store.ensure_registered()  # 按已安装清单重建工具注册表（连接器等启动后立即可用）
+        logger.info("百炼客户端就绪（mock=%s）", _client.is_mock)
+    return _client
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global _client
-    _client = get_client()
-    skill_store.ensure_registered()  # 启动即按已安装清单重建工具注册表（连接器等启动后立即可用）
-    logger.info("百炼客户端就绪（mock=%s）", _client.is_mock)
+    _get_client_cached()
     yield
 
 
 app = FastAPI(title="千岸 QianAn API", version="0.1.0", lifespan=lifespan)
 
-# 允许的来源：本地开发 + CloudBase 静态托管（含自定义域名与预览域名）
-# 额外来源用 QIANAN_CORS_ORIGINS 逗号分隔追加
-_BASE_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://ai-native-d5gfb0dm2a28d1fe9-1419921079.tcloudbaseapp.com",
-]
-_EXTRA_ORIGINS = [o.strip() for o in os.getenv("QIANAN_CORS_ORIGINS", "").split(",") if o.strip()]
+# CORS 注意：CloudBase 网关本身已注入 CORS 头，后端不再重复添加，
+# 否则浏览器收到两个 Access-Control-Allow-Origin 值会拒绝请求。
+# 本地开发（无网关）需要 CORS 时设 QIANAN_ENABLE_CORS=1。
+_ENABLE_CORS = os.getenv("QIANAN_ENABLE_CORS", "0") not in ("0", "false", "")
+if _ENABLE_CORS:
+    _BASE_ORIGINS = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://ai-native-d5gfb0dm2a28d1fe9-1419921079.tcloudbaseapp.com",
+    ]
+    _EXTRA_ORIGINS = [o.strip() for o in os.getenv("QIANAN_CORS_ORIGINS", "").split(",") if o.strip()]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_BASE_ORIGINS + _EXTRA_ORIGINS,
-    allow_origin_regex=r"https://[a-z0-9-]+\.(tcloudbaseapp\.com|tcloudbase\.com|cloudbase\.net|app\.tcloudbase\.com)",
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["Content-Disposition"],
-    max_age=86400,
-)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=_BASE_ORIGINS + _EXTRA_ORIGINS,
+        allow_origin_regex=r"https://[a-z0-9-]+\.(tcloudbaseapp\.com|tcloudbase\.com|cloudbase\.net|app\.tcloudbase\.com)",
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["Content-Disposition"],
+        max_age=86400,
+    )
 
 
 @app.get("/api/health")
 async def health():
     return {
         "status": "ok",
-        "mock": _client.is_mock if _client else None,
+        "mock": _get_client_cached().is_mock,
         "auth": {
             "ready": cbauth.auth_ready(),
             "require_auth": cbauth.REQUIRE_AUTH,
@@ -193,7 +203,8 @@ async def audit(req: AuditRequest):
 
 # ---------- 评测集（Evals：合规规则与历史事故的回归测试） ----------
 
-EVALS_REPORT = Path(__file__).resolve().parents[1] / "data" / "evals" / "report.json"
+from .paths import readonly_dir
+EVALS_REPORT = readonly_dir("data", "evals") / "report.json"
 
 _EMPTY_EVALS_REPORT = {
     "generated_at": None,
@@ -248,7 +259,7 @@ async def ideation(req: IdeationRequest):
     装了趋势连接器 → 实时热搜注入选品 prompt（trend_source=live）；
     装了竞品连接器 → 顺带返回类目价格带。未装则静默降级，建议照常生成。
     """
-    agent = IdeationAgent(_client)
+    agent = IdeationAgent(_get_client_cached())
     (trends, trend_source), (band, band_source) = await asyncio.gather(
         extdata.hot_keywords(req.market), extdata.competitor_band(req.category)
     )
@@ -309,7 +320,7 @@ async def generate(req: GenerateRequest, user: dict = Depends(cbauth.require_use
 
 async def _run_and_persist(task: TaskRecord) -> None:
     """跑完流水线并把成品写入文件仓库（后台任务）。"""
-    await run_pipeline(task, _client)
+    await run_pipeline(task, _get_client_cached())
     if task.status == TaskStatus.done:
         try:
             persist_task(task)
@@ -323,7 +334,7 @@ async def _maybe_evolve() -> None:
     done = sum(1 for t in list_tasks() if t.status == TaskStatus.done)
     if done and done % 3 == 0:
         try:
-            result = await evolution.evolve(_client)
+            result = await evolution.evolve(_get_client_cached())
             logger.info("进化分析（自动）：%s", result)
         except Exception:  # noqa: BLE001
             logger.exception("进化分析失败（不影响主流程）")
@@ -839,7 +850,7 @@ async def proposals_list():
 async def evolve_now(user: dict = Depends(cbauth.require_user)):
     """手动触发一轮进化分析：读记忆+差评，产出提案待人工审批（不自动生效）。"""
     try:
-        return {"result": await evolution.evolve(_client)}
+        return {"result": await evolution.evolve(_get_client_cached())}
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=502, detail=f"进化分析失败: {exc}") from exc
 

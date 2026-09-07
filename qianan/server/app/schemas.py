@@ -26,6 +26,19 @@ class IdeationSuggestion(BaseModel):
     category: str = "home_kitchen"
 
 
+class AblationConfig(BaseModel):
+    """消融实验配置：控制各 Agentic 组件的启用/禁用（默认全开 = 完整管线）。
+
+    用于 ablation study：逐个关闭组件，度量对输出质量的影响。
+    所有字段默认 False = 组件正常运行；True = 跳过该组件。
+    """
+
+    disable_plan: bool = Field(default=False, description="跳过规划阶段，直接用默认计划")
+    disable_memory: bool = Field(default=False, description="跳过长期记忆召回与注入")
+    disable_heal: bool = Field(default=False, description="跳过合规自愈循环")
+    disable_reflect: bool = Field(default=False, description="跳过反思阶段（不回写记忆）")
+
+
 class GenerateRequest(BaseModel):
     """一稿输入：一张白底主图 + 中文卖点。"""
 
@@ -35,6 +48,7 @@ class GenerateRequest(BaseModel):
     image_url: Optional[str] = Field(default=None, description="商品图公网 URL（仅 https）")
     image_base64: Optional[str] = Field(default=None, max_length=20_000_000, description="商品图 base64（≤20MB）")
     platforms: list[str] = Field(default_factory=lambda: list(ALL_PLATFORMS), max_length=10)
+    ablation: Optional[AblationConfig] = Field(default=None, description="消融实验配置（默认 None = 完整管线）")
 
 
 class AuditRequest(BaseModel):

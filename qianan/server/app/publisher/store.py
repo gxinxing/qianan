@@ -6,9 +6,10 @@ import threading
 import uuid
 from pathlib import Path
 
+from ..paths import writable_dir
 from ..schemas import PublishJob
 
-DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "publish"
+DATA_DIR = writable_dir("data", "publish")
 JOBS_FILE = DATA_DIR / "jobs.jsonl"
 
 _LOCK = threading.Lock()

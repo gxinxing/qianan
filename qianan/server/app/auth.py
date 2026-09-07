@@ -30,6 +30,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Optional
 
+from .paths import writable_file
 from fastapi import HTTPException, Request
 
 # ───────────────────── 配置 ─────────────────────
@@ -50,7 +51,7 @@ TOKEN_TTL = int(os.getenv("QIANAN_TOKEN_TTL", "86400"))  # 24h
 PW_MIN_LEN = 6
 USER_MIN_LEN = 3
 
-_USERS_FILE = Path(__file__).resolve().parents[1] / "data" / "users.json"
+_USERS_FILE = writable_file("data", "users.json")
 _USERS: dict[str, dict] = {}  # username(lower) -> {uid, username, salt, pw_hash}
 _LOADED = False
 

@@ -17,14 +17,11 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 from .import_files import build_import_files
+from .paths import writable_dir
 from .schemas import TaskRecord, TaskStatus
 
-# 云函数等只读文件系统部署：用 QIANAN_DATA_DIR 把任务包落到可写目录（如 /tmp/qianan-data）
-_DATA_DIR_ENV = os.getenv("QIANAN_DATA_DIR", "")
-if _DATA_DIR_ENV:
-    DATA_DIR = Path(_DATA_DIR_ENV)
-else:
-    DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "tasks"
+# 云函数等只读文件系统部署：用 paths.writable_dir 自动回退到 QIANAN_DATA_DIR
+DATA_DIR = writable_dir("data", "tasks")
 IMAGE_DIR_NAME = "images"
 
 

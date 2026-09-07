@@ -21,7 +21,9 @@ import time
 import uuid
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "mock_seller"
+from .paths import writable_dir
+
+DATA_DIR = writable_dir("data", "mock_seller")
 LISTINGS_FILE = DATA_DIR / "listings.jsonl"
 
 TIME_SCALE = float(os.environ.get("MOCK_TIME_SCALE", "60"))  # 逻辑秒 / 真实秒
