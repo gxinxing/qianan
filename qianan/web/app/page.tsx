@@ -398,7 +398,7 @@ export default function HomePage() {
         image_base64: imageBase64 || undefined,
         platforms,
       });
-      router.push(`/result/${task_id}`);
+      router.push(`/result?taskId=`);
     } catch (e) {
       setError(`无法连接后端：${String(e)}`);
       setLoading(false);

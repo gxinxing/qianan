@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import Nav from "@/components/Nav";
 import PublishPanel from "@/components/PublishPanel";
 import AgentTracePanel from "@/components/AgentTracePanel";
@@ -214,8 +214,8 @@ function FieldIssues({
 }
 
 export default function ResultPage() {
-  const params = useParams<{ taskId: string }>();
-  const taskId = params?.taskId;
+  const searchParams = useSearchParams();
+  const taskId = searchParams.get("taskId") || "";
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [active, setActive] = useState(0);
   const [feedback, setFeedback] = useState<Record<string, number>>({});
