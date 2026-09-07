@@ -1,1 +1,0 @@
-self.__REACT_LOADABLE_MANIFEST="{\"app/result/[taskId]/page.tsx -> @/lib/api\":{\"id\":\"app/result/[taskId]/page.tsx -> @/lib/api\",\"files\":[]}}"

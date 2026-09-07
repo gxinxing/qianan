@@ -86,3 +86,10 @@ qianan/server/cloudfunctions/
 
 # ===== 发布执行留痕（运行时产物）=====
 qianan/server/data/publish/pub-*/
+
+# ===== 构建实验残留垃圾（2026-09-07 清理，防复发）=====
+qianan/web/.next.trash*/
+qianan/web/.next-trash*/
+qianan/web/out.trash*/
+qianan/web/out-trash*/
+qianan/web/.taskId-trash/
