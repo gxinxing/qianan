@@ -188,7 +188,7 @@
 <div class="mock-badge">Demo mock page · not affiliated with Amazon</div>
 
 <script>
-  var QA_API = new URLSearchParams(location.search).get("api") || "http://localhost:8001";
+  var QA_API = new URLSearchParams(location.search).get("api") || "";
 
   var FILL_MAP = {
     title: "title", brand: "brand", sku: "sku",
@@ -279,7 +279,7 @@
       location.hash = "#live/" + data.listing_id;
       renderLive(data.listing);
     } catch (e) {
-      showError("提交失败：" + e.message + "（确认千岸后端在 " + QA_API + " 运行）");
+      showError("提交失败：" + e.message + "（确认千岸后端在 " + (QA_API || location.origin) + " 运行）");
     } finally {
       btn.disabled = false;
       btn.textContent = "Save and Finish";
