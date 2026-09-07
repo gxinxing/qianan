@@ -1,28 +1,28 @@
 {
   "version": "1.0.0",
-  "projectId": "qianan-hackathon",
+  "envId": "ai-native-d5gfb0dm2a28d1fe9",
+  "functionRoot": "../qianan/server",
   "functions": [
     {
       "name": "qianan-api",
+      "handler": "scf_entry.main_handler",
       "runtime": "Python3.10",
-      "source": "../qianan/server/deploy_pkg",
       "timeout": 120,
+      "memorySize": 512,
+      "installDependency": false,
       "envVariables": {
         "BAILIAN_API_KEY": "${env.BAILIAN_API_KEY}",
-        "QIANAN_MOCK": "1",
-        "BAILIAN_BASE_URL": "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1",
+        "BAILIAN_BASE_URL": "https://tokendance.space/gateway/v1",
+        "QIANAN_DATA_DIR": "/tmp/qianan-data",
+        "QIANAN_IMAGE_MODEL": "seedream-5.0-lite",
+        "QIANAN_IMAGE_SIZE": "2048x2048",
+        "QIANAN_JWT_SECRET": "${env.QIANAN_JWT_SECRET}",
+        "QIANAN_MOCK": "0",
+        "QIANAN_REQUIRE_AUTH": "0",
         "QIANAN_TEXT_MODEL": "qwen3.7-max",
-        "QIANAN_IMAGE_MODEL": "qwen-image-2.0",
-        "QIANAN_VL_MODEL": ""
+        "QIANAN_VL_MODEL": "qwen3-vl-plus",
+        "TENCENT_SCF": "1"
       }
     }
-  ],
-  "hosting": {
-    "public": "../qianan/web/.next",
-    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
-    "rewrites": [
-      { "source": "/api/**", "function": "qianan-api" },
-      { "source": "**", "destination": "/index.html" }
-    ]
-  }
+  ]
 }

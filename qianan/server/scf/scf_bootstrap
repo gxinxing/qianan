@@ -1,0 +1,5 @@
+#!/bin/bash
+# SCF Web 函数（Type=HTTP）启动脚本
+# 平台要求：绝对路径（Python3.10）、LF 行尾、可执行权限
+export PORT=9000
+/var/lang/python310/bin/python3.10 -u scf_serve.py
