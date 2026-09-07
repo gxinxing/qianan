@@ -2,7 +2,9 @@ services:
   backend:
     build: ./qianan/server
     ports:
-      - "8000:8000"
+      # 宿主 8100 → 容器 8000：避开 8000 端口常见占用（本地 dev server / 其他项目），
+      # 保证浏览器访问地址唯一确定；容器内部仍是 8000（healthcheck 不受影响）
+      - "8100:8000"
     # 配置唯一事实源：server/.env（真实网关 / 密钥 / 模型名都在里面，已被 .gitignore 排除）。
     # 旧版这里的 ${BAILIAN_API_KEY:-}、${QIANAN_VL_MODEL:-} 等空值会把 .env 的真实配置
     # "压空"（应用侧 setdefault 不覆盖已存在的空变量 → 静默降级 mock、网关/模型配错），
@@ -38,7 +40,7 @@ services:
       dockerfile: Dockerfile
       args:
         # NEXT_PUBLIC_* 是构建期内联变量，必须走 build args（写 environment 运行时不生效）
-        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8100}
     ports:
       - "3000:3000"
     depends_on:

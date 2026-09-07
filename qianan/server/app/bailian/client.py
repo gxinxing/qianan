@@ -233,9 +233,24 @@ class BailianClient:
         payload: dict = {"model": model, "prompt": prompt, "n": 1, "size": IMAGE_SIZE}
         if ref_image:
             payload["image_url"] = ref_image
-        resp = requests.post(
-            f"{BASE_URL}/images/generations", headers=_headers(), json=payload, timeout=120
-        )
+        # 提交请求带网络级重试（与 _post 同策略）：直连式网关对 SSL/超时抖动敏感，
+        # 一次抖动不应导致整个平台缺图（E2E 自检实测 amazon 因此缺图）
+        resp = None
+        for attempt in range(1, _MAX_ATTEMPTS + 1):
+            try:
+                resp = requests.post(
+                    f"{BASE_URL}/images/generations", headers=_headers(), json=payload, timeout=120
+                )
+                break
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                if attempt == _MAX_ATTEMPTS:
+                    raise
+                delay = _retry_delay(None, attempt)
+                logger.warning(
+                    "图片提交第 %d/%d 次尝试网络异常(%s)，%.1fs 后重试",
+                    attempt, _MAX_ATTEMPTS, type(exc).__name__, delay,
+                )
+                time.sleep(delay)
         try:
             data = resp.json()
         except ValueError as exc:
@@ -262,7 +277,10 @@ class BailianClient:
         deadline = time.monotonic() + 180
         while time.monotonic() < deadline:
             time.sleep(4)
-            r = requests.get(f"{BASE_URL}/tasks/{tid}", headers=_headers(), timeout=30)
+            try:
+                r = requests.get(f"{BASE_URL}/tasks/{tid}", headers=_headers(), timeout=30)
+            except (requests.Timeout, requests.ConnectionError):
+                continue  # 轮询请求抖动直接进下一轮，不消耗任务进度
             try:
                 d = (r.json() or {}).get("data") or {}
             except ValueError:

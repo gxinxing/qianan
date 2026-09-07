@@ -1,0 +1,320 @@
+[
+  {
+    "listings_n": 5,
+    "compliance_pass_rate": 1.0,
+    "compliance_passed": 5,
+    "errors_total": 0,
+    "warns_total": 16,
+    "revised_total": 0,
+    "text_total_chars": 1132,
+    "text_avg_chars": 226.4,
+    "cross_platform_diversity": 0.04,
+    "elapsed_s": 0.01,
+    "plan_decided_by": "fallback",
+    "plan_strategy": "默认流水线：理解→规则匹配→并行生成→体检自愈",
+    "memory_recall_count": 15,
+    "reflection_count": 0,
+    "trace_count": 16,
+    "platforms": [
+      {
+        "platform": "amazon",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "shopee",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 69
+      },
+      {
+        "platform": "aliexpress",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 4,
+        "title_len": 64
+      },
+      {
+        "platform": "lazada",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "tiktokshop",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      }
+    ],
+    "config": "A_Full",
+    "ablation": null,
+    "status": "TaskStatus.done"
+  },
+  {
+    "listings_n": 5,
+    "compliance_pass_rate": 1.0,
+    "compliance_passed": 5,
+    "errors_total": 0,
+    "warns_total": 16,
+    "revised_total": 0,
+    "text_total_chars": 1132,
+    "text_avg_chars": 226.4,
+    "cross_platform_diversity": 0.04,
+    "elapsed_s": 0.0,
+    "plan_decided_by": "ablated",
+    "plan_strategy": "默认流水线：理解→规则匹配→并行生成→体检自愈",
+    "memory_recall_count": 15,
+    "reflection_count": 0,
+    "trace_count": 16,
+    "platforms": [
+      {
+        "platform": "amazon",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "shopee",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 69
+      },
+      {
+        "platform": "aliexpress",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 4,
+        "title_len": 64
+      },
+      {
+        "platform": "lazada",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "tiktokshop",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      }
+    ],
+    "config": "B_NoPlan",
+    "ablation": {
+      "disable_plan": true
+    },
+    "status": "TaskStatus.done"
+  },
+  {
+    "listings_n": 5,
+    "compliance_pass_rate": 1.0,
+    "compliance_passed": 5,
+    "errors_total": 0,
+    "warns_total": 16,
+    "revised_total": 0,
+    "text_total_chars": 1132,
+    "text_avg_chars": 226.4,
+    "cross_platform_diversity": 0.04,
+    "elapsed_s": 0.0,
+    "plan_decided_by": "fallback",
+    "plan_strategy": "默认流水线：理解→规则匹配→并行生成→体检自愈",
+    "memory_recall_count": 0,
+    "reflection_count": 0,
+    "trace_count": 11,
+    "platforms": [
+      {
+        "platform": "amazon",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "shopee",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 69
+      },
+      {
+        "platform": "aliexpress",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 4,
+        "title_len": 64
+      },
+      {
+        "platform": "lazada",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "tiktokshop",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      }
+    ],
+    "config": "C_NoMemory",
+    "ablation": {
+      "disable_memory": true
+    },
+    "status": "TaskStatus.done"
+  },
+  {
+    "listings_n": 5,
+    "compliance_pass_rate": 1.0,
+    "compliance_passed": 5,
+    "errors_total": 0,
+    "warns_total": 16,
+    "revised_total": 0,
+    "text_total_chars": 1132,
+    "text_avg_chars": 226.4,
+    "cross_platform_diversity": 0.04,
+    "elapsed_s": 0.0,
+    "plan_decided_by": "fallback",
+    "plan_strategy": "默认流水线：理解→规则匹配→并行生成→体检自愈",
+    "memory_recall_count": 15,
+    "reflection_count": 0,
+    "trace_count": 16,
+    "platforms": [
+      {
+        "platform": "amazon",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "shopee",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 69
+      },
+      {
+        "platform": "aliexpress",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 4,
+        "title_len": 64
+      },
+      {
+        "platform": "lazada",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "tiktokshop",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      }
+    ],
+    "config": "D_NoHeal",
+    "ablation": {
+      "disable_heal": true
+    },
+    "status": "TaskStatus.done"
+  },
+  {
+    "listings_n": 5,
+    "compliance_pass_rate": 1.0,
+    "compliance_passed": 5,
+    "errors_total": 0,
+    "warns_total": 16,
+    "revised_total": 0,
+    "text_total_chars": 1132,
+    "text_avg_chars": 226.4,
+    "cross_platform_diversity": 0.04,
+    "elapsed_s": 0.0,
+    "plan_decided_by": "fallback",
+    "plan_strategy": "默认流水线：理解→规则匹配→并行生成→体检自愈",
+    "memory_recall_count": 15,
+    "reflection_count": 0,
+    "trace_count": 12,
+    "platforms": [
+      {
+        "platform": "amazon",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "shopee",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 69
+      },
+      {
+        "platform": "aliexpress",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 4,
+        "title_len": 64
+      },
+      {
+        "platform": "lazada",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      },
+      {
+        "platform": "tiktokshop",
+        "compliance_passed": true,
+        "revised_count": 0,
+        "errors": 0,
+        "warns": 3,
+        "title_len": 64
+      }
+    ],
+    "config": "E_NoReflect",
+    "ablation": {
+      "disable_reflect": true
+    },
+    "status": "TaskStatus.done"
+  }
+]

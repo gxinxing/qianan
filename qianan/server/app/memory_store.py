@@ -15,7 +15,9 @@ import time
 import uuid
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parents[1] / "data" / "memory"
+from .paths import writable_dir
+
+DATA_DIR = writable_dir("data", "memory")
 EXPERIENCE_FILE = DATA_DIR / "experiences.jsonl"
 FEEDBACK_FILE = DATA_DIR / "feedback.jsonl"
 

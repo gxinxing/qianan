@@ -23,11 +23,12 @@ import requests
 
 from .agent_core import registry
 from .bailian.client import BailianLike
+from .paths import readonly_dir, writable_dir
 from .schemas import ALL_PLATFORMS
 
-SKILLS_DIR = Path(__file__).resolve().parents[1] / "data" / "skills"
+SKILLS_DIR = readonly_dir("data", "skills")
 REGISTRY_DIR = SKILLS_DIR / "registry"
-INSTALLED_DIR = SKILLS_DIR / "installed"
+INSTALLED_DIR = writable_dir("data", "skills", "installed")
 
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{1,40}$")
 _TOOL_NAME_RE = re.compile(r"^[a-z][a-z0-9_]{1,40}$")
@@ -222,7 +223,7 @@ def _manifests() -> list[dict]:
     return out
 
 
-EVOLUTION_OVERLAYS_DIR = Path(__file__).resolve().parents[1] / "data" / "evolution" / "overlays"
+EVOLUTION_OVERLAYS_DIR = readonly_dir("data", "evolution", "overlays")
 
 
 def rules_patch(platform: str) -> dict:

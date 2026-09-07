@@ -20,25 +20,13 @@ from .. import collector, memory_store, prompt_store
 from ..agent_core.loop import run_tool_loop
 from ..agent_core.registry import ToolSpec
 from ..bailian.client import BailianLike
+from ..paths import writable_dir
 from ..rules_store import cache_clear
 from ..schemas import ALL_PLATFORMS
 
 logger = logging.getLogger(__name__)
 
-
-def _resolve_evolution_dir() -> Path:
-    """定位 data/evolution：env 优先，其次向上回退两级探测（兼容云函数只读布局）。"""
-    env = os.getenv("QIANAN_EVOLUTION_DIR", "")
-    if env:
-        return Path(env)
-    here = Path(__file__).resolve()
-    for cand in (here.parents[2] / "data" / "evolution", here.parents[1] / "data" / "evolution"):
-        if cand.is_dir():
-            return cand
-    return here.parents[1] / "data" / "evolution"
-
-
-DATA_DIR = _resolve_evolution_dir()
+DATA_DIR = writable_dir("data", "evolution")
 PROPOSALS_FILE = DATA_DIR / "proposals.jsonl"
 OVERLAYS_DIR = DATA_DIR / "overlays"
 
