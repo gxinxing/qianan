@@ -18,8 +18,6 @@ from __future__ import annotations
 import asyncio
 import json
 
-import pytest
-
 from app.agents.review import _SEVERITY_BY_TYPE, review_listing
 from app.schemas import PlatformListing, Understanding
 

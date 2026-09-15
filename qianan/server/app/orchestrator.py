@@ -550,7 +550,7 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
         # run_pipeline 自动做合规+自愈，但视觉失败被捕获后续跑，必须再过一次闸门；不过闸一律降为 partial。
         gate = evaluate_delivery_gate(
             req.platforms,
-            {l.platform: l for l in task.listings},
+            {item.platform: item for item in task.listings},
             set(req.platforms),
         )
         if gate["ok"]:

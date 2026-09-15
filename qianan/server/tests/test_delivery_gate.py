@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import pytest
 
+from app.agent_core.registry import ToolSpec
 from app.chat_agent import IMAGE_ONLY_FIELDS, evaluate_delivery_gate
 from app.schemas import ComplianceIssue, PlatformListing, TaskStatus
 
@@ -205,8 +206,6 @@ class _FakeClient:
 
 
 def _noop_tool() -> "ToolSpec":
-    from app.agent_core.registry import ToolSpec
-
     async def handler() -> str:
         return "ok"
 

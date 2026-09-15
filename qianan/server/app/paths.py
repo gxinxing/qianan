@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Union
 
 _HERE = Path(__file__).resolve().parent  # app/
 _PKG_ROOT = _HERE.parent                 # server/ (= /var/user on SCF)

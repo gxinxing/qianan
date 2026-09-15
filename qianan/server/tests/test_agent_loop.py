@@ -23,20 +23,17 @@ import pytest
 
 import app.agents.reflection as reflection_mod
 import app.chat_agent as chat_agent
-from app.chat_agent import run_chat_agent
-from app.agents.compliance import ComplianceAgent
 from app.agents.copywriting import CopywritingAgent
 from app.agents.understanding import ProductUnderstandingAgent
 from app.agents.visual import VisualAgent
+from app.chat_agent import run_chat_agent
 from app.schemas import (
-    ComplianceIssue,
     GenerateRequest,
     PlatformListing,
     TaskRecord,
     TaskStatus,
     Understanding,
 )
-
 
 # ------------------------------------------------------------ 脚本客户端
 
@@ -50,7 +47,7 @@ class ScriptedClient:
 
     is_mock = False
 
-    def __init__(self, script: list[tuple[str, str | None]] | None = None, repeat: tuple[str, str | None] | None = None) -> None:
+    def __init__(self, script: list[tuple[str, str | None]] | None = None, repeat: tuple[str, str | None] | None = None) -> None:  # noqa: E501
         self.script = list(script or [])
         self.repeat = repeat
         self.calls = 0

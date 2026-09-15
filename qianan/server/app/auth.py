@@ -30,8 +30,9 @@ import uuid
 from pathlib import Path
 from typing import Any, Optional
 
-from .paths import writable_file
 from fastapi import HTTPException, Request
+
+from .paths import writable_file
 
 # ───────────────────── 配置 ─────────────────────
 #: JWT 签名密钥：不设硬编码兜底（仓库里的常量等于公开密钥，任何人可伪造令牌）。

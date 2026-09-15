@@ -9,7 +9,6 @@ from __future__ import annotations
 import json
 import logging
 import uuid
-from pathlib import Path
 from typing import Optional
 
 from .paths import writable_file
