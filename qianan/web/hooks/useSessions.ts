@@ -53,18 +53,26 @@ function saveToStorage(sessions: Session[]) {
 }
 
 export function useSessions() {
-  const [sessions, setSessions] = useState<Session[]>(() => loadFromStorage());
+  // Server and first client render must match. Restore browser-only history after hydration.
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [hydrated, setHydrated] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    setSessions(loadFromStorage());
+    setHydrated(true);
+  }, []);
+
   // 防抖持久化
   useEffect(() => {
+    if (!hydrated) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => saveToStorage(sessions), 500);
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [sessions]);
+  }, [hydrated, sessions]);
 
   const currentSession = sessions.find((s) => s.id === currentSessionId) || undefined;
 
