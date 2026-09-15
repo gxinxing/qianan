@@ -13,7 +13,6 @@ import pytest
 
 from app.bailian.client import _FATAL_MARKERS, _is_fatal_error
 
-
 # ------------------------------------------------------------------ 应判为致命
 
 @pytest.mark.parametrize("status", [401, 403])

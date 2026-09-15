@@ -15,13 +15,12 @@
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
-import time
 from typing import Any
 
+from . import memory_store
 from .agent_core.loop import run_tool_loop
 from .agent_core.registry import ToolSpec
 from .agent_core.trace import record
@@ -32,16 +31,12 @@ from .agents.rules_engine import RulesEngineAgent
 from .agents.understanding import ProductUnderstandingAgent
 from .agents.visual import VisualAgent
 from .bailian.client import BailianLike, resolve_image_ref
-from . import memory_store
 from .schemas import (
-    AgentReflection,
-    GenerateRequest,
     MemoryLesson,
     PlatformListing,
     TaskPlan,
     TaskRecord,
     TaskStatus,
-    Understanding,
 )
 
 logger = logging.getLogger(__name__)
@@ -238,7 +233,7 @@ async def run_chat_agent(
         )
         record(task, "build", "understand_product", "完成", summary[:120])
         if on_event:
-            on_event("text", f"好的，我看了这个商品。它是一个{understanding.product_type}，主要卖点是{'、'.join(understanding.selling_points[:3])}。接下来我来为各平台生成上架文案。")
+            on_event("text", f"好的，我看了这个商品。它是一个{understanding.product_type}，主要卖点是{'、'.join(understanding.selling_points[:3])}。接下来我来为各平台生成上架文案。")  # noqa: E501
         return summary
 
     async def tool_generate(platform: str) -> str:
@@ -285,8 +280,8 @@ async def run_chat_agent(
         bullets_count = len(listing.bullets)
         if on_event:
             on_event("listing", _listing_detail(listing))
-            on_event("text", f"{display}文案已生成。标题：{title_preview}{'...' if len(listing.title) > 80 else ''}，{bullets_count} 条卖点描述。让我检查一下合规性。")
-        return f"平台: {display}\n标题: {title_preview}\n五点描述: {bullets_count} 条\n描述长度: {len(listing.description)} 字符"
+            on_event("text", f"{display}文案已生成。标题：{title_preview}{'...' if len(listing.title) > 80 else ''}，{bullets_count} 条卖点描述。让我检查一下合规性。")  # noqa: E501
+        return f"平台: {display}\n标题: {title_preview}\n五点描述: {bullets_count} 条\n描述长度: {len(listing.description)} 字符"  # noqa: E501
 
     async def tool_review(platform: str) -> str:
         """合规审核：规则引擎（确定性）+ 语义审核（事实一致性）。"""
@@ -331,7 +326,7 @@ async def run_chat_agent(
         if total_errors == 0:
             record(task, "heal", f"review_listing[{platform}]", display, f"通过（{total_warns} 项提示）")
             if on_event:
-                on_event("text", f"{display}文案审核通过！没有阻断级问题。" + (f" 有 {total_warns} 项提示可后续优化。" if total_warns else ""))
+                on_event("text", f"{display}文案审核通过！没有阻断级问题。" + (f" 有 {total_warns} 项提示可后续优化。" if total_warns else ""))  # noqa: E501
             return f"审核通过。{total_warns} 项提示。"
         else:
             error_msgs = "; ".join(f"{i.field}: {i.message}" for i in errors[:5])
@@ -388,7 +383,7 @@ async def run_chat_agent(
             else:
                 on_event("text", f"{display}文案已修订，但还有 {len(remaining)} 个问题暂时无法通过文案修改解决。")
 
-        return f"已修订（第 {revised.revised_count} 轮）。" + ("全部修复。" if not remaining else f"仍有 {len(remaining)} 项 error。")
+        return f"已修订（第 {revised.revised_count} 轮）。" + ("全部修复。" if not remaining else f"仍有 {len(remaining)} 项 error。")  # noqa: E501
 
     async def tool_images(platform: str) -> str:
         """生成主图和详情图（以图改图）。"""
@@ -497,7 +492,7 @@ async def run_chat_agent(
         except Exception as exc:  # noqa: BLE001
             logger.warning("反思失败: %s", exc)
 
-        platforms_done = [l.display_name or l.platform for l in listings]
+        platforms_done = [item.display_name or item.platform for item in listings]
         total = len(req.platforms)
         summary = f"已为 {len(listings)}/{total} 个平台生成上架包：{', '.join(platforms_done)}。"
         if len(listings) == total:
@@ -629,8 +624,8 @@ async def run_chat_agent(
 
         gate = evaluate_delivery_gate(
             req.platforms,
-            {l.platform: l for l in task.listings},
-            {l.platform for l in task.listings if l.compliance_passed},
+            {item.platform: item for item in task.listings},
+            {item.platform for item in task.listings if item.compliance_passed},
             RulesEngineAgent().run(req.platforms),
         )
         if not gate["ok"]:

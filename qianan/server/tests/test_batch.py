@@ -9,8 +9,6 @@
 """
 from __future__ import annotations
 
-import pytest
-
 
 async def _async_noop(*args, **kwargs):  # noqa: ANN001
     return None

@@ -228,7 +228,7 @@ async def audit(req: AuditRequest):
 
 # ---------- 评测集（Evals：合规规则与历史事故的回归测试） ----------
 
-from .paths import readonly_dir
+from .paths import readonly_dir  # noqa: E402
 EVALS_REPORT = readonly_dir("data", "evals") / "report.json"
 
 _EMPTY_EVALS_REPORT = {
@@ -463,9 +463,9 @@ async def _maybe_evolve() -> None:
 # 对话式 SSE 接口：Agent 自主编排（function calling tool loop）
 # =====================================================================
 
-from fastapi.responses import StreamingResponse
-from .agent_core.trace import set_event_hook
-from .chat_agent import run_chat_agent
+from fastapi.responses import StreamingResponse  # noqa: E402
+from .agent_core.trace import set_event_hook  # noqa: E402
+from .chat_agent import run_chat_agent  # noqa: E402
 
 
 class ChatRequest(BaseModel):

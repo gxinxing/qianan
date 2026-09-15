@@ -13,19 +13,15 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-
 import app.agents.reflection as reflection_mod
 import app.orchestrator as orch
-from app.bailian.client import MockBailianClient
-from app.agents.compliance import ComplianceAgent
 from app.agents.copywriting import CopywritingAgent
 from app.agents.intent import GOAL_FULL_PACKAGE, Intent, IntentAgent
 from app.agents.understanding import ProductUnderstandingAgent
 from app.agents.visual import VisualAgent
+from app.bailian.client import MockBailianClient
 from app.orchestrator import run_pipeline
 from app.schemas import GenerateRequest, TaskRecord, TaskStatus
-
 
 # ------------------------------------------------------------ 确定性替身
 

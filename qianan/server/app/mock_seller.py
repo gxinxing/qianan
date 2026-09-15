@@ -19,7 +19,6 @@ import re
 import threading
 import time
 import uuid
-from pathlib import Path
 
 from .paths import writable_dir
 

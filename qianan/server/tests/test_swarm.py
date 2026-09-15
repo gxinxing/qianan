@@ -13,9 +13,8 @@ from typing import Any
 import pytest
 
 from app.agents.swarm.blackboard import ActionSpec, Blackboard
-from app.schemas import ComplianceIssue, PlatformListing, TaskStatus
 from app.agents.swarm.supervisor import Supervisor
-
+from app.schemas import PlatformListing, TaskStatus
 
 # ---------------------------------------------------------------- 替身客户端
 
