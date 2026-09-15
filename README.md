@@ -6,14 +6,14 @@
 
 把卖家上传的一张商品图 + 一段中文卖点，自动生成 **Amazon / Shopee / 速卖通 / Lazada / TikTok Shop** 5 个平台各自合规的上架包（多语言文案 + 规范主图 + A+ 详情 + 后台导入 CSV + 合规报告）。
 
-从 3–7 天人工制作，压到约 90 秒 AI 一键生成（单平台约 30 秒，5 平台并行约 90 秒）。
+从 3–7 天人工制作，压到约 90 秒 AI 一键生成（单平台约 30 秒，5 平台并行约 90 秒；**该耗时与并发为已有测试样本下的实测值，非对所有商品/网络的普遍保证**）。
 
 ## 技术栈
 
 | 层 | 选型 |
 |---|---|
 | Backend | FastAPI + Python 3.10 + Pydantic v2 |
-| AI 模型 | 阿里云百炼平台（Qwen-Max 多语言 + Wanx 文生图 + Qwen-VL 视觉理解） |
+| AI 模型 | 文本/视觉理解：阿里云百炼 Qwen（Qwen-Max 多语言 + Qwen-VL 视觉理解）；商品图生成：经 **TokenDance 网关**调用 Seedream-5.0-lite（并非直接走百炼 Wanx） |
 | Frontend | Next.js 15 + TypeScript + Tailwind CSS |
 | Agent 编排 | 自研轻量框架（tool loop + function calling） |
 | 部署 | 阿里云函数计算 FC / 轻量应用服务器 + Vercel（前端） |
@@ -153,13 +153,14 @@ docker-compose up --build
 |---|---|---|
 | 公网 Demo（前端） | ✅ 已部署，HTTP 200 | https://ai-native-d5gfb0dm2a28d1fe9-1419921079.tcloudbaseapp.com |
 | 公网 API（真实模式） | ✅ 在线（mock:false） | https://ai-native-d5gfb0dm2a28d1fe9-1419921079.ap-shanghai.app.tcloudbase.com/api |
-| 源代码仓库 | ✅ 已推送 `main` | https://github.com/gxinxing/qianan （HEAD `0ceb8c0`） |
-| 技术说明 | ✅ | `submission/SimonStudio_千岸QianAn_复赛作品.docx` + `docs/` |
-| Agent 闭环验收测试 | ✅ 53 passed（含 4 条端到端） | `qianan/server/tests/test_agent_loop.py` |
+| 源代码仓库 | ✅ 已推送 `main` | https://github.com/gxinxing/qianan （HEAD `main`） |
+| 技术说明 | ✅ | `FINAL-DELIVERY.md`（决赛总览）+ `docs/`；复赛作品 `submission/SimonStudio_千岸QianAn_复赛作品.docx` 为复赛版 |
+| Agent 闭环验收测试 | ✅ 56 passed（含 4 条端到端） | `qianan/server/tests/test_agent_loop.py` |
 | 演示视频 | 🚧 待本机录屏 | 访问上方公网 Demo 即可录制（建议脚本见 `FINAL-DELIVERY.md`） |
 
 > 部署链路：`cloudbase/deploy.sh`（CloudBase 云函数 + 静态托管，9/7 全链路实测，今日含 P0 修复重部署）。
 > 限流与游客归属：`/api/chat` 接 `require_user` + `uid_of`（游客按 IP+UA 派生独立 uid）+ `check_rate_limit`，公开地址不会被反复调用烧完额度。
+> 数据留存（诚实）：任务产物 `task.json` / `export.json` 及生成上架包**持久化于服务端**供续查与导出，并非"处理完即弃"；演示数据按游客 uid 隔离。
 
 ## 许可证
 

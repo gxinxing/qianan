@@ -215,7 +215,13 @@ export function useChat(options: UseChatOptions = {}) {
               }
 
               if (data.type === "listing_full") {
-                // 全量快照（权威）：直接替换，含 status/stage/progress/plan/memory/reflections
+                // 全量快照（权威）：含 status/stage/progress/plan/memory/reflections。
+                // 防御：后端周期快照在产物同步前可能为空列表，不能据此把已渲染的实时产物整块冲掉。
+                const prev = snapshotRef.current;
+                const listings =
+                  data.listings && data.listings.length
+                    ? data.listings
+                    : prev?.listings ?? [];
                 const snapshot: ListingSnapshot = {
                   status: data.status,
                   stage: data.stage,
@@ -223,7 +229,7 @@ export function useChat(options: UseChatOptions = {}) {
                   plan: data.plan ?? null,
                   memory_recall: data.memory_recall || data.memoryRecall || [],
                   reflections: data.reflections || [],
-                  listings: data.listings || [],
+                  listings,
                 };
                 snapshotRef.current = snapshot;
                 onListingRef.current?.(snapshot);

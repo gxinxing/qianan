@@ -28,6 +28,7 @@ from .agents.understanding import ProductUnderstandingAgent
 from .agents.visual import VisualAgent
 from .bailian.client import BailianLike, resolve_image_ref
 from . import memory_store, skill_store
+from .chat_agent import evaluate_delivery_gate
 from .schemas import (
     ACTION_LABELS,
     ALL_ACTIONS,
@@ -545,7 +546,19 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
 
         task.stage = "完成"
         task.progress = 1.0
-        task.status = TaskStatus.done
+        # 交付闸门：与对话路径同口径，杜绝「视觉生成失败留下缺图产物 / 仍有阻断级问题却标完成」的假完成。
+        # run_pipeline 自动做合规+自愈，但视觉失败被捕获后续跑，必须再过一次闸门；不过闸一律降为 partial。
+        gate = evaluate_delivery_gate(
+            req.platforms,
+            {l.platform: l for l in task.listings},
+            set(req.platforms),
+        )
+        if gate["ok"]:
+            task.status = TaskStatus.done
+        else:
+            task.status = TaskStatus.partial
+            task.error = "交付闸门未通过：" + "；".join(gate["blockers"])
+            record(task, "guard", "delivery_gate", "拒绝 finish", task.error[:200], "warn")
     except Exception as exc:  # noqa: BLE001 —— Demo 阶段全量捕获，保证任务有终态
         logger.exception("pipeline 失败")
         task.status = TaskStatus.failed

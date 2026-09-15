@@ -42,6 +42,7 @@ from .publisher import store as publish_store
 from . import collector, extdata, memory_store, mock_seller, skill_store
 from .rules_store import all_platforms, load_rules
 from .schemas import (
+    ALL_PLATFORMS,
     AuditRequest,
     BatchGenerateRequest,
     Feedback,
