@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import { Enter, PressButton, Feedback } from "@/components/MotionUI";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
@@ -32,15 +33,16 @@ function LoginInner() {
   }
 
   return (
-    <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] max-w-md flex-col justify-center px-6">
-      <div className="rounded-2xl border border-ink-100 bg-white p-8 shadow-sm">
+    <div className="auth-page mx-auto flex min-h-dvh max-w-md flex-col justify-center px-6 py-10">
+      <Link href="/" className="mb-7 text-center text-xs text-ink-500 hover:text-ink-900">← 返回千岸</Link>
+      <Enter className="rounded-2xl border border-ink-100 bg-white p-8 shadow-xs">
         <div className="mb-6 flex items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-md bg-brand-800 text-[15px] font-semibold text-white">
             岸
           </span>
           <div>
             <p className="text-[15px] font-semibold tracking-tight text-ink-900">登录千岸</p>
-            <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-400">
+            <p className="text-[11px] tracking-wide text-ink-500">
               一稿多岸 · 跨境上新 Agent
             </p>
           </div>
@@ -72,18 +74,18 @@ function LoginInner() {
           </div>
 
           {error && (
-            <p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-[12.5px] text-red-600">
+            <Feedback role="alert" className="rounded-md bg-red-50 px-3 py-2 text-[12.5px] text-red-600">
               {error}
-            </p>
+            </Feedback>
           )}
 
-          <button
+          <PressButton
             type="submit"
             disabled={busy}
             className="w-full rounded-lg bg-brand-800 py-2.5 text-[14px] font-medium text-white transition hover:bg-brand-700 disabled:opacity-60"
           >
             {busy ? "登录中…" : "登录"}
-          </button>
+          </PressButton>
         </form>
 
         <p className="mt-5 text-center text-[13px] text-ink-400">
@@ -92,7 +94,7 @@ function LoginInner() {
             立即注册
           </Link>
         </p>
-      </div>
+      </Enter>
     </div>
   );
 }

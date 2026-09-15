@@ -306,7 +306,11 @@ export default function ResultPage() {
     backoff: "exponential",
     maxAttempts: 20,
     enabled: !!taskId,
-    isDone: (detail) => detail.status === "done" || detail.status === "failed",
+    isDone: (detail) =>
+      detail.status === "done" ||
+      detail.status === "failed" ||
+      detail.status === "partial" ||
+      detail.status === "cancelled",
     onUpdate: setTask,
     onError: (e, gaveUp) => {
       if (gaveUp) setPollError(String(e));
@@ -374,7 +378,8 @@ export default function ResultPage() {
   }
 
   /* ---------- 阶段一：流水线 ---------- */
-  if (task.status !== "done") {
+  // 仅 running / pending 视为「生成中」；partial / cancelled 已是终态，应展示已生成产物而非卡在等待界面
+  if (task.status === "running" || task.status === "queued") {
     const idx = stageToIndex(task);
     const kw = task.understanding?.keywords || [];
     return (
@@ -670,6 +675,18 @@ export default function ResultPage() {
           <h1 className="mt-4 max-w-3xl text-[32px] font-semibold leading-[1.2] tracking-tight text-white sm:text-4xl">
             {task.request?.product_name || "上架包已生成"}
           </h1>
+
+          {/* 终态横幅：partial / cancelled 不伪装成「完成」，如实告知用户 */}
+          {task.status === "partial" && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-500/15 px-3 py-1 text-xs font-medium text-amber-300">
+              ⚠ 部分完成 · 部分平台未达上架标准（缺必需产物或仍有阻断项），可查看已生成内容
+            </p>
+          )}
+          {task.status === "cancelled" && (
+            <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-ink-400/20 px-3 py-1 text-xs font-medium text-ink-200">
+              ■ 已停止 · 可查看已生成内容
+            </p>
+          )}
 
           {/* mono 任务元信息 */}
           <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2">
