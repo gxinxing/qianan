@@ -90,6 +90,27 @@ GET  /api/tasks/__probe__ -> 404，响应体可读：{"detail":"task not found"}
 - （注：`response.headers.get('access-control-allow-origin')` 在页面脚本里返回 `null` 属**正常**——浏览器按设计不向脚本暴露 CORS 响应头，判断是否放行应以"能否读到 body"为准。）
 - 结论：**后端 API 与前端域之间的浏览器通信正常**；阻碍在**前端测试域名**本身（见第五节第 5 条）。
 
+#### 前端页面真实流程验证（2026-09-15，真实 Chromium 驱动实际页面）
+
+> 补充：上面只是"页面上下文里的 fetch"；这一次是**真的打开 /workbench 页面、填表、点生成按钮**，走完整 UI 流程。
+
+本地起 `next dev`（:3001）指向**已部署云端真实后端**（CORS 网关回显 Origin，游客模式 `require_auth:false`），用无头 Chromium 驱动：
+
+```
+1) 打开 http://localhost:3001/workbench  → 未跳转 /login（游客放行，/api/health 探测成功）
+2) 填商品名「便携榨汁杯 380ml」+ 中文卖点 → 勾选平台 → 点「生成 N 平台上架包」
+3) 页面发出真实 POST /api/generate，请求体字段与后端契约一致：
+   {"product_name":"便携榨汁杯 380ml",
+    "selling_points":"USB-C 快充，10 秒出汁，杯身可拆洗…",   ← 字符串，非数组
+    "category":"home_kitchen",
+    "platforms":["shopee","aliexpress","lazada","tiktokshop"]}  ← tiktokshop 键正确
+4) 结果：cors_errors=[]，visible_error=null，其它 API(/api/health,/api/files,/api/admin/*) 全部 200
+```
+
+- **结论：前端页面与后端连通、表单提交链路打通、字段契约正确**，不存在"CORS 拦页面"或"点了没反应"的问题。
+- 诚实边界：本次观察窗口内**未等到 `/api/generate` 的响应体**——云端为 SCF 同步模式，长任务会挂到约 120s 才返回（已知限制第 3 条），属时序问题非连通失败；请求已确证发出并被后端接收。
+- 阻碍仍未变：公网**前端测试域名**显示「访问量已达上限」，浏览器进不去应用（见第五节第 5 条），故真实页面验证是在**本地 dev + 云端后端**组合下完成的。
+
 ## 四、测试与构建
 
 - 后端：`pytest tests/` → **56 passed**（49 既有 + 4 条闭环）。
