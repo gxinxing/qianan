@@ -90,6 +90,13 @@ qianan/server/cloudfunctions/
 # ===== 发布执行留痕（运行时产物）=====
 qianan/server/data/publish/pub-*/
 
+# ===== 本地 AI 记忆笔记（含本机凭据存放位置等内部运维信息，严禁入库）=====
+CODELY.md
+
+# ===== 运行时映射 / 评测产物（公开仓库不应含运行态数据）=====
+qianan/server/data/owners.json
+qianan/server/data/evals/
+
 # ===== 构建实验残留垃圾（2026-09-07 清理，防复发）=====
 qianan/web/.next.trash*/
 qianan/web/.next-trash*/
