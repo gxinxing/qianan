@@ -86,7 +86,10 @@ export default function FilesPage() {
         </header>
 
         {error && (
-          <div className="mt-6 rounded-lg bg-red-50 px-4 py-3 font-mono text-xs tracking-[0.04em] text-red-600">
+          <div
+            role="alert"
+            className="mt-6 rounded-lg bg-red-50 px-4 py-3 font-mono text-xs tracking-[0.04em] text-red-600"
+          >
             [ERROR] {error}
           </div>
         )}
@@ -145,7 +148,7 @@ export default function FilesPage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Link
-                      href={`/result?taskId=`}
+                      href={`/result?taskId=${pkg.task_id}`}
                       className="btn-ghost !px-3 !py-1.5 !text-xs"
                     >
                       查看结果

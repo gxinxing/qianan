@@ -29,6 +29,12 @@ const TOOL_LABEL: Record<string, string> = {
   get_trending_searches: "平台热搜趋势",
 };
 
+/** 规划动作 → 中文名（与后端 schemas.ACTION_LABELS 对齐） */
+const ACTION_LABEL: Record<string, string> = {
+  generate_detail_shots: "多角度详情图",
+  generate_video: "展示视频",
+};
+
 function CapHead({ no, name, claim, tone }: { no: string; name: string; claim: string; tone: string }) {
   return (
     <div className="flex items-start gap-3">
@@ -60,6 +66,9 @@ export default function AgentCapabilityPanel({ task }: { task: TaskDetail }) {
   const memories = task.memory_recall || [];
   const reflections = task.reflections || [];
   const listings = task.listings || [];
+
+  /** ① 自主规划：被执行器实际消费的跳过项 —— 规划改变执行图的直接证据 */
+  const skipped = plan?.skipped_actions || [];
 
   // ② 工具调用：按工具名聚合调用次数
   const toolStats = useMemo(() => {
@@ -148,6 +157,24 @@ export default function AgentCapabilityPanel({ task }: { task: TaskDetail }) {
                   生成要点：{plan.focus}
                 </p>
               )}
+
+              {/* 规划被消费的直接证据：跳过项确实从执行图里移除了，而不只是写进日志 */}
+              <div className="rounded-lg bg-sky-50/70 px-2.5 py-2 ring-1 ring-sky-100">
+                <p className="text-[10px] uppercase tracking-[0.1em] text-sky-700">执行图调整</p>
+                {skipped.length > 0 ? (
+                  <p className="mt-1 text-[11px] leading-4 text-ink-700">
+                    跳过{" "}
+                    <span className="font-medium">
+                      {skipped.map((a) => ACTION_LABEL[a] || a).join("、")}
+                    </span>
+                    ，本次执行图已移除这些步骤
+                  </p>
+                ) : (
+                  <p className="mt-1 text-[11px] leading-4 text-ink-500">
+                    本次未跳过任何可选步骤，按完整流水线交付
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             <Pending text="等待规划 Agent 提交策略…" />

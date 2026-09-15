@@ -253,6 +253,10 @@ export default function WorkbenchPage() {
       setError("先填写商品名称或卖点");
       return;
     }
+    if (platforms.length === 0) {
+      setError("请至少选择一个目标平台");
+      return;
+    }
     setSubmitting(true);
     try {
       const { task_id } = await createTask({
@@ -264,7 +268,7 @@ export default function WorkbenchPage() {
       setProductName("");
       setSellingPoints("");
       load();
-      window.open(`/result?taskId=`, "_blank");
+      window.open(`/result?taskId=${task_id}`, "_blank");
     } catch (e) {
       setError(`提交失败：${String(e)}`);
     } finally {
@@ -280,6 +284,10 @@ export default function WorkbenchPage() {
       .filter(Boolean);
     if (lines.length === 0) {
       setBatchError("先粘贴多个商品（每行一个）");
+      return;
+    }
+    if (platforms.length === 0) {
+      setBatchError("请至少选择一个目标平台");
       return;
     }
     const items = lines.map((line) => {
@@ -365,9 +373,9 @@ export default function WorkbenchPage() {
             const isDone =
               (s.key === "pre" && activeStage !== "pre") || (s.key === "on" && activeStage === "post");
             return (
-              <div key={s.key} className="flex flex-1 items-center">
+              <div key={s.key} className="flex flex-1 items-center min-w-0">
                 <div
-                  className={`flex flex-1 items-center gap-3 rounded-lg border px-4 py-3 transition duration-150 ${
+                  className={`flex flex-1 items-center gap-2 rounded-lg border px-2 py-2.5 transition duration-150 sm:gap-3 sm:px-4 sm:py-3 ${
                     isActive
                       ? "border-brand-800 bg-brand-800 shadow-sm"
                       : isDone
@@ -376,7 +384,7 @@ export default function WorkbenchPage() {
                   }`}
                 >
                   <span
-                    className={`font-mono text-lg font-medium leading-none ${
+                    className={`font-mono text-base font-medium leading-none sm:text-lg ${
                       isActive ? "text-brand-200" : isDone ? "text-brand-600" : "text-ink-300"
                     }`}
                   >
@@ -384,14 +392,14 @@ export default function WorkbenchPage() {
                   </span>
                   <span className="min-w-0">
                     <span
-                      className={`block text-sm font-semibold ${
+                      className={`block truncate text-[13px] font-semibold sm:text-sm ${
                         isActive ? "text-white" : "text-ink-800"
                       }`}
                     >
                       {s.label}
                     </span>
                     <span
-                      className={`block font-mono text-[10px] tracking-wide ${
+                      className={`mt-0.5 hidden font-mono text-[10px] tracking-wide sm:block ${
                         isActive ? "text-brand-200/80" : "text-ink-400"
                       }`}
                     >
@@ -402,7 +410,7 @@ export default function WorkbenchPage() {
                 </div>
                 {i < STAGES.length - 1 && (
                   <span
-                    className={`mx-2 h-px w-6 shrink-0 transition duration-150 ${
+                    className={`mx-1 h-px w-3 shrink-0 transition duration-150 sm:mx-2 sm:w-6 ${
                       isDone ? "bg-brand-300" : "bg-ink-200"
                     }`}
                   />
@@ -413,7 +421,9 @@ export default function WorkbenchPage() {
         </div>
 
         {error && (
-          <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">{error}</div>
+          <div role="alert" className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600">
+            {error}
+          </div>
         )}
 
         {/* ---------- 阶段一：上架前 —— 选品 / 编辑 ---------- */}
@@ -489,7 +499,7 @@ export default function WorkbenchPage() {
                 <option value="apparel">服饰配饰</option>
               </select>
               <button onClick={submit} disabled={submitting} className="btn-primary mt-5">
-                {submitting ? "提交中…" : "生成 N 平台上架包"}
+                {submitting ? "提交中…" : `生成 ${platforms.length} 平台上架包`}
               </button>
             </div>
           </div>
@@ -522,7 +532,11 @@ export default function WorkbenchPage() {
                   ? "提交中…"
                   : `批量生成 ${batchText.split("\n").filter((l) => l.trim()).length || ""} 个上架包`}
               </button>
-              {batchError && <span className="text-xs text-red-600">{batchError}</span>}
+              {batchError && (
+                <span role="alert" className="text-xs text-red-600">
+                  {batchError}
+                </span>
+              )}
             </div>
           </div>
         </section>
@@ -586,7 +600,11 @@ export default function WorkbenchPage() {
               </span>
             )}
           </div>
-          {ecoError && <p className="mt-2 text-xs text-red-600">{ecoError}</p>}
+          {ecoError && (
+            <p role="alert" className="mt-2 text-xs text-red-600">
+              {ecoError}
+            </p>
+          )}
 
           {ecoResult && (
             <div className="mt-4 rounded-lg border border-ink-100 bg-white px-4 py-3">
@@ -656,7 +674,7 @@ export default function WorkbenchPage() {
                     </span>
                     {b.task_id && (
                       <Link
-                        href={`/result?taskId=`}
+                        href={`/result?taskId=${b.task_id}`}
                         className="shrink-0 text-brand-700 transition duration-150 hover:underline"
                       >
                         查看
@@ -687,7 +705,7 @@ export default function WorkbenchPage() {
                         <span className="font-mono text-[11px] text-ink-400">{t.stage}</span>
                       </div>
                       <Link
-                        href={`/result?taskId=`}
+                        href={`/result?taskId=${t.task_id}`}
                         className="shrink-0 text-xs text-brand-700 transition duration-150 hover:text-brand-800 hover:underline"
                       >
                         查看流水线 →
@@ -818,7 +836,7 @@ export default function WorkbenchPage() {
                     </span>
                     <div className="flex shrink-0 gap-2 text-xs">
                       <Link
-                        href={`/result?taskId=`}
+                        href={`/result?taskId=${pkg.task_id}`}
                         className="text-brand-700 transition duration-150 hover:text-brand-800 hover:underline"
                       >
                         查看

@@ -3,7 +3,7 @@ import { getAccessToken } from "./cloudbase";
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.NEXT_PUBLIC_API_BASE ||
-  "http://localhost:8000";
+  "http://localhost:8001";
 
 /** 包装 fetch：自动带上 CloudBase 登录态的 access_token，供后端多租户隔离。 */
 const _nativeFetch: typeof fetch =
@@ -20,6 +20,16 @@ export async function qfetch(input: string, init: RequestInit = {}): Promise<Res
   return _nativeFetch(input, { ...init, headers });
 }
 
+/**
+ * 为 <img> / <a download> 这类带不了 Authorization 头的直连 URL 追加 ?access_token= 兜底参数
+ *（后端 auth._bearer_from_request 支持 query 兜底）。未登录时原样返回。
+ */
+export function withToken(url: string): string {
+  const token = getAccessToken();
+  if (!token || !url.includes(API_BASE)) return url;
+  return `${url}${url.includes("?") ? "&" : "?"}access_token=${encodeURIComponent(token)}`;
+}
+
 export interface IdeationSuggestion {
   product_name: string;
   reason: string;
@@ -30,6 +40,8 @@ export interface IdeationSuggestion {
 export interface GenerateInput {
   product_name: string;
   selling_points: string;
+  /** 一句话诉求（可空 = 默认出完整上架包），由意图 Agent 判定要做什么 */
+  request_text?: string;
   category: string;
   image_base64?: string;
   image_url?: string;
@@ -59,6 +71,8 @@ export interface PlatformListing {
   description: string;
   attributes: Record<string, string>;
   images: string[];
+  detail_images?: string[];
+  video_url?: string | null;
   aplus: AplusModule[];
   compliance: ComplianceIssue[];
   compliance_passed: boolean;
@@ -75,6 +89,21 @@ export interface TraceEvent {
   status: string; // ok / error / fallback
 }
 
+/** ⓪a 输入理解②：意图判定 —— 决定本次任务的执行图（动作空间）。 */
+export interface Intent {
+  /** full_package = 出完整上架包 / preview = 先出方案，暂不生成 */
+  goal: string;
+  /** 从诉求中解析出的目标平台（空 = 沿用请求里的选择） */
+  platforms: string[];
+  /** 一句话复述用户诉求，供核对 */
+  summary: string;
+  confidence: number;
+  /** planner = 模型判定 / default = 未写诉求 / fallback = 判定失败兜底 */
+  decided_by: string;
+  /** 本次意图不包含的动作 —— 意图改变执行图的直接证据 */
+  excluded_actions?: string[];
+}
+
 /** ⓪ 自主规划：规划 Agent 的决策产物（含规划前自主调研所调用的工具）。 */
 export interface TaskPlan {
   strategy: string;
@@ -82,6 +111,10 @@ export interface TaskPlan {
   focus: string;
   research_tools: string[];
   decided_by: string; // planner = 模型决策 / fallback = 回退默认
+  /** 规划器声明的跳过项（仅可选动作可被跳过） */
+  skip?: string[];
+  /** 执行器实际生效的跳过项 —— 规划被消费的直接证据（为空 = 本次未跳过任何步骤） */
+  skipped_actions?: string[];
 }
 
 /** ③ 长期记忆：被召回并注入提示词的历史教训，hit_count 为其跨任务复用次数。 */
@@ -111,10 +144,12 @@ export interface TaskDetail {
   } | null;
   listings: PlatformListing[];
   trace?: TraceEvent[];
-  // —— 四项 Agentic 能力的结构化证据 ——
+  // —— Agentic 能力的结构化证据 ——
+  intent?: Intent | null;
   plan?: TaskPlan | null;
   memory_recall?: MemoryLesson[];
   reflections?: AgentReflection[];
+  strategy_report?: string | null;
   error?: string | null;
 }
 
@@ -167,6 +202,45 @@ export async function createTask(input: GenerateInput) {
     body: JSON.stringify(input),
   });
   return json(res) as Promise<{ task_id: string }>;
+}
+
+export interface BatchItem extends GenerateInput {}
+
+export interface BatchResult {
+  batch_id: string;
+  task_ids: string[];
+  tasks?: TaskDetail[];
+}
+
+export interface BatchStatusItem {
+  task_id: string;
+  status: string;
+  stage: string;
+  progress: number;
+  product_name: string;
+  platforms: string[];
+}
+
+export interface BatchStatus {
+  batch_id: string;
+  total: number;
+  done: number;
+  running: number;
+  failed: number;
+  items: BatchStatusItem[];
+}
+
+export async function createBatch(items: BatchItem[], platforms?: string[]): Promise<BatchResult> {
+  const res = await qfetch(`${API_BASE}/api/generate/batch`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ items, platforms: platforms ?? null }),
+  });
+  return json(res) as Promise<BatchResult>;
+}
+
+export async function fetchBatch(batchId: string): Promise<BatchStatus> {
+  return json(await qfetch(`${API_BASE}/api/batch/${batchId}`)) as Promise<BatchStatus>;
 }
 
 export async function fetchTask(taskId: string) {
@@ -332,7 +406,7 @@ export async function runEconomics(input: EconomicsInput) {
 }
 
 export function exportUrl(taskId: string) {
-  return `${API_BASE}/api/tasks/${taskId}/export`;
+  return withToken(`${API_BASE}/api/tasks/${taskId}/export`);
 }
 
 export async function submitFeedback(taskId: string, platform: string, rating: number, comment = "") {
@@ -534,7 +608,7 @@ export async function validateDraft(payload: ValidateDraftPayload): Promise<Vali
 }
 
 export function zipUrl(taskId: string) {
-  return `${API_BASE}/api/files/${taskId}/zip`;
+  return withToken(`${API_BASE}/api/files/${taskId}/zip`);
 }
 
 export async function fetchFiles() {
@@ -572,7 +646,7 @@ export async function fetchAdminTasks() {
 }
 
 export function fileDownloadUrl(taskId: string, name: string) {
-  return `${API_BASE}/api/files/${taskId}/download/${name}`;
+  return withToken(`${API_BASE}/api/files/${taskId}/download/${name}`);
 }
 
 // ---------- 上架执行（PRD v0.3：审批闸口 + 全程留痕） ----------
@@ -617,7 +691,7 @@ export async function fetchPublishJobs(taskId?: string) {
 }
 
 export function publishShotUrl(jobId: string, filename: string) {
-  return `${API_BASE}/api/publish/jobs/${jobId}/shots/${filename}`;
+  return withToken(`${API_BASE}/api/publish/jobs/${jobId}/shots/${filename}`);
 }
 
 // ---------- 经营数据回流（PRD v0.3：数据飞轮） ----------

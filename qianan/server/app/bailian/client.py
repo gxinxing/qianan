@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import random
+import threading
 import time
 from typing import Protocol
 
@@ -49,12 +50,104 @@ TEXT_MODEL = os.getenv("QIANAN_TEXT_MODEL", "qwen3.7-max")
 IMAGE_MODEL = os.getenv("QIANAN_IMAGE_MODEL", "qwen-image-2.0")
 #: 直连式图像网关（如 TokenDance seedream）的出图尺寸；部分模型有最小像素要求（如 ≥1920×1920）
 IMAGE_SIZE = os.getenv("QIANAN_IMAGE_SIZE", "1024x1024")
+
+#: 阿里云百炼原生直连（万相 wan2.7-image 等）。
+#: 走兼容模式的 /images/generations 对**任何**图像模型都返回 404，
+#: 万相必须走原生异步任务接口 /api/v1/services/aigc/... + Bearer 鉴权。
+#: 留空 = 不启用，仍走上面的网关链路（seedream 等）。
+DASHSCOPE_KEY = os.getenv("QIANAN_DASHSCOPE_API_KEY", "")
+DASHSCOPE_NATIVE = "https://dashscope.aliyuncs.com/api/v1"
+#: 百炼尺寸格式用星号（1024*1024），与直连式网关的 1024x1024 不同
+DASHSCOPE_IMAGE_SIZE = os.getenv("QIANAN_DASHSCOPE_IMAGE_SIZE", "1024*1024")
+#: 百炼专用模型名。必须与网关的 IMAGE_MODEL 分开 —— 万相走不通时要回退网关，
+#: 而网关（TokenDance）并不认识 wan2.7-image，用同一个变量会让回退也一起失败。
+DASHSCOPE_IMAGE_MODEL = os.getenv("QIANAN_DASHSCOPE_IMAGE_MODEL", "wan2.7-image")
+#: 额度保护：入门套餐张数有限，用完自动回退网关而不再调万相。
+#: 0 = 不限制。按 ¥0.2/张 估算，100 张 ≈ ¥20。
+DASHSCOPE_IMAGE_QUOTA = int(os.getenv("QIANAN_DASHSCOPE_IMAGE_QUOTA", "100"))
+_QUOTA_FILE = "data/wan_image_quota.json"
+_quota_lock = threading.Lock()
+
+
+def _quota_used() -> int:
+    """已消耗的万相出图张数（落盘，重启不丢）。"""
+    try:
+        return int(json.loads(open(_QUOTA_FILE, encoding="utf-8").read()).get("used", 0))
+    except Exception:  # noqa: BLE001 —— 配额文件损坏不应影响主流程
+        return 0
+
+
+def _quota_allow(n: int = 1) -> bool:
+    if DASHSCOPE_IMAGE_QUOTA <= 0:
+        return True
+    return _quota_used() + n <= DASHSCOPE_IMAGE_QUOTA
+
+
+def _quota_consume(n: int = 1) -> None:
+    """累加消耗。失败只记日志 —— 记账失败不该让已生成的图丢掉。"""
+    if DASHSCOPE_IMAGE_QUOTA <= 0:
+        return
+    with _quota_lock:
+        try:
+            used = _quota_used() + n
+            os.makedirs(os.path.dirname(_QUOTA_FILE) or ".", exist_ok=True)
+            with open(_QUOTA_FILE, "w", encoding="utf-8") as fh:
+                json.dump({"used": used, "quota": DASHSCOPE_IMAGE_QUOTA}, fh)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("万相额度记账失败: %s", exc)
+
+
+def _public_ref(ref: str) -> str | None:
+    """确保参考图是万相能下载到的公网 URL。
+
+    万相服务端要主动去下载参考图，所以：
+    - 公网 URL → 直接用
+    - `data:` URL（上传图床失败时的回退形态）→ 阿里云下载不了，先转存成公网地址；
+      转存也失败就返回 None —— 宁可退化成纯文生图，也不要提交一个必然报错的请求。
+    """
+    if not ref.startswith("data:"):
+        return ref
+    try:
+        import base64 as _b64
+
+        from .. import uploader
+
+        raw = _b64.b64decode(ref.split(",", 1)[-1])
+        url = uploader.upload_bytes(raw)
+        logger.info("万相参考图为 data URL，已转存为公网地址")
+        return url
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("万相参考图转存失败，退化为纯文生图: %s", exc)
+        return None
+
+
+def _persist_image(url: str) -> str:
+    """把万相返回的临时签名 URL 转存为持久地址。
+
+    万相出图 URL 带 OSS 签名且会过期（Expires），直接交给前端会在若干小时后变死链。
+    转存失败时**返回原 URL** —— 宁可将来过期，也不要当下没图。
+    """
+    try:
+        from .. import uploader
+
+        raw = requests.get(url, timeout=60).content
+        return uploader.upload_bytes(raw)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("万相图片转存失败，使用临时 URL: %s", exc)
+        return url
+
 VL_MODEL = os.getenv("QIANAN_VL_MODEL", "")  # 留空 = 网关无 VL 模型
 TIMEOUT = 180
 # —— HTTP 重试：百炼网关偶发 429/5xx/超时抖动，避免整条 pipeline 因此直接失败 ——
 _MAX_ATTEMPTS = 3       # 最多重试 2 次，共 3 次尝试
 _RETRY_BACKOFF = 1.0     # 指数退避基数：两次重试分别等待约 1s / 2s（另加随机 jitter）
 _RETRY_AFTER_CAP = 60.0  # 429 优先按 Retry-After 头等待，并截断到该上限（秒）
+
+
+VIDEO_MODEL = os.getenv("QIANAN_VIDEO_MODEL", "wan2.7-i2v-2026-04-25")
+VIDEO_BASE_URL = os.getenv(
+    "DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/api/v1"
+)
 
 
 class BailianLike(Protocol):
@@ -68,6 +161,8 @@ class BailianLike(Protocol):
     def image_gen(self, prompt: str, model: str | None = None, ref_image: str | None = None) -> str: ...
 
     def vision(self, image_ref: str, prompt: str, model: str | None = None) -> str: ...
+
+    def video_gen(self, image_url: str, prompt: str, model: str | None = None) -> str: ...
 
 
 class _AsyncImageUnsupported(RuntimeError):
@@ -207,6 +302,13 @@ class BailianClient:
           该方法失败时自动回退该路径。
         """
         model = model or IMAGE_MODEL
+        # ① 阿里云百炼原生（万相 wan2.7-image）：阿里自研、¥0.2/张，比赛场景优先。
+        #    失败一律回退到网关链路，账户欠费/未配置都不会让任务缺图。
+        if DASHSCOPE_KEY:
+            try:
+                return self._dashscope_image_gen(prompt, DASHSCOPE_IMAGE_MODEL, ref_image)
+            except Exception as exc:  # noqa: BLE001 —— 万相不可用必须静默降级
+                logger.warning("百炼万相生图不可用，回退网关链路：%s", exc)
         try:
             return self._async_image_gen(prompt, model, ref_image)
         except _AsyncImageUnsupported:
@@ -227,6 +329,53 @@ class BailianClient:
             if isinstance(part, dict) and part.get("image"):
                 return part["image"]
         raise RuntimeError(f"图片生成返回中未找到图片: {str(result)[:200]}")
+
+    def _dashscope_image_gen(self, prompt: str, model: str, ref_image: str | None) -> str:
+        """阿里云百炼万相文生图（wan2.7-image / wan2.7-image-pro）。
+
+        三个实测出来的关键点，改错任何一个都会失败：
+        1. 端点是 `/services/aigc/multimodal-generation/generation`，
+           不是 text2image/image-synthesis（后者一律报 "url error"）。
+        2. **同步返回**，没有 task_id，结果直接在 output.choices[0].message.content 里。
+        3. 鉴权用 `Authorization: Bearer`，用 X-DashScope-API-Key 报 No API-key provided。
+
+        返回的图片 URL 是带 Expires 的 OSS 临时签名地址，必须转存，
+        否则过期后前端拿到的是死链。
+        """
+        if not _quota_allow(1):
+            raise RuntimeError(
+                f"万相额度保护：已用 {_quota_used()}/{DASHSCOPE_IMAGE_QUOTA} 张，"
+                f"达上限后自动回退网关，避免超出入门套餐"
+            )
+        headers = {
+            "Authorization": f"Bearer {DASHSCOPE_KEY}",
+            "Content-Type": "application/json",
+        }
+        content: list[dict] = [{"text": prompt}]
+        ref = _public_ref(ref_image) if ref_image else None
+        if ref:
+            # 以图改图：参考图与提示词一起给（**图片在前、文字在后**），保持商品主体一致
+            content = [{"image": ref}, {"text": prompt}]
+        payload = {
+            "model": model,
+            "input": {"messages": [{"role": "user", "content": content}]},
+            "parameters": {"size": DASHSCOPE_IMAGE_SIZE, "n": 1},
+        }
+        resp = requests.post(
+            f"{DASHSCOPE_NATIVE}/services/aigc/multimodal-generation/generation",
+            headers=headers,
+            json=payload,
+            timeout=180,
+        )
+        if resp.status_code >= 400:
+            raise RuntimeError(f"万相调用失败({resp.status_code}): {resp.text[:200]}")
+        data = resp.json() or {}
+        choices = ((data.get("output") or {}).get("choices") or [{}])
+        for part in ((choices[0].get("message") or {}).get("content") or []):
+            if isinstance(part, dict) and part.get("image"):
+                _quota_consume(int((data.get("usage") or {}).get("image_count") or 1))
+                return _persist_image(part["image"])
+        raise RuntimeError(f"万相返回中无图片: {str(data)[:200]}")
 
     def _async_image_gen(self, prompt: str, model: str, ref_image: str | None) -> str:
         """异步任务式图片生成（apimart 等聚合网关），含提交与轮询。"""
@@ -328,6 +477,62 @@ class BailianClient:
             return "".join(p.get("text", "") for p in content if isinstance(p, dict))
         return str(content)
 
+    def video_gen(self, image_url: str, prompt: str, model: str | None = None) -> str:
+        """图生视频（wan2.7-i2v）：基于商品主图生成 5 秒展示视频。
+
+        DashScope 异步任务接口：
+        1. POST /services/aigc/video-generation/video-synthesis 提交任务
+        2. GET /tasks/{task_id} 轮询直到 SUCCEEDED
+        """
+        model = model or VIDEO_MODEL
+        headers = {
+            "Authorization": f"Bearer {os.environ['BAILIAN_API_KEY']}",
+            "Content-Type": "application/json",
+            "X-DashScope-Async": "enable",
+        }
+        payload = {
+            "model": model,
+            "input": {
+                "image_url": image_url,
+                "prompt": prompt,
+            },
+            "parameters": {
+                "resolution": "720p",
+                "duration": 5,
+                "prompt_extend": True,
+            },
+        }
+        # 提交任务
+        submit_url = f"{VIDEO_BASE_URL}/services/aigc/video-generation/video-synthesis"
+        resp = requests.post(submit_url, headers=headers, json=payload, timeout=120)
+        data = resp.json()
+        if resp.status_code != 200:
+            raise RuntimeError(f"视频任务提交失败({resp.status_code}): {str(data)[:300]}")
+        task_id = data.get("output", {}).get("task_id")
+        if not task_id:
+            raise RuntimeError(f"视频任务提交无 task_id: {str(data)[:200]}")
+
+        # 轮询
+        poll_url = f"{VIDEO_BASE_URL}/tasks/{task_id}"
+        deadline = time.monotonic() + 300  # 5 分钟超时
+        while time.monotonic() < deadline:
+            time.sleep(5)
+            try:
+                r = requests.get(poll_url, headers=headers, timeout=30)
+                d = r.json()
+            except (requests.Timeout, requests.ConnectionError, ValueError):
+                continue
+            status = d.get("output", {}).get("task_status", "")
+            if status == "SUCCEEDED":
+                video_url = d.get("output", {}).get("video_url")
+                if video_url:
+                    return video_url
+                raise RuntimeError(f"视频任务成功但无 URL: {str(d)[:200]}")
+            if status in ("FAILED", "UNKNOWN"):
+                err = d.get("output", {}).get("message", "上游错误")
+                raise RuntimeError(f"视频任务 {status}: {err}")
+        raise RuntimeError(f"视频生成超时（300s）: task {task_id}")
+
 
 class MockBailianClient:
     """模拟客户端：返回可读占位结果，供无 key 联调与演示兜底。"""
@@ -361,6 +566,9 @@ class MockBailianClient:
 
     def vision(self, image_ref: str, prompt: str, model: str | None = None) -> str:
         return "[MOCK vision] 模拟商品理解结果。"
+
+    def video_gen(self, image_url: str, prompt: str, model: str | None = None) -> str:
+        return "mock://generated-video.mp4"
 
 
 def get_client() -> BailianLike:

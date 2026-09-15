@@ -147,7 +147,11 @@ export default function PublishPanel({
               {busy ? "已派发…" : "确认上架"}
             </button>
           </div>
-          {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+          {error && (
+            <p role="alert" className="mt-2 text-xs text-red-600">
+              {error}
+            </p>
+          )}
         </div>
       )}
 
@@ -182,7 +186,9 @@ export default function PublishPanel({
 
           {/* 轮询超限提示：后端持续不可达时，执行状态不再自动刷新 */}
           {error && job.status !== "failed" && (
-            <p className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-xs leading-5 text-red-600">{error}</p>
+            <p role="alert" className="mt-3 rounded-xl bg-red-50 px-4 py-3 text-xs leading-5 text-red-600">
+              {error}
+            </p>
           )}
 
           {/* 执行留痕 */}

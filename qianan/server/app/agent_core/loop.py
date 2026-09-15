@@ -25,16 +25,28 @@ async def run_tool_loop(
     max_rounds: int = 3,
     deadline_s: float = 40.0,
     on_event=None,
+    should_stop=None,
 ) -> dict:
     """执行工具循环。
 
     返回 {
       "content": 最终文本（收敛时）, "tool_results": {工具名: [结果...]},
       "rounds": 轮数, "fallback": 是否未收敛/异常（调用方应走兜底路径）,
-      "reason": 兜底原因
+      "reason": 兜底原因, "cancelled": 是否被用户取消
     }
+
+    should_stop: 返回 True 时立即停止。用于「用户点了停止」时真正中断后台 Agent ——
+    否则断开前端 fetch 只是不再接收事件，模型调用仍在继续烧额度。
     """
-    result = {"content": None, "tool_results": {}, "rounds": 0, "fallback": False, "reason": ""}
+    result = {
+        "content": None,
+        "tool_results": {},
+        "rounds": 0,
+        "fallback": False,
+        "reason": "",
+        "cancelled": False,
+    }
+    stop_check = should_stop or (lambda: False)
     if not tools:
         result["fallback"], result["reason"] = True, "无可用工具"
         return result
@@ -47,6 +59,10 @@ async def run_tool_loop(
     handlers = {t.name: t.handler for t in tools}
 
     for rnd in range(max_rounds):
+        # 用户取消：优先于墙钟判断，立即停止，不再发起任何模型调用
+        if stop_check():
+            result["cancelled"], result["reason"] = True, "用户取消"
+            return result
         if time.monotonic() >= deadline:
             result["fallback"], result["reason"] = True, f"超墙钟预算 {deadline_s:.0f}s"
             return result
@@ -65,6 +81,10 @@ async def run_tool_loop(
 
         messages.append({"role": "assistant", "content": msg.get("content"), "tool_calls": calls})
         for call in calls:
+            # 单个工具就可能是几十秒的图像/视频生成，逐个检查才能及时停
+            if stop_check():
+                result["cancelled"], result["reason"] = True, "用户取消"
+                return result
             fn = call.get("function") or {}
             name = fn.get("name", "")
             try:

@@ -26,6 +26,13 @@ const IDEA_CATEGORIES = [
   { key: "apparel", name: "服饰配饰" },
 ];
 
+/** 诉求快捷短语：一键填入，演示与日常使用都不用打字。 */
+const REQUEST_PRESETS = [
+  { label: "出完整包", text: "帮我出一套完整的上架包" },
+  { label: "先看方案", text: "先别生成，我想看看你打算怎么做" },
+  { label: "只要东南亚", text: "只铺 Shopee、Lazada 和 TikTok Shop" },
+];
+
 const LAUNCH_FLOW = [
   { no: "01", title: "商品事实", desc: "图片 / 文档提取，标记证据与缺口" },
   { no: "02", title: "平台适配", desc: "标题、属性、图片按渠道规则生成" },
@@ -289,6 +296,7 @@ export default function HomePage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [productName, setProductName] = useState("");
   const [sellingPoints, setSellingPoints] = useState("");
+  const [requestText, setRequestText] = useState("");
   const [category, setCategory] = useState("home_kitchen");
   const [imageBase64, setImageBase64] = useState("");
   const [preview, setPreview] = useState("");
@@ -302,6 +310,15 @@ export default function HomePage() {
   const [ideaError, setIdeaError] = useState("");
   const [trends, setTrends] = useState<string[]>([]);
   const [band, setBand] = useState<CompetitorBand | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  /** 清空已选图片，回到未上传态（重新选择同一文件也能再次触发 change）。 */
+  const clearImage = () => {
+    setImageBase64("");
+    setPreview("");
+    setError("");
+    if (fileRef.current) fileRef.current.value = "";
+  };
 
   const onFile = (file: File | undefined) => {
     if (!file) return;
@@ -394,11 +411,12 @@ export default function HomePage() {
       const { task_id } = await createTask({
         product_name: productName.trim(),
         selling_points: sellingPoints.trim(),
+        request_text: requestText.trim(),
         category,
         image_base64: imageBase64 || undefined,
         platforms,
       });
-      router.push(`/result?taskId=`);
+      router.push(`/result?taskId=${task_id}`);
     } catch (e) {
       setError(`无法连接后端：${String(e)}`);
       setLoading(false);
@@ -484,32 +502,63 @@ export default function HomePage() {
           </div>
 
           <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-            <div
-              onClick={() => fileRef.current?.click()}
-              className="group flex h-28 w-full shrink-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed border-brand-400/50 bg-brand-50/40 text-center transition hover:border-brand-500 hover:bg-brand-50 sm:h-36 sm:w-36"
-            >
-              {preview ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={preview} alt="商品图" className="h-full w-full object-cover" />
-              ) : (
-                <>
-                  <span className="font-mono text-2xl text-brand-400 transition group-hover:text-brand-500">+</span>
-                  <span className="mt-1 px-2 text-[11px] font-medium leading-4 text-brand-600">
-                    拖入 / 点击上传商品图
-                  </span>
-                  <span className="mt-0.5 px-2 text-[10px] leading-3 text-ink-400">
-                    一张图即可出包
-                  </span>
-                </>
+            {/* 上传区：label 关联 sr-only input —— 点击 / 拖入 / 键盘 Enter 都能触发选图 */}
+            <div className="relative h-28 w-full shrink-0 rounded-lg focus-within:ring-2 focus-within:ring-brand-500 focus-within:ring-offset-2 sm:h-36 sm:w-36">
+              <label
+                htmlFor="product-image-input"
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setDragOver(true);
+                }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  onFile(e.dataTransfer.files?.[0]);
+                }}
+                className={`group flex h-full w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed text-center transition duration-150 ${
+                  dragOver
+                    ? "border-brand-600 bg-brand-100"
+                    : "border-brand-400/50 bg-brand-50/40 hover:border-brand-500 hover:bg-brand-50"
+                }`}
+              >
+                {preview ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={preview} alt="商品图" className="h-full w-full object-cover" />
+                ) : (
+                  <>
+                    <span className="font-mono text-2xl text-brand-400 transition group-hover:text-brand-500">+</span>
+                    <span className="mt-1 px-2 text-[11px] font-medium leading-4 text-brand-600">
+                      拖入 / 点击上传商品图
+                    </span>
+                    <span className="mt-0.5 px-2 text-[10px] leading-3 text-ink-400">
+                      一张图即可出包
+                    </span>
+                  </>
+                )}
+              </label>
+              {preview && (
+                <button
+                  type="button"
+                  onClick={clearImage}
+                  aria-label="移除已上传的商品图"
+                  className="absolute right-1.5 top-1.5 z-10 rounded-md bg-ink-950/70 px-2.5 py-1 text-[11px] font-medium leading-4 text-white shadow-sm transition duration-150 hover:bg-ink-950"
+                >
+                  移除
+                </button>
               )}
+              <input
+                ref={fileRef}
+                id="product-image-input"
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  onFile(e.target.files?.[0]);
+                  e.target.value = "";
+                }}
+              />
             </div>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => onFile(e.target.files?.[0])}
-            />
 
             <div className="flex min-w-0 flex-1 flex-col gap-3">
               <input
@@ -526,6 +575,34 @@ export default function HomePage() {
                 className="field flex-1 resize-none !leading-6"
               />
             </div>
+          </div>
+
+          {/* 诉求：决定 Agent 本次要做什么（留空 = 出完整上架包） */}
+          <div className="mt-5 border-t border-ink-100 pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label htmlFor="request-text" className="spec-label">
+                你想让我做什么（留空 = 出完整上架包）
+              </label>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {REQUEST_PRESETS.map((p) => (
+                  <button
+                    key={p.label}
+                    type="button"
+                    onClick={() => setRequestText(p.text)}
+                    className="rounded-md border border-ink-200 bg-white px-2.5 py-1 text-xs text-ink-600 shadow-xs transition duration-150 hover:border-brand-400 hover:text-brand-700"
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <input
+              id="request-text"
+              value={requestText}
+              onChange={(e) => setRequestText(e.target.value)}
+              placeholder="例如：先别生成，我想看看你打算怎么做 · 只铺 Shopee 和 Lazada"
+              className="field mt-2"
+            />
           </div>
 
           <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-ink-100 pt-4">
@@ -554,7 +631,11 @@ export default function HomePage() {
             </div>
 
             <button onClick={submit} disabled={loading} className="btn-primary">
-              {loading ? "创建任务中…" : `开始上架任务 · ${platforms.length} 平台 →`}
+              {loading
+                ? "创建任务中…"
+                : requestText.trim()
+                  ? `按你的诉求开始 · ${platforms.length} 平台 →`
+                  : `开始上架任务 · ${platforms.length} 平台 →`}
             </button>
           </div>
 
@@ -577,7 +658,11 @@ export default function HomePage() {
             </div>
           </div>
 
-          {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
+          {error && (
+            <p role="alert" className="mt-3 text-sm text-red-600">
+              {error}
+            </p>
+          )}
         </div>
 
         {/* 样例商品 */}
@@ -687,7 +772,11 @@ export default function HomePage() {
           </div>
         )}
 
-        {ideaError && <p className="mt-3 text-sm text-red-600">{ideaError}</p>}
+        {ideaError && (
+          <p role="alert" className="mt-3 text-sm text-red-600">
+            {ideaError}
+          </p>
+        )}
 
         {ideas.length > 0 && (
           <div className="mt-6 grid gap-4 md:grid-cols-3">

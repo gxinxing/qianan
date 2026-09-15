@@ -183,7 +183,7 @@ def auth_ready() -> bool:
 
 
 def current_user(request: Request) -> dict:
-    """解析当前请求身份。匿名时返回 anonymous 租户。"""
+    """解析当前请求身份。匿名时返回基于客户端指纹派生的独立租户。"""
     token = _bearer_from_request(request)
     if token:
         payload = decode_token(token)
@@ -199,7 +199,9 @@ def current_user(request: Request) -> dict:
         raise HTTPException(status_code=401, detail="登录已失效，请重新登录")
     if REQUIRE_AUTH:
         raise HTTPException(status_code=401, detail="请先登录")
-    return {"uid": ANON_UID, "name": "", "username": "", "authenticated": False}
+    # 游客模式：按客户端指纹派生独立 uid（IP+UA hash），避免所有游客共享同一租户
+    fp = _client_fingerprint(request)
+    return {"uid": f"anon_{fp}", "name": "", "username": "", "authenticated": False}
 
 
 def require_user(request: Request) -> dict:
@@ -212,6 +214,50 @@ def require_user(request: Request) -> dict:
 
 def uid_of(user: dict) -> str:
     return str(user.get("uid") or ANON_UID)
+
+
+def _client_fingerprint(request: Request) -> str:
+    """从客户端 IP + User-Agent 派生稳定指纹（12 位 hex），用于游客模式下的租户隔离。
+
+    同一浏览器/同一 IP 的访客获得同一 uid → 自己的任务自己看得到；
+    不同评委获得不同 uid → 彼此数据隔离。
+    """
+    fwd = request.headers.get("x-forwarded-for", "")
+    ip = fwd.split(",")[0].strip() if fwd else (request.client.host if request.client else "0.0.0.0")
+    ua = request.headers.get("user-agent", "")
+    return hashlib.sha256(f"{ip}|{ua}".encode()).hexdigest()[:12]
+
+
+def client_ip(request: Request) -> str:
+    """获取真实客户端 IP（穿透代理/网关）。"""
+    fwd = request.headers.get("x-forwarded-for", "")
+    if fwd:
+        return fwd.split(",")[0].strip()
+    return request.client.host if request.client else "0.0.0.0"
+
+
+# ───────────────────── 演示限流（防额度被刷干） ─────────────────────
+#: 游客模式下，每个 IP 每天最多调用的生成次数（单+批量合计）。
+#: 演示日防止恶意循环调用 /api/generate 烧干网关额度。
+RATE_LIMIT_DAILY = int(os.getenv("QIANAN_RATE_LIMIT", "30"))
+_rate_store: dict[str, dict] = {}  # ip → {date: "YYYY-MM-DD", count: N}
+
+
+def check_rate_limit(ip: str) -> None:
+    """每日配额检查：超限则 429。内存计数，SCF 冷启动自然重置（演示场景足够）。"""
+    if RATE_LIMIT_DAILY <= 0:
+        return  # 0 = 不限流
+    today = time.strftime("%Y-%m-%d", time.gmtime())
+    rec = _rate_store.get(ip)
+    if not rec or rec["date"] != today:
+        _rate_store[ip] = {"date": today, "count": 1}
+        return
+    rec["count"] += 1
+    if rec["count"] > RATE_LIMIT_DAILY:
+        raise HTTPException(
+            status_code=429,
+            detail=f"每日体验额度已用完（{RATE_LIMIT_DAILY} 次/天），请联系团队获取专属账号。",
+        )
 
 
 def token_fingerprint(token: str) -> str:

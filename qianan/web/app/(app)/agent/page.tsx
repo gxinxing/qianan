@@ -162,7 +162,15 @@ export default function AgentPage() {
         </div>
         {installed ? (
           <button
-            onClick={() => act(s.id, () => uninstallSkill(s.id))}
+            onClick={() => {
+              if (
+                !window.confirm(
+                  `卸载「${s.name}」？其规则补丁与工具将立即失效（可随时重新安装）。`
+                )
+              )
+                return;
+              act(s.id, () => uninstallSkill(s.id));
+            }}
             disabled={!!busy}
             className="shrink-0 rounded-md px-3 py-1.5 text-xs font-medium text-red-600 transition duration-150 hover:bg-red-50 disabled:opacity-50"
           >
@@ -203,12 +211,17 @@ export default function AgentPage() {
           </p>
         )}
         {error && (
-          <p className="mt-6 rounded-lg bg-red-50 px-4 py-3 font-mono text-xs tracking-[0.04em] text-red-600">
+          <p
+            role="alert"
+            className="mt-6 rounded-lg bg-red-50 px-4 py-3 font-mono text-xs tracking-[0.04em] text-red-600"
+          >
             [ERROR] {error}
           </p>
         )}
         {notice && (
-          <p className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-600">{notice}</p>
+          <p role="alert" className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-600">
+            {notice}
+          </p>
         )}
 
         {!loading && overview && (
