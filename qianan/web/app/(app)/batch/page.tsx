@@ -49,7 +49,7 @@ function newKey() {
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   queued: { label: "排队中", cls: "bg-ink-100 text-ink-500" },
-  running: { label: "生成中", cls: "bg-blue-50 text-blue-600" },
+  running: { label: "生成中", cls: "bg-brand-50 text-brand-700" },
   done: { label: "已完成", cls: "bg-emerald-50 text-emerald-600" },
   failed: { label: "失败", cls: "bg-red-50 text-red-600" },
   missing: { label: "丢失", cls: "bg-red-50 text-red-600" },
@@ -343,7 +343,7 @@ function BatchResultView({
               {it.status === "running" && (
                 <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-ink-100">
                   <div
-                    className="h-full bg-blue-400 transition-all"
+                    className="h-full bg-brand-500 transition-all"
                     style={{ width: `${Math.max(8, it.progress * 100)}%` }}
                   />
                 </div>
