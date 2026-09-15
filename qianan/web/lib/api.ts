@@ -133,7 +133,7 @@ export interface AgentReflection {
 
 export interface TaskDetail {
   task_id: string;
-  status: "queued" | "running" | "done" | "failed";
+  status: "queued" | "running" | "done" | "failed" | "partial" | "cancelled";
   stage: string;
   progress: number;
   request?: { product_name?: string };

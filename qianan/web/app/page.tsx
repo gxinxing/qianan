@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Nav from "@/components/Nav";
+import Link from "next/link";
+import { ArrowUp, ArrowUpRight, Plus, SlidersHorizontal, Globe2, Package, PanelLeft, X, Layers, FolderOpen, BookOpen, Sparkles } from "lucide-react";
+import { Enter, PressButton, Reveal, Feedback, SidebarMotion } from "@/components/MotionUI";
 import Footer from "@/components/Footer";
 import {
   createTask,
@@ -63,84 +65,6 @@ const CAPABILITIES = [
     points: ["禁用词 / 超限自动修复", "修订次数全程可溯", "通过率纳入后台统计"],
   },
 ];
-
-/* Agent Trace 演示数据：与后端真实 plan/build/heal/reflect/evolve 五阶段对应 */
-const TRACE_DEMO = [
-  { phase: "plan", tool: "understand_product", summary: "识别品类 · 提取 3 个核心卖点", status: "ok" },
-  { phase: "build", tool: "draft_listing", summary: "Amazon · en-US 标题与五点描述", status: "ok" },
-  { phase: "build", tool: "localize", summary: "Shopee · th-TH 原生改写", status: "ok" },
-  { phase: "heal", tool: "fix_banned_word", summary: "命中禁用词「best」· 自动修订复检通过", status: "run" },
-  { phase: "reflect", tool: "review_package", summary: "待执行 · 产出物一致性复核", status: "wait" },
-  { phase: "evolve", tool: "distill_lesson", summary: "待执行 · 经验沉淀入记忆库", status: "wait" },
-] as const;
-
-function AgentTracePanel() {
-  return (
-    <div className="trace-panel w-full max-w-md rounded-xl p-5">
-      <div className="flex items-center justify-between">
-        <p className="font-mono text-[10px] font-medium uppercase tracking-[0.1em] text-brand-300">
-          Agent Trace · Live
-        </p>
-        <span className="flex items-center gap-1.5 font-mono text-[10px] text-emerald-400">
-          <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-emerald-400" />
-          RUNNING
-        </span>
-      </div>
-      <div className="mt-4 space-y-1">
-        {TRACE_DEMO.map((t, i) => (
-          <div
-            key={i}
-            data-status={t.status}
-            className="trace-row flex items-start gap-3 rounded-r-md py-2 pl-3 pr-2"
-          >
-            <span
-              className={`mt-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.08em] ${
-                t.status === "ok"
-                  ? "text-emerald-400"
-                  : t.status === "run"
-                    ? "text-brand-300"
-                    : "text-brand-200/40"
-              }`}
-            >
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <div className="min-w-0 flex-1">
-              <p
-                className={`font-mono text-[11px] font-medium ${
-                  t.status === "wait" ? "text-brand-200/40" : "text-brand-100"
-                }`}
-              >
-                {t.phase}
-                <span className="mx-1.5 text-brand-200/30">·</span>
-                <span className={t.status === "wait" ? "text-brand-200/40" : "text-brand-300"}>
-                  {t.tool}
-                </span>
-              </p>
-              <p
-                className={`mt-0.5 truncate text-[11px] leading-4 ${
-                  t.status === "wait" ? "text-brand-200/30" : "text-brand-100/60"
-                }`}
-              >
-                {t.summary}
-              </p>
-            </div>
-            {t.status === "run" && (
-              <span className="mt-1 h-1.5 w-1.5 shrink-0 animate-pulse-dot rounded-full bg-brand-300" />
-            )}
-            {t.status === "ok" && (
-              <span className="mt-1 shrink-0 text-[10px] text-emerald-400">✓</span>
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="mt-3 border-t border-white/5 pt-3">
-        <p className="font-mono text-[10px] text-brand-200/40">
-          plan → build → heal → reflect → evolve
-        </p>
-      </div>
-    </div>
-  );
-}
 
 /* ---------- 产出物微缩样机（纯 CSS，对应真实上架包内容） ---------- */
 
@@ -311,6 +235,8 @@ export default function HomePage() {
   const [trends, setTrends] = useState<string[]>([]);
   const [band, setBand] = useState<CompetitorBand | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   /** 清空已选图片，回到未上传态（重新选择同一文件也能再次触发 change）。 */
   const clearImage = () => {
@@ -353,7 +279,7 @@ export default function HomePage() {
   const fillSample = (i: number) => {
     const s = SAMPLES[i];
     setProductName(s.name);
-    setSellingPoints(s.sellingPoints);
+    setSellingPoints(`${s.name}，${s.sellingPoints}`);
     setCategory(s.category);
     setError("");
   };
@@ -390,7 +316,7 @@ export default function HomePage() {
 
   const useIdea = (idea: IdeationSuggestion) => {
     setProductName(idea.product_name);
-    setSellingPoints(idea.selling_points);
+    setSellingPoints(`${idea.product_name}，${idea.selling_points}`);
     setCategory(idea.category);
     setError("");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -409,9 +335,9 @@ export default function HomePage() {
     setLoading(true);
     try {
       const { task_id } = await createTask({
-        product_name: productName.trim(),
+        product_name: productName.trim() || sellingPoints.trim().slice(0, 200),
         selling_points: sellingPoints.trim(),
-        request_text: requestText.trim(),
+        request_text: requestText.trim() || sellingPoints.trim().slice(0, 300),
         category,
         image_base64: imageBase64 || undefined,
         platforms,
@@ -424,262 +350,47 @@ export default function HomePage() {
   };
 
   return (
-    <main>
-      <Nav />
-
-      {/* ---------- Hero：深海图 + Agent Trace ---------- */}
-      <section className="contour-bg relative overflow-hidden">
-        <div className="mx-auto max-w-6xl px-6 pb-36 pt-12">
-          {/* 赛事公告条（Supabase 式） */}
-          <div className="flex justify-center">
-            <span className="inline-flex max-w-full items-center gap-2 rounded-full border border-brand-400/25 bg-white/5 px-3.5 py-1.5 font-mono text-[11px] tracking-[0.04em] text-brand-200 backdrop-blur">
-              <span className="sm:hidden">AI+跨境黑客松 · 复赛 Demo</span>
-              <span className="hidden sm:inline">AI+跨境黑客松巅峰赛 · 复赛</span>
-              <span className="hidden h-3 w-px bg-brand-400/30 sm:inline" />
-              <span className="hidden text-brand-300 sm:inline">多平台智能上新 Agent →</span>
-            </span>
-          </div>
-
-          <div className="mt-14 grid items-center gap-12 lg:grid-cols-[1.2fr_1fr]">
-            {/* 左：标题组 */}
-            <div>
-              {/* 实时数据眉题（Stripe 式） */}
-              <p className="eyebrow !text-brand-300 animate-fade-up flex items-center gap-2">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                </span>
-                Rules Engine Online · 38 Checks · 5 Platforms · 10 Locales
-              </p>
-
-              <h1 className="mt-5 text-[52px] font-semibold leading-[1.05] tracking-[-0.02em] text-white sm:text-[72px]">
-                一稿多岸
-              </h1>
-              <p className="mt-4 max-w-xl text-xl leading-snug sm:text-2xl">
-                <span className="text-white">一件商品，一次输入，</span>
-                <span className="text-brand-300">五片海岸各自合规。</span>
-              </p>
-              <p className="mt-5 max-w-lg text-[15px] leading-7 text-brand-100/70">
-                AI 按 5 个平台的结构化规则引擎，生成各自合规、可直接导入的上架包——
-                多语言文案、规范主图、A+ 详情、后台导入表，下载即用。
-              </p>
-
-              {/* 平台墙（Vercel/Stripe 式 logo 带） */}
-              <div className="mt-10 border-t border-white/10 pt-5">
-                <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
-                  {PLATFORM_META.map((p) => (
-                    <div key={p.key} className="flex items-center gap-2">
-                      <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: p.key === "tiktokshop" ? "#e3e8f0" : p.dot }}
-                      />
-                      <span className="text-[13px] font-semibold tracking-wide text-brand-100/80">
-                        {p.name}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+    <main className="agent-home">
+      <SidebarMotion open={menuOpen} onClose={() => setMenuOpen(false)}>
+        <Link href="/" className="agent-home-brand"><span>岸</span>千岸 <small>QianAn</small></Link>
+        <PressButton className="agent-home-new" onClick={() => { setProductName(""); setSellingPoints(""); setRequestText(""); clearImage(); setMenuOpen(false); }}><Plus size={17} /> 新建任务</PressButton>
+        <nav aria-label="工作区导航">
+          <Link href="/workbench"><Layers size={17} />任务工作台<ArrowUpRight size={13} /></Link>
+          <Link href="/studio"><Sparkles size={17} />对话 Studio<ArrowUpRight size={13} /></Link>
+          <Link href="/files"><FolderOpen size={17} />我的文件</Link>
+          <Link href="/batch"><Package size={17} />批量上新</Link>
+          <p>工作区</p>
+          <Link href="/rules"><BookOpen size={17} />平台规则</Link>
+          <Link href="/agent"><Globe2 size={17} />Agent 中枢</Link>
+        </nav>
+        <div className="agent-home-sidebar-note"><span>一稿多岸</span><p>从一件商品，到下一个市场。</p><Link href="/login">账户与登录 <ArrowUpRight size={14} /></Link></div>
+      </SidebarMotion>
+      {menuOpen && <PressButton className="agent-home-backdrop" aria-label="关闭导航" onClick={() => setMenuOpen(false)} />}
+      <div className="agent-home-content">
+        <header className="agent-home-topbar">
+          <div><PressButton className="agent-home-menu" aria-label="切换导航" aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><PanelLeft size={20} /></PressButton><span>千岸 Agent</span><span className="agent-home-badge">跨境上新</span></div>
+          <Link href="/workbench">查看任务 <ArrowUpRight size={14} /></Link>
+        </header>
+        <section className="agent-home-start" aria-labelledby="agent-home-title">
+          <Enter className="agent-home-intro"><div className="agent-home-mark"><Globe2 size={29} strokeWidth={1.3} /></div><p>让好商品，走向更远的地方</p><h1 id="agent-home-title">今天，想把什么卖向世界？</h1><span>告诉千岸你的商品和目标，把上新交给 Agent。</span></Enter>
+          <Enter delay={0.08} className={`agent-home-composer ${dragOver ? "is-dragging" : ""}`} onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)} onDrop={(e) => { e.preventDefault(); setDragOver(false); onFile(e.dataTransfer.files?.[0]); }}>
+            {preview && <div className="agent-home-attachment"><img src={preview} alt="已上传的商品图" /><span>商品图片</span><PressButton onClick={clearImage} aria-label="移除商品图"><X size={16} /></PressButton></div>}
+            <textarea aria-label="描述商品和上新需求" value={sellingPoints} maxLength={2000} onChange={(e) => { setSellingPoints(e.target.value); setProductName(""); }} placeholder="例如：我有一款 380ml 便携榨汁杯，USB-C 充电，帮我准备出海上架内容…" rows={3} disabled={loading} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); if (!loading) void submit(); } }} />
+            <div className="agent-home-composer-tools">
+              <div><PressButton className="agent-home-icon" onClick={() => fileRef.current?.click()} aria-label="上传商品图片" title="上传商品图片"><Plus size={21} /></PressButton><PressButton className="agent-home-settings" onClick={() => setSettingsOpen(!settingsOpen)} aria-expanded={settingsOpen} aria-controls="agent-home-settings"><SlidersHorizontal size={15} /><span>{platforms.length} 个平台</span></PressButton><span className="agent-home-mode"><Sparkles size={13} />Agent</span></div>
+              <PressButton className="agent-home-send" onClick={submit} disabled={loading} aria-label={loading ? "创建任务中" : "开始上架任务"}>{loading ? <span className="animate-pulse">•••</span> : <ArrowUp size={20} />}</PressButton>
             </div>
-
-            {/* 右：Agent Trace 产品证明面板（Linear 式） */}
-            <div className="hidden justify-end lg:flex">
-              <AgentTracePanel />
-            </div>
-          </div>
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-b from-transparent to-[#f2f5fb]" />
-      </section>
-
-      {/* ---------- 输入卡片（压 Hero 边） ---------- */}
-      <section className="mx-auto max-w-6xl px-6">
-        <div className="card relative z-10 -mt-24 p-6 shadow-lg">
-          <div className="flex items-center justify-between">
-            <p className="eyebrow">New Listing · 新建上架任务</p>
-            <p className="font-mono text-[11px] text-ink-400">
-              {platforms.length}/{PLATFORM_META.length} SHORES
-            </p>
-          </div>
-
-          <div className="mt-4 flex flex-col gap-4 sm:flex-row">
-            {/* 上传区：label 关联 sr-only input —— 点击 / 拖入 / 键盘 Enter 都能触发选图 */}
-            <div className="relative h-28 w-full shrink-0 rounded-lg focus-within:ring-2 focus-within:ring-brand-500 focus-within:ring-offset-2 sm:h-36 sm:w-36">
-              <label
-                htmlFor="product-image-input"
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(true);
-                }}
-                onDragLeave={() => setDragOver(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragOver(false);
-                  onFile(e.dataTransfer.files?.[0]);
-                }}
-                className={`group flex h-full w-full cursor-pointer flex-col items-center justify-center overflow-hidden rounded-lg border border-dashed text-center transition duration-150 ${
-                  dragOver
-                    ? "border-brand-600 bg-brand-100"
-                    : "border-brand-400/50 bg-brand-50/40 hover:border-brand-500 hover:bg-brand-50"
-                }`}
-              >
-                {preview ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={preview} alt="商品图" className="h-full w-full object-cover" />
-                ) : (
-                  <>
-                    <span className="font-mono text-2xl text-brand-400 transition group-hover:text-brand-500">+</span>
-                    <span className="mt-1 px-2 text-[11px] font-medium leading-4 text-brand-600">
-                      拖入 / 点击上传商品图
-                    </span>
-                    <span className="mt-0.5 px-2 text-[10px] leading-3 text-ink-400">
-                      一张图即可出包
-                    </span>
-                  </>
-                )}
-              </label>
-              {preview && (
-                <button
-                  type="button"
-                  onClick={clearImage}
-                  aria-label="移除已上传的商品图"
-                  className="absolute right-1.5 top-1.5 z-10 rounded-md bg-ink-950/70 px-2.5 py-1 text-[11px] font-medium leading-4 text-white shadow-sm transition duration-150 hover:bg-ink-950"
-                >
-                  移除
-                </button>
-              )}
-              <input
-                ref={fileRef}
-                id="product-image-input"
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => {
-                  onFile(e.target.files?.[0]);
-                  e.target.value = "";
-                }}
-              />
-            </div>
-
-            <div className="flex min-w-0 flex-1 flex-col gap-3">
-              <input
-                value={productName}
-                onChange={(e) => setProductName(e.target.value)}
-                placeholder="商品名称，如：便携榨汁杯 380ml"
-                className="field !text-[15px] !font-medium"
-              />
-              <textarea
-                value={sellingPoints}
-                onChange={(e) => setSellingPoints(e.target.value)}
-                rows={2}
-                placeholder="一句话卖点，如：USB-C 快充，10 秒出汁，杯身可拆洗，仅 380g…"
-                className="field flex-1 resize-none !leading-6"
-              />
-            </div>
-          </div>
-
-          {/* 诉求：决定 Agent 本次要做什么（留空 = 出完整上架包） */}
-          <div className="mt-5 border-t border-ink-100 pt-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <label htmlFor="request-text" className="spec-label">
-                你想让我做什么（留空 = 出完整上架包）
-              </label>
-              <div className="flex flex-wrap items-center gap-1.5">
-                {REQUEST_PRESETS.map((p) => (
-                  <button
-                    key={p.label}
-                    type="button"
-                    onClick={() => setRequestText(p.text)}
-                    className="rounded-md border border-ink-200 bg-white px-2.5 py-1 text-xs text-ink-600 shadow-xs transition duration-150 hover:border-brand-400 hover:text-brand-700"
-                  >
-                    {p.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <input
-              id="request-text"
-              value={requestText}
-              onChange={(e) => setRequestText(e.target.value)}
-              placeholder="例如：先别生成，我想看看你打算怎么做 · 只铺 Shopee 和 Lazada"
-              className="field mt-2"
-            />
-          </div>
-
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-ink-100 pt-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="spec-label mr-1">目标平台</span>
-              {PLATFORM_META.map((p) => {
-                const on = platforms.includes(p.key);
-                return (
-                  <button
-                    key={p.key}
-                    onClick={() => togglePlatform(p.key)}
-                    className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition duration-150 ${
-                      on
-                        ? "border-brand-800 bg-brand-800 font-medium text-white shadow-sm"
-                        : "border-ink-200 bg-white text-ink-500 hover:border-ink-300 hover:text-ink-700"
-                    }`}
-                  >
-                    <span
-                      className="h-1.5 w-1.5 rounded-full"
-                      style={{ background: on ? p.dot : "#cdd5e0" }}
-                    />
-                    {p.name}
-                  </button>
-                );
-              })}
-            </div>
-
-            <button onClick={submit} disabled={loading} className="btn-primary">
-              {loading
-                ? "创建任务中…"
-                : requestText.trim()
-                  ? `按你的诉求开始 · ${platforms.length} 平台 →`
-                  : `开始上架任务 · ${platforms.length} 平台 →`}
-            </button>
-          </div>
-
-          <div className="mt-4 rounded-lg bg-ink-50/70 px-3.5 py-3 ring-1 ring-ink-100">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-xs font-medium text-ink-700">提交后会进入可追踪的上架工作台</p>
-              <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-ink-400">INPUT → RECEIPT</span>
-            </div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-4">
-              {LAUNCH_FLOW.map((step, i) => (
-                <div key={step.no} className="relative flex gap-2.5 rounded-md bg-white px-2.5 py-2 ring-1 ring-ink-100">
-                  <span className="font-mono text-[10px] font-semibold text-brand-600">{step.no}</span>
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-medium text-ink-800">{step.title}</p>
-                    <p className="mt-0.5 text-[10px] leading-4 text-ink-400">{step.desc}</p>
-                  </div>
-                  {i < LAUNCH_FLOW.length - 1 && <span className="absolute -right-2.5 top-1/2 hidden text-ink-300 sm:block">›</span>}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {error && (
-            <p role="alert" className="mt-3 text-sm text-red-600">
-              {error}
-            </p>
-          )}
-        </div>
-
-        {/* 样例商品 */}
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <span className="spec-label">没有商品？试试样例</span>
-          {SAMPLES.map((s, i) => (
-            <button
-              key={s.name}
-              onClick={() => fillSample(i)}
-              className="rounded-md border border-ink-200 bg-white px-2.5 py-1 text-xs text-ink-600 shadow-xs transition hover:border-brand-400 hover:text-brand-700"
-            >
-              {s.name}
-            </button>
-          ))}
-        </div>
-      </section>
-
+            <input ref={fileRef} type="file" accept="image/*" aria-label="商品图片" className="hidden" onChange={(e) => { onFile(e.target.files?.[0]); e.target.value = ""; }} />
+            <Reveal open={settingsOpen} id="agent-home-settings"><div className="agent-home-options"><p>发布到哪些平台？</p><div className="agent-home-platforms">{PLATFORM_META.map((p) => <PressButton key={p.key} aria-pressed={platforms.includes(p.key)} onClick={() => togglePlatform(p.key)}>{p.name}{platforms.includes(p.key) && <span>✓</span>}</PressButton>)}</div><label htmlFor="agent-product-name">商品名称（可选）</label><input id="agent-product-name" maxLength={200} className="field" value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="补充准确的商品名称" /><label htmlFor="agent-request">本次任务</label><input id="agent-request" maxLength={300} className="field" value={requestText} onChange={(e) => setRequestText(e.target.value)} placeholder="默认生成完整上架包，也可以先看方案" /></div></Reveal>
+          </Enter>
+          {error && <Feedback role="alert" className="mt-3 text-sm text-red-600">{error}</Feedback>}
+          <p className="agent-home-hint">上传商品图，或直接描述商品 · Enter 开始，Shift + Enter 换行</p>
+          <div className="agent-home-suggestions">{REQUEST_PRESETS.map((p) => <PressButton key={p.label} aria-pressed={requestText === p.text} onClick={() => { setRequestText(p.text); if (p.label === "只要东南亚") setPlatforms(["shopee", "lazada", "tiktokshop"]); }}><span>{p.label === "先看方案" ? "先帮我规划" : p.label === "只要东南亚" ? "拓展东南亚" : "生成完整上架包"}</span><ArrowUpRight size={14} /></PressButton>)}</div>
+          {requestText && <p className="agent-home-selection">{requestText}<PressButton aria-label="清除任务偏好" onClick={() => setRequestText("")}><X size={13} /></PressButton></p>}
+          <div className="agent-home-examples"><span>没有灵感？从一件商品开始</span><div>{SAMPLES.map((s, i) => <PressButton key={s.name} onClick={() => fillSample(i)}><Package size={15} />{s.name}</PressButton>)}</div></div>
+          <div className="agent-home-journey">{LAUNCH_FLOW.map((step, i) => <span key={step.no}>{i > 0 && <span className="agent-home-journey-arrow">→</span>}{step.title}</span>)}</div>
+        </section>
+        <details className="agent-home-more"><summary>了解千岸能为你做什么 <span>产出物 · 选品灵感 · 平台能力</span></summary>
       {/* ---------- 产出物证明（Linear 式：直接展示产品输出） ---------- */}
       <section className="mx-auto mt-20 max-w-6xl px-6">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -730,31 +441,31 @@ export default function HomePage() {
           <div className="flex flex-wrap items-center gap-2">
             <div className="segment">
               {MARKETS.map((m) => (
-                <button
+                <PressButton
                   key={m.key}
                   data-on={market === m.key}
                   onClick={() => setMarket(m.key)}
                   className="segment-item"
                 >
                   {m.name}
-                </button>
+                </PressButton>
               ))}
             </div>
             <div className="segment">
               {IDEA_CATEGORIES.map((c) => (
-                <button
+                <PressButton
                   key={c.key}
                   data-on={ideaCategory === c.key}
                   onClick={() => setIdeaCategory(c.key)}
                   className="segment-item"
                 >
                   {c.name}
-                </button>
+                </PressButton>
               ))}
             </div>
-            <button onClick={genIdeation} disabled={ideaLoading} className="btn-primary !px-4 !py-2 !text-xs">
+            <PressButton onClick={genIdeation} disabled={ideaLoading} className="btn-primary !px-4 !py-2 !text-xs">
               {ideaLoading ? "AI 分析中…" : "生成选品建议"}
-            </button>
+            </PressButton>
           </div>
         </div>
 
@@ -788,12 +499,12 @@ export default function HomePage() {
                 <p className="mt-3 border-t border-ink-100 pt-3 text-xs leading-5 text-ink-400">
                   {idea.selling_points}
                 </p>
-                <button
+                <PressButton
                   onClick={() => useIdea(idea)}
                   className="btn-primary mt-4 !w-full !py-2 !text-xs"
                 >
                   上架这个 →
-                </button>
+                </PressButton>
               </div>
             ))}
           </div>
@@ -844,16 +555,18 @@ export default function HomePage() {
           <p className="mx-auto mt-3 max-w-md text-sm leading-6 text-brand-100/70">
             填入商品名称与一句话卖点，两分钟取回五套合规上架包。
           </p>
-          <button
+          <PressButton
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             className="mt-6 inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 text-sm font-semibold text-brand-900 shadow-lg transition hover:bg-brand-50 active:translate-y-px"
           >
             立即创建上架任务 ↑
-          </button>
+          </PressButton>
         </div>
       </section>
 
-      <Footer />
+        </details>
+        <Footer />
+      </div>
     </main>
   );
 }
