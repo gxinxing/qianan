@@ -75,6 +75,9 @@ qianan/server/data/memory/*.jsonl
 qianan/server/data/metrics/*.jsonl
 qianan/server/data/mock_seller/*.jsonl
 qianan/server/data/publish/*.jsonl
+# 运行时计数/用户映射（游客 uid 由 IP+UA 派生，非密钥，但属运行态不应入库）
+qianan/server/data/users.json
+qianan/server/data/wan_image_quota.json
 
 # ===== 会话迁移记录（AI 对话导出，不入库）=====
 会话记录*.md

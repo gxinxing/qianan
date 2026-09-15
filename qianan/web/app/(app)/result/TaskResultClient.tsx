@@ -1,12 +1,13 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Nav from "@/components/Nav";
 import PublishPanel from "@/components/PublishPanel";
 import AgentTracePanel from "@/components/AgentTracePanel";
 import AgentCapabilityPanel from "@/components/AgentCapabilityPanel";
-import { exportUrl, fetchTask, PLATFORM_META, submitFeedback, validateDraft, zipUrl, type ComplianceIssue, type PlatformListing, type TaskDetail } from "@/lib/api";
+import { exportUrl, fetchTask, PLATFORM_META, submitFeedback, validateDraft, withToken, zipUrl, type ComplianceIssue, type PlatformListing, type TaskDetail } from "@/lib/api";
 import { useTaskPolling } from "@/lib/useTaskPolling";
 
 const STEPS = [
@@ -24,6 +25,18 @@ const TITLE_LIMITS: Record<string, number> = {
   aliexpress: 128,
   lazada: 255,
   tiktokshop: 255,
+};
+
+/** 动作 → 中文名（与后端 schemas.ACTION_LABELS 对齐，用于「本次执行图」展示）。 */
+const ACTION_LABEL_FULL: Record<string, string> = {
+  understand_product: "商品理解",
+  match_rules: "规则匹配",
+  generate_copy: "多语言文案",
+  generate_visual: "规范主图",
+  generate_detail_shots: "多角度详情图",
+  generate_video: "展示视频",
+  audit_compliance: "合规体检",
+  reflect_memory: "反思回写记忆",
 };
 
 function stageToIndex(task: TaskDetail): number {
@@ -152,7 +165,7 @@ function CompareSection({ listings }: { listings: PlatformListing[] }) {
                           <span className="text-ink-300">—</span>
                         ) : (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={v} alt={`${listing.display_name} 主图`} className="h-10 w-10 rounded-lg object-cover ring-1 ring-ink-100" />
+                          <img src={withToken(v)} alt={`${listing.display_name} 主图`} className="h-10 w-10 rounded-lg object-cover ring-1 ring-ink-100" />
                         )
                       ) : isCompliance ? (
                         <span
@@ -285,6 +298,8 @@ export default function ResultPage() {
   // 任务轮询：1.5s 一轮直至 done / failed；失败退避（首次失败 3s，随后指数递增），
   // 连续 20 次失败即停止并提示，避免后端不可达时无限重试。
   const [pollError, setPollError] = useState("");
+  const [downloading, setDownloading] = useState("");
+  const [downloadError, setDownloadError] = useState("");
   useTaskPolling({
     fetchFn: () => fetchTask(taskId),
     interval: 1500,
@@ -297,6 +312,29 @@ export default function ResultPage() {
       if (gaveUp) setPollError(String(e));
     },
   });
+
+  if (!taskId) {
+    return (
+      <main className="pb-24">
+        <Nav />
+        <div className="mx-auto max-w-3xl px-6 py-24 text-center">
+          <p className="eyebrow !text-amber-600">Missing Task</p>
+          <p className="mt-4 text-lg text-ink-800">链接中缺少任务 ID</p>
+          <p className="mt-2 text-sm text-ink-400">
+            请从工作台或文件管理进入某个具体任务的结果页
+          </p>
+          <div className="mt-8 flex justify-center gap-3">
+            <a href="/workbench" className="btn-primary inline-flex">
+              去工作台
+            </a>
+            <a href="/files" className="btn-ghost inline-flex">
+              文件管理
+            </a>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (!task) {
     return (
@@ -469,18 +507,32 @@ export default function ResultPage() {
   /** 拉取导出包，把当前平台的后台导入 CSV 下载到本地（Excel 直开）。 */
   async function downloadImportFile(platform: string) {
     if (!taskId) return;
-    const res = await fetch(exportUrl(taskId));
-    const data = await res.json();
-    const listing = (data.listings as PlatformListing[]).find((l) => l.platform === platform);
-    const files = listing?.import_files;
-    if (!files) return;
-    for (const [name, content] of Object.entries(files)) {
-      const blob = new Blob(["" + content], { type: "text/csv;charset=utf-8" });
-      const a = document.createElement("a");
-      a.href = URL.createObjectURL(blob);
-      a.download = name;
-      a.click();
-      URL.revokeObjectURL(a.href);
+    setDownloadError("");
+    setDownloading(platform);
+    try {
+      const res = await fetch(exportUrl(taskId));
+      if (!res.ok) throw new Error(`导出接口返回 ${res.status}`);
+      const data = await res.json();
+      const listing = (data.listings as PlatformListing[]).find((l) => l.platform === platform);
+      const files = listing?.import_files;
+      if (!files || Object.keys(files).length === 0) {
+        throw new Error("该平台暂无导入表文件");
+      }
+      for (const [name, content] of Object.entries(files)) {
+        const url = URL.createObjectURL(
+          new Blob(["\ufeff" + content], { type: "text/csv;charset=utf-8" })
+        );
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = name;
+        a.click();
+        // 延迟回收：立即 revoke 会让部分浏览器取消尚未真正开始的下载
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+    } catch (e) {
+      setDownloadError(`导入表下载失败：${e instanceof Error ? e.message : String(e)}`);
+    } finally {
+      setDownloading("");
     }
   }
 
@@ -499,6 +551,112 @@ export default function ResultPage() {
     } catch (e) {
       alert(`反馈提交失败：${String(e)}`);
     }
+  }
+
+  /* ---------- 意图：方案预览（只出方案，不生成上架包） ---------- */
+  if (task.intent?.goal === "preview") {
+    const excluded = task.intent.excluded_actions || [];
+    return (
+      <main className="pb-24">
+        <Nav />
+
+        <section className="contour-bg relative overflow-hidden">
+          <div className="mx-auto max-w-6xl px-6 pb-28 pt-14">
+            <p className="eyebrow !text-brand-300">Intent · 意图识别</p>
+            <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-white sm:text-4xl">
+              先给你方案，暂不上架
+            </h1>
+            <p className="mt-4 max-w-xl text-[15px] leading-7 text-brand-100/70">
+              我读懂了商品与平台规则，但按你的要求没有动手生成物料 —— 确认方案后再出包，
+              不用为一版可能推翻的产出等上几分钟。
+            </p>
+            {task.intent.summary && (
+              <p className="mt-5 inline-flex max-w-full items-start gap-2 rounded-lg border border-brand-400/25 bg-white/5 px-3.5 py-2 text-[13px] leading-5 text-brand-200 backdrop-blur">
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-[0.08em] text-brand-300">
+                  我听懂的是
+                </span>
+                <span className="min-w-0">{task.intent.summary}</span>
+              </p>
+            )}
+          </div>
+        </section>
+
+        <div className="mx-auto max-w-6xl px-6">
+          {/* ---------- 本次执行图 ---------- */}
+          <section className="card relative z-10 -mt-16 p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-ink-100 pb-4">
+              <div>
+                <p className="eyebrow">Execution Graph · 本次执行图</p>
+                <h2 className="mt-1.5 text-[15px] font-semibold text-ink-900">
+                  意图改变了执行图，不是走完整流水线
+                </h2>
+              </div>
+              <span className="font-mono text-[11px] text-ink-500">
+                {excluded.length} / {excluded.length + 2} 个步骤未进入本次执行
+              </span>
+            </div>
+
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
+              <div>
+                <p className="spec-label mb-2">已执行</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {["商品理解", "规则匹配"].map((n) => (
+                    <span
+                      key={n}
+                      className="flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700"
+                    >
+                      <span aria-hidden="true">✓</span>
+                      {n}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="spec-label mb-2">本次不执行</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {excluded.map((a) => (
+                    <span
+                      key={a}
+                      className="rounded-md bg-ink-100 px-2 py-1 text-xs text-ink-500 line-through decoration-ink-300"
+                    >
+                      {ACTION_LABEL_FULL[a] || a}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <p className="mt-4 border-t border-ink-100 pt-3 text-[11px] leading-5 text-ink-500">
+              未生成上架物料 ⇒ 没有可上架的产物 ⇒ 合规体检与反思不适用于本次意图
+              （合规闸门保护的是要上架的东西，不是流程本身）。
+            </p>
+          </section>
+
+          {/* ---------- 策略报告 ---------- */}
+          {task.strategy_report && (
+            <section className="card mt-6 p-6">
+              <p className="eyebrow">Strategy · 上新策略报告</p>
+              <pre className="mt-4 whitespace-pre-wrap font-sans text-[13.5px] leading-7 text-ink-700">
+                {task.strategy_report}
+              </pre>
+            </section>
+          )}
+
+          {/* ---------- 下一步 ---------- */}
+          <section className="card mt-6 flex flex-wrap items-center justify-between gap-4 p-6">
+            <div>
+              <p className="text-sm font-semibold text-ink-900">方案确认了？</p>
+              <p className="mt-1 text-[13px] leading-6 text-ink-500">
+                回首页把诉求改成「出完整上架包」（或留空），就会按这份策略生成各平台物料。
+              </p>
+            </div>
+            <Link href="/" className="btn-primary shrink-0">
+              按此方案生成上架包 →
+            </Link>
+          </section>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -562,7 +720,20 @@ export default function ResultPage() {
           <AgentCapabilityPanel task={task} />
         </div>
 
-        {/* ---------- 闭环总览：把“生成完成”明确连接到下一步发布 ---------- */}
+        {/* ---------- 上新策略报告（AI 交付物，对标 mzsleep 策略文档） ---------- */}
+        {task.strategy_report && (
+          <div className="card mt-5 p-6 animate-fade-up">
+            <div className="flex items-baseline justify-between">
+              <h2 className="eyebrow">上新策略报告</h2>
+              <span className="spec-label">Strategy Report</span>
+            </div>
+            <div className="prose prose-sm mt-4 max-w-none whitespace-pre-wrap text-sm leading-relaxed text-ink-700">
+              {task.strategy_report}
+            </div>
+          </div>
+        )}
+
+        {/* ---------- 闭环总览：把"生成完成"明确连接到下一步发布 ---------- */}
         <section className="card mt-5 overflow-hidden animate-fade-up">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-ink-100 px-5 py-4">
             <div>
@@ -600,6 +771,10 @@ export default function ResultPage() {
               <button
                 key={l.platform}
                 onClick={() => setActive(i)}
+                aria-pressed={on}
+                aria-label={`${l.display_name || platformName(l.platform)} 上架包，合规${
+                  l.compliance_passed ? "通过" : "未通过"
+                }`}
                 className={`flex items-center gap-2 rounded-lg border px-3.5 py-2 text-[13px] transition duration-150 ${
                   on
                     ? "border-brand-800 bg-brand-800 font-medium text-white shadow-sm"
@@ -607,11 +782,21 @@ export default function ResultPage() {
                 }`}
               >
                 <span
-                  className="h-1.5 w-1.5 rounded-full"
+                  className="h-1.5 w-1.5 shrink-0 rounded-full"
                   style={{ background: platformDot(l.platform) }}
                 />
                 {l.display_name || platformName(l.platform)}
-                <span className={`h-1.5 w-1.5 rounded-full ${l.compliance_passed ? "bg-green-500" : "bg-red-500"}`} />
+                {/* 合规状态不能只靠颜色：保留色底 + ✓/✗ 符号，色盲与灰度屏同样可读 */}
+                <span
+                  aria-hidden="true"
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${
+                    l.compliance_passed
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
+                  {l.compliance_passed ? "✓" : "✗"}
+                </span>
               </button>
             );
           })}
@@ -798,10 +983,18 @@ export default function ResultPage() {
                 <h2 className="eyebrow">后台导入表</h2>
                 <button
                   onClick={() => downloadImportFile(current.platform)}
-                  className="btn-ghost mt-3"
+                  disabled={downloading === current.platform}
+                  className="btn-ghost mt-3 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  下载 {current.display_name || current.platform} 导入 CSV
+                  {downloading === current.platform
+                    ? "下载中…"
+                    : `下载 ${current.display_name || current.platform} 导入 CSV`}
                 </button>
+                {downloadError && (
+                  <p role="alert" className="mt-2 text-xs text-red-600">
+                    {downloadError}
+                  </p>
+                )}
                 <p className="mt-2 text-xs text-ink-400">
                   Amazon Flat File / Shopee 批量上传模板列子集，Excel 直开
                 </p>
@@ -841,8 +1034,8 @@ export default function ResultPage() {
               />
               <div className="card p-6">
                 <div className="flex items-baseline justify-between">
-                  <h2 className="eyebrow">主图</h2>
-                  <span className="spec-label">Main Image</span>
+                  <h2 className="eyebrow">视觉素材</h2>
+                  <span className="spec-label">Main Image · Details · Video</span>
                 </div>
                 <div className="mt-4">
                   {current.images.length ? (
@@ -861,7 +1054,7 @@ export default function ResultPage() {
                         </div>
                       ) : (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img key={src} src={src} alt="生成主图" className="aspect-square w-full rounded-xl object-cover ring-1 ring-ink-100" />
+                        <img key={src} src={withToken(src)} alt="生成主图" className="aspect-square w-full rounded-xl object-cover ring-1 ring-ink-100" />
                       )
                     )
                   ) : (
@@ -870,6 +1063,44 @@ export default function ResultPage() {
                     </div>
                   )}
                 </div>
+
+                {/* 详情图 */}
+                {current.detail_images && current.detail_images.length > 0 && (
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-400">Detail Shots</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {current.detail_images.map((src, i) =>
+                        src.startsWith("mock://") ? (
+                          <div key={src + i} className="flex aspect-square items-center justify-center rounded-lg bg-ink-50 ring-1 ring-ink-100">
+                            <p className="font-mono text-[10px] text-ink-300">Detail {i + 1}</p>
+                          </div>
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img key={src + i} src={withToken(src)} alt={`详情图 ${i + 1}`} className="aspect-square w-full rounded-lg object-cover ring-1 ring-ink-100" />
+                        )
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* 展示视频 */}
+                {current.video_url && (
+                  <div className="mt-4">
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-ink-400">Product Video</p>
+                    {current.video_url.startsWith("mock://") ? (
+                      <div className="flex aspect-video items-center justify-center rounded-lg bg-ink-50 ring-1 ring-ink-100">
+                        <p className="font-mono text-[10px] text-ink-300">Video Pending</p>
+                      </div>
+                    ) : (
+                      <video
+                        src={withToken(current.video_url)}
+                        controls
+                        playsInline
+                        className="aspect-video w-full rounded-lg ring-1 ring-ink-100"
+                      />
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="card p-6">

@@ -8,6 +8,7 @@ import { useAuth } from "./AuthProvider";
 const LINKS = [
   { href: "/", label: "首页" },
   { href: "/workbench", label: "工作台" },
+  { href: "/batch", label: "批量上新" },
   { href: "/rules", label: "规则库" },
   { href: "/agent", label: "Agent" },
   { href: "/files", label: "文件管理" },
@@ -54,7 +55,7 @@ function UserMenu() {
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const { user, ready } = useAuth();
+  const { user, ready, signOut } = useAuth();
 
   return (
     <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/85 backdrop-blur">
@@ -139,7 +140,6 @@ export default function Nav() {
               {ready && user ? (
                 <button
                   onClick={async () => {
-                    const { signOut } = useAuth();
                     await signOut();
                     setOpen(false);
                     window.location.href = "/login";

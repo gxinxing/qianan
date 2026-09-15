@@ -6,8 +6,8 @@
   "scripts": {
     "test:skills": "python -c \"from skills.compliance_check import ComplianceCheckSkill; from skills.copywriting import CopywritingSkill; from skills.economics import EconomicsSkill; from skills.ideation import IdeationSkill; from skills.product_understanding import ProductUnderstandingSkill; from skills.rules_engine import RulesEngineSkill; from skills.visual_agent import VisualAgentSkill; print('All 7 skills OK')\"",
     "test:rules": "python -c \"from skills import load_rules, all_platforms; p = all_platforms(); print(f'Loaded {len(p)} platforms: {list(p.keys())}')\"",
-    "test:economics": "python -c \"import asyncio; from skills.economics import EconomicsSkill; s = EconomicsSkill(mock=True); r = asyncio.run(s.run(cost_cny=12, weight_kg=0.3, length_cm=20, width_cm=15, height_cm=8)); print(f'Economics test OK: {len(r[\"platforms\"])} platforms')\"",
-    "test:compliance": "python -c \"import asyncio; from skills.compliance_check import ComplianceCheckSkill; s = ComplianceCheckSkill(mock=True); r = asyncio.run(s.run(listing={'platform':'amazon','title':'test','bullets':[],'description':'test','attributes':{}}, rules={'title':{'maxLength':200},'bannedWords':{}}, category='home_kitchen')); print(f'Compliance test OK: passed={r[\"passed\"]}, issues={r[\"issue_count\"]}')\"",
+    "test:economics": "python -c \"import asyncio; from skills.economics import EconomicsSkill; s = EconomicsSkill(mock=True); r = asyncio.run(s.run(cost_cny=12, weight_kg=0.3, length_cm=20, width_cm=15, height_cm=8)); print('Economics test OK: %d platforms' % len(r['platforms']))\"",
+    "test:compliance": "python -c \"import asyncio; from skills.compliance_check import ComplianceCheckSkill; s = ComplianceCheckSkill(mock=True); r = asyncio.run(s.run(listing={'platform':'amazon','title':'test','bullets':[],'description':'test','attributes':{}}, rules={'title':{'maxLength':200},'bannedWords':{}}, category='home_kitchen')); print('Compliance test OK: passed=%s, issues=%d' % (r['passed'], r['issue_count']))\"",
     "dev": "pnpm dev --filter qianan-dsh"
   },
   "dependencies": {

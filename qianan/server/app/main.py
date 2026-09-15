@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+import uuid
 import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -42,6 +43,7 @@ from . import collector, extdata, memory_store, mock_seller, skill_store
 from .rules_store import all_platforms, load_rules
 from .schemas import (
     AuditRequest,
+    BatchGenerateRequest,
     Feedback,
     GenerateRequest,
     IdeationRequest,
@@ -52,6 +54,9 @@ from .schemas import (
 )
 from . import task_store
 from .task_store import create_task, delete_task, get_task, list_tasks
+
+# 批量上新：batch_id → 元信息（租户隔离，结构与 task_store 同源）
+BATCHES: dict[str, dict] = {}
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -285,7 +290,8 @@ async def trends(market: str = "us"):
 
 
 @app.post("/api/generate")
-async def generate(req: GenerateRequest, user: dict = Depends(cbauth.require_user)):
+async def generate(req: GenerateRequest, request: Request, user: dict = Depends(cbauth.require_user)):
+    cbauth.check_rate_limit(cbauth.client_ip(request))
     # 浏览器上传的 base64 图 → 先上公网临时图床 → 交给 AI 网关以 URL 消费
     # （聚合网关图片任务拒绝超大 data URL body：nginx 413；localhost URL 网关又无法回访）
     if req.image_base64 and not req.image_url:
@@ -318,6 +324,99 @@ async def generate(req: GenerateRequest, user: dict = Depends(cbauth.require_use
     return {"task_id": task.task_id}
 
 
+@app.post("/api/generate/batch")
+async def generate_batch(req: BatchGenerateRequest, request: Request, user: dict = Depends(cbauth.require_user)):
+    """批量上新：一次提交多个商品，逐一对齐各平台生成合规 Listing。
+
+    赛事场景一「批量完成 Listing 撰写与后台上架」评分点。
+    复用与单任务完全相同的 create_task + run_pipeline，仅在外层做多商品编排。
+    - 正常模式：并发起后台任务，立即返回 batch_id + task_ids（前端轮询各 task）。
+    - SCF 模式：同步顺序跑完每个 task 后返回完整结果（保证线上也能跑通）。
+    """
+    cbauth.check_rate_limit(cbauth.client_ip(request))
+    if not req.items:
+        raise HTTPException(status_code=422, detail="items 不能为空")
+    owner = cbauth.uid_of(user)
+    tasks: list[TaskRecord] = []
+    for item in req.items:
+        # 浏览器上传的 base64 图 → 公网临时图床（与单任务同逻辑）
+        if item.image_base64 and not item.image_url:
+            import base64 as _b64
+
+            from . import uploader
+
+            try:
+                raw = item.image_base64.split(",", 1)[-1]
+                data = _b64.b64decode(raw)
+                item.image_url = uploader.upload_bytes(data)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("批量商品图上传失败，回退 base64 直传: %s", exc)
+        if req.platforms:
+            item.platforms = [p for p in req.platforms if p in ALL_PLATFORMS] or list(ALL_PLATFORMS)
+        tasks.append(create_task(item, owner_uid=owner))
+
+    batch_id = f"batch_{uuid.uuid4().hex[:12]}"
+    BATCHES[batch_id] = {
+        "batch_id": batch_id,
+        "owner_uid": owner,
+        "task_ids": [t.task_id for t in tasks],
+        "created_at": int(asyncio.get_event_loop().time()),
+    }
+
+    if os.getenv("TENCENT_SCF"):
+        from .file_store import persist_task
+
+        for t in tasks:
+            await run_pipeline(t, get_client())
+            if t.status == TaskStatus.done:
+                try:
+                    persist_task(t)
+                except Exception:  # noqa: BLE001
+                    logger.exception("SCF 批量 persist 失败")
+        return {"batch_id": batch_id, "tasks": [t.model_dump() for t in tasks]}
+
+    for t in tasks:
+        asyncio.create_task(_run_and_persist(t))
+    return {"batch_id": batch_id, "task_ids": [t.task_id for t in tasks]}
+
+
+@app.get("/api/batch/{batch_id}")
+async def batch_status(batch_id: str, request: Request, user: dict = Depends(cbauth.current_user)):
+    """批量进度汇总：返回该 batch 下每个 task 的状态/进度，供前端批量页轮询。"""
+    batch = BATCHES.get(batch_id)
+    if not batch:
+        raise HTTPException(status_code=404, detail="batch 不存在")
+    owner = cbauth.uid_of(user) if user else None
+    if owner and batch.get("owner_uid") and batch["owner_uid"] != owner:
+        raise HTTPException(status_code=403, detail="无权限访问该 batch")
+    items = []
+    for tid in batch["task_ids"]:
+        t = get_task(tid)
+        if t is None:
+            items.append({"task_id": tid, "status": "missing"})
+            continue
+        req = t.request
+        items.append(
+            {
+                "task_id": t.task_id,
+                "status": t.status,
+                "stage": t.stage,
+                "progress": t.progress,
+                "product_name": getattr(req, "product_name", "") if req else "",
+                "platforms": getattr(req, "platforms", []) if req else [],
+            }
+        )
+    done = sum(1 for i in items if i["status"] == "done")
+    return {
+        "batch_id": batch_id,
+        "total": len(items),
+        "done": done,
+        "running": sum(1 for i in items if i["status"] == "running"),
+        "failed": sum(1 for i in items if i["status"] == "failed"),
+        "items": items,
+    }
+
+
 async def _run_and_persist(task: TaskRecord) -> None:
     """跑完流水线并把成品写入文件仓库（后台任务）。"""
     await run_pipeline(task, _get_client_cached())
@@ -338,6 +437,246 @@ async def _maybe_evolve() -> None:
             logger.info("进化分析（自动）：%s", result)
         except Exception:  # noqa: BLE001
             logger.exception("进化分析失败（不影响主流程）")
+
+
+# =====================================================================
+# 对话式 SSE 接口：Agent 自主编排（function calling tool loop）
+# =====================================================================
+
+from fastapi.responses import StreamingResponse
+from .agent_core.trace import set_event_hook
+from .chat_agent import run_chat_agent
+
+
+class ChatRequest(BaseModel):
+    """对话式生成请求：自然语言描述 + 可选图片。"""
+
+    message: str = ""
+    product_name: str = ""
+    selling_points: str = ""
+    category: str = "home_kitchen"
+    image_url: str | None = None
+    image_base64: str | None = None
+    platforms: list[str] = None  # None = 全 5 平台
+    ablation: dict | None = None
+
+
+def _sse_line(data: dict) -> bytes:
+    """把 dict 编码为 SSE data: 行。"""
+    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n".encode("utf-8")
+
+
+def _listing_snapshot(task: TaskRecord) -> dict:
+    """提取当前 task 的 listing 产物快照（供前端右侧面板渲染）。
+
+    type 必须是 `listing_full`：前端 `useChat.ts` 先无条件匹配 `type === "listing"`
+    并当作「单个平台产物」处理，全量快照若也叫 listing，会被包装成一条
+    `platform: undefined` 的假记录，**覆盖掉右侧已生成的多个平台产物**，
+    还会把 status 硬编码成 running、plan 清空成 null。
+    """
+    return {
+        "type": "listing_full",
+        # 必须是 .value：str(TaskStatus.done) 在 Python 3.10 得到 "TaskStatus.done"，
+        # 前端 `status === "done"` 永远判不中。
+        "status": task.status.value,
+        "stage": task.stage,
+        "progress": task.progress,
+        "plan": task.plan.model_dump() if task.plan else None,
+        "memory_recall": [m.model_dump() for m in task.memory_recall],
+        "reflections": [r.model_dump() for r in task.reflections],
+        "listings": [
+            {
+                "platform": l.platform,
+                "display_name": l.display_name,
+                "title": l.title,
+                "bullets": l.bullets,
+                "description": l.description[:200] if l.description else "",
+                "images": l.images[:3] if l.images else [],
+                "detail_images": (l.detail_images or [])[:4],
+                "video_url": l.video_url,
+                "compliance_passed": l.compliance_passed,
+                "revised_count": l.revised_count,
+                "compliance_errors": sum(1 for i in l.compliance if i.severity == "error"),
+                "compliance_warns": sum(1 for i in l.compliance if i.severity == "warn"),
+            }
+            for l in task.listings
+        ],
+    }
+
+
+#: 被用户取消的对话任务 id。仅用于「停止后别再烧额度」，
+#: 进程内集合足够（SSE 断开即无消费者，跨进程恢复不在本层范围）。
+_CHAT_CANCELLED: set[str] = set()
+
+
+@app.post("/api/chat/{task_id}/cancel")
+async def chat_cancel(task_id: str):
+    """真正停止后台 Agent。
+
+    此前「停止」只断开前端 fetch —— SSE 关闭了，但后台 `run_chat_agent`
+    仍在跑工具循环，继续消耗模型额度。这里置位后，工具循环会在下一个检查点退出。
+    """
+    existed = task_id in _CHAT_CANCELLED
+    _CHAT_CANCELLED.add(task_id)
+    logger.info("chat 任务 %s 收到取消指令", task_id)
+    return {"ok": True, "task_id": task_id, "cancelled": True, "was_running": not existed}
+
+
+@app.post("/api/chat")
+async def chat(req: ChatRequest, request: Request, user: dict = Depends(cbauth.require_user)):
+    # 限流：chat 是公开可访问的对话入口，一次请求会触发多轮模型调用与出图，
+    # 没有限流的话一个公开地址被反复调用就能把模型额度烧完。与 /api/generate 同策略。
+    cbauth.check_rate_limit(cbauth.client_ip(request))
+    """对话式 Agent 接口：Agent 用 function calling 自主编排上架全流程。
+
+    与旧版（跑固定 pipeline）不同，新版让模型在对话中自主决定：
+    理解商品 → 生成文案 → 审核 → 发现问题自己改 → 出图 → 出视频 → 交付。
+    全程通过 SSE 事件实时推送"我在做 X"和中间产物。
+
+    事件类型:
+      - init:         {type, task_id}
+      - text:         {type, content}          — Agent 的文本回复
+      - trace:        {type, phase, tool, args, result, status}  — 工具调用追踪
+      - listing:      {type, platform, title, ...} — 单个平台的产物更新
+      - listing_full: {type, status, stage, progress, listings[]} — 全量快照
+      - done:         {type, task_id, status, summary}
+      - error:        {type, message}
+    """
+    from .schemas import ALL_PLATFORMS, AblationConfig, GenerateRequest
+
+    platforms = req.platforms or list(ALL_PLATFORMS)
+    abl = AblationConfig(**req.ablation) if req.ablation else None
+
+    product_name = req.product_name or req.message[:200]
+    selling_points = req.selling_points or req.message
+
+    gen_req = GenerateRequest(
+        product_name=product_name,
+        selling_points=selling_points,
+        category=req.category,
+        image_url=req.image_url,
+        image_base64=req.image_base64,
+        platforms=platforms,
+        ablation=abl,
+    )
+
+    # 图片上传
+    if gen_req.image_base64 and not gen_req.image_url:
+        import base64 as _b64
+        from . import uploader
+        try:
+            raw = gen_req.image_base64.split(",", 1)[-1]
+            data = _b64.b64decode(raw)
+            gen_req.image_url = uploader.upload_bytes(data)
+        except Exception as exc:  # noqa: BLE001
+            logger.warning("chat 图片上传失败: %s", exc)
+
+    # 与 /api/generate 一致地归属租户：游客也会拿到基于 IP+UA 派生的独立 uid。
+    # 此前写死 "anonymous" 意味着所有访客的任务混在同一个租户下，互相可见。
+    owner = cbauth.uid_of(user)
+    task = create_task(gen_req, owner_uid=owner)
+    logger.info("chat 任务 %s 归属租户 %s", task.task_id, owner)
+    _CHAT_CANCELLED.discard(task.task_id)  # 防御：task_id 复用时不要继承取消态
+    client = _get_client_cached()
+
+    async def event_stream():
+        """SSE 流：Agent 对话事件 + trace 事件合并推送。"""
+        queue: asyncio.Queue = asyncio.Queue()
+
+        # init
+        await queue.put(_sse_line({"type": "init", "task_id": task.task_id}))
+
+        # trace 事件钩子
+        def trace_hook(event_data: dict):
+            queue.put_nowait(_sse_line({"type": "trace", **event_data}))
+
+        set_event_hook(task.task_id, trace_hook)
+
+        # chat agent 事件回调
+        pushed_done = False
+
+        def chat_event(evt_type: str, content):
+            nonlocal pushed_done
+            if evt_type == "text":
+                queue.put_nowait(_sse_line({"type": "text", "content": content}))
+            elif evt_type == "listing":
+                # 单平台产物更新。事件名统一为 `listing_update` —— 此前外层写死 "listing"，
+                # 会把 payload 自带的 type 覆盖掉，前端只能靠 data.listings 是否存在来猜，
+                # 全量快照（listing_full）也因此被误判成单平台事件、冲掉已生成的产物。
+                payload = content if isinstance(content, dict) else {"data": str(content)}
+                payload = {**payload, "type": "listing_update"}
+                queue.put_nowait(_sse_line(payload))
+            elif evt_type == "done":
+                pushed_done = True
+                queue.put_nowait(_sse_line({"type": "done", "task_id": task.task_id, "status": task.status.value, "summary": content}))
+            elif evt_type == "error":
+                queue.put_nowait(_sse_line({"type": "error", "message": content}))
+
+        # 在后台跑 Agent（带上取消信号，停止时不再继续烧额度）
+        def should_stop() -> bool:
+            return task.task_id in _CHAT_CANCELLED
+
+        agent_task = asyncio.create_task(
+            run_chat_agent(task, client, req.message, on_event=chat_event, should_stop=should_stop)
+        )
+
+        # 推送循环
+        last_snapshot = 0.0
+        while not agent_task.done():
+            try:
+                evt = await asyncio.wait_for(queue.get(), timeout=1.0)
+                yield evt
+                # 定期推送全量快照
+                now = asyncio.get_event_loop().time()
+                if now - last_snapshot > 3.0:
+                    yield _sse_line(_listing_snapshot(task))
+                    last_snapshot = now
+            except asyncio.TimeoutError:
+                now = asyncio.get_event_loop().time()
+                if now - last_snapshot > 3.0:
+                    yield _sse_line(_listing_snapshot(task))
+                    last_snapshot = now
+
+        # 排空队列
+        while not queue.empty():
+            yield queue.get_nowait()
+
+        # 最终快照
+        yield _sse_line(_listing_snapshot(task))
+
+        if task.status == TaskStatus.failed:
+            yield _sse_line({"type": "error", "message": task.error or "agent failed"})
+
+        # 兜底 done：只在 Agent 自己没推过时补一个。
+        # 此前无条件推送 → 前端总是收到两个 done，第二个还没有 summary，会把第一个覆盖掉。
+        if not pushed_done:
+            yield _sse_line({
+                "type": "done",
+                "task_id": task.task_id,
+                "status": task.status.value,
+                "summary": task.stage or "",
+            })
+
+        # 持久化：done 之外的 partial / cancelled 也必须落盘。
+        # partial 意味着「跑出了一部分但没达标」，正是最需要留档以便续跑/复盘的状态；
+        # 此前只存 done，这类任务一断线就彻底丢失。
+        if task.status in (TaskStatus.done, TaskStatus.partial, TaskStatus.cancelled):
+            try:
+                persist_task(task)
+            except Exception:  # noqa: BLE001
+                logger.exception("chat persist task failed")
+
+        set_event_hook(task.task_id, None)
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/api/tasks/{task_id}")
@@ -382,19 +721,36 @@ def _task_from_disk(task_id: str) -> dict | None:
 
 
 def _localize_listing_images(task_id: str, listings: list[dict], base: str) -> None:
-    """把已落盘的主图 URL 换成本地文件地址（OSS 签名会过期，路演现场不能断图）。
+    """把已落盘的主图/详情图/视频 URL 换成本地文件地址（OSS 签名会过期，路演现场不能断图）。
 
     未落盘（下载线程还没跑完/下载失败）的保持原 URL，不影响首次浏览。
     """
     for listing in listings:
+        # 主图
         images = listing.get("images") or []
         for idx, url in enumerate(images):
-            if not url.startswith("http"):
+            if not isinstance(url, str) or not url.startswith("http"):
                 continue
             ext = Path(url.split("?")[0]).suffix or ".png"
             rel = f"images/{listing.get('platform', 'p')}_{idx + 1}{ext}"
             if resolve_file(task_id, rel):
                 images[idx] = f"{base}/api/files/{task_id}/download/{rel}"
+        # 详情图
+        detail_imgs = listing.get("detail_images") or []
+        for idx, url in enumerate(detail_imgs):
+            if not isinstance(url, str) or not url.startswith("http"):
+                continue
+            ext = Path(url.split("?")[0]).suffix or ".png"
+            rel = f"images/{listing.get('platform', 'p')}_detail_{idx + 1}{ext}"
+            if resolve_file(task_id, rel):
+                detail_imgs[idx] = f"{base}/api/files/{task_id}/download/{rel}"
+        # 视频
+        video = listing.get("video_url")
+        if isinstance(video, str) and video.startswith("http"):
+            ext = Path(video.split("?")[0]).suffix or ".mp4"
+            rel = f"images/{listing.get('platform', 'p')}_video{ext}"
+            if resolve_file(task_id, rel):
+                listing["video_url"] = f"{base}/api/files/{task_id}/download/{rel}"
 
 
 @app.get("/api/tasks/{task_id}/export")

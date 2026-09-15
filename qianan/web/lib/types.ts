@@ -94,6 +94,30 @@ export interface ComplianceIssue {
   message: string;
 }
 
+export interface TaskPlan {
+  strategy: string;
+  heal_budget: number;
+  focus: string;
+  research_tools: string[];
+  decided_by: string;
+  /** 规划器声明的跳过项（仅可选动作可被跳过） */
+  skip?: string[];
+  /** 执行器实际生效的跳过项 —— 规划被消费的直接证据（为空 = 本次未跳过任何步骤） */
+  skipped_actions?: string[];
+}
+
+export interface MemoryLesson {
+  lesson: string;
+  platform: string;
+  hit_count: number;
+  source_task: string;
+}
+
+export interface AgentReflection {
+  platform: string;
+  lesson: string;
+}
+
 export interface AplusModule {
   type: "headline" | "grid" | "compare" | "story" | string;
   title: string;
@@ -110,6 +134,8 @@ export interface PlatformListing {
   description: string;
   attributes: Record<string, string>;
   images: string[];
+  detail_images?: string[];
+  video_url?: string | null;
   aplus: AplusModule[];
   compliance: ComplianceIssue[];
   compliance_passed: boolean;
@@ -141,6 +167,10 @@ export interface TaskRecord {
   understanding: Understanding | null;
   listings: PlatformListing[];
   trace: TraceEvent[];
+  plan?: TaskPlan | null;
+  memory_recall?: MemoryLesson[];
+  reflections?: AgentReflection[];
+  strategy_report?: string | null;
   error: string | null;
   created_at: number;
 }

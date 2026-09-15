@@ -88,7 +88,10 @@ export default function RulesPage() {
           </p>
         )}
         {error && (
-          <p className="py-24 text-center font-mono text-xs tracking-[0.04em] text-red-600">
+          <p
+            role="alert"
+            className="py-24 text-center font-mono text-xs tracking-[0.04em] text-red-600"
+          >
             [ERROR] {error}
           </p>
         )}

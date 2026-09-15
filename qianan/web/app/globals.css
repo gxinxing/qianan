@@ -63,9 +63,9 @@ h1, h2, h3 {
       placeholder:text-ink-400 shadow-xs transition focus:border-brand-500 focus:outline-none
       focus:ring-2 focus:ring-brand-100;
   }
-  /* 规格说明书式数据单元 */
+  /* 规格说明书式数据单元（ink-400 在 10px 下仅 2.47:1，改用达标的 ink-600 4.64:1） */
   .spec-label {
-    @apply font-mono text-[10px] uppercase tracking-[0.08em] text-ink-400;
+    @apply font-mono text-[10px] uppercase tracking-[0.08em] text-ink-600;
   }
   /* 分段选择器（Supabase 式控件） */
   .segment {

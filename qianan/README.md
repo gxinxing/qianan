@@ -3,7 +3,7 @@
 > 复赛 Demo 代码仓库 · 队伍 Simon Studio · 赛道：场景一 AI 智能上新
 > 同一件商品，一个设计稿，铺到千片海岸。
 
-上传一张商品图 + 中文卖点，30 秒生成 Amazon / Shopee / 速卖通 / Lazada / TikTok Shop
+上传一张商品图 + 中文卖点，约 90 秒并行生成 Amazon / Shopee / 速卖通 / Lazada / TikTok Shop
 五个平台各自合规、可直接导入的上架包 + 合规报告。
 
 ---

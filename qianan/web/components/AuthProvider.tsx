@@ -31,6 +31,12 @@ interface AuthContextValue {
   user: AuthUser | null;
   loading: boolean;
   ready: boolean;
+  /**
+   * 后端是否强制登录（/api/health 的 auth.require_auth）。
+   * false = 演示模式允许游客直连，前端不应把用户拦在登录墙外；
+   * null = 尚未探测到（此时按需要登录处理，避免闪现无权限内容）。
+   */
+  requireAuth: boolean | null;
   signIn: (username: string, password: string) => Promise<void>;
   signUp: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -39,6 +45,17 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function toUser(session: any): AuthUser | null {
+  if (!session) return null;
+  // 自包含鉴权：后端 /api/auth/{login,register} 直接返回 { token, uid, username, name? }
+  if (session.uid || session.username) {
+    return {
+      uid: session.uid || "",
+      username: session.username || "",
+      name: session.name || session.username || "",
+      authenticated: true,
+    };
+  }
+  // 兼容 CloudBase 会话结构 { session: { user } }
   const s = session?.session;
   if (!s || !s.user) return null;
   const u = s.user;
@@ -54,11 +71,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [ready, setReady] = useState(false);
+  const [requireAuth, setRequireAuth] = useState<boolean | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       await initAuth();
+      // 探测后端是否强制登录：false 时前端不拦游客（演示模式），保持与后端一致
+      try {
+        const hres = await fetch(`${API_BASE}/api/health`);
+        if (hres.ok) {
+          const health = await hres.json();
+          if (alive) setRequireAuth(health?.auth?.require_auth === true);
+        }
+      } catch {
+        /* 探测失败：按需要登录处理 */
+      }
       // 自包含鉴权：若本地已存 token，向 /api/me 还原登录态（兼容页面刷新）
       const token = getAccessToken();
       if (token) {
@@ -115,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, ready, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, ready, requireAuth, signIn, signUp, signOut }}>
       {children}
     </AuthContext.Provider>
   );
