@@ -1,15 +1,18 @@
-"""阿里云百炼客户端封装 —— 黑客松 Token Plan 专属网关（真实模式 + Mock 模式）。
+"""阿里云百炼客户端封装（真实模式 + Mock 模式）。
 
-实测结论（2026-09-01，Token Plan 专属基地址）：
+网关链路（2026-09-15 实测，官方 dashscope 兼容模式）：
 1. 文本模型走 /chat/completions（OpenAI 兼容），支持 enable_thinking: false 关闭思考加速响应。
-2. 图片生成模型（qwen-image-2.0 / wan2.7-image）同样走 /chat/completions，
-   但 content 必须是 DashScope 列表格式 [{"text": "..."}]，
-   图片 URL 在返回体的 choices[0].message.content[0]["image"]。
-   （/images/generations 路由在该网关不可用。）
-3. 该网关暂无视觉理解（VL）模型：商品理解默认纯文本路径；
-   如未来配置 QIANAN_VL_MODEL，将尝试多模态调用。
+   实测可用：qwen3.7-max（默认）、qwen-max / qwen-plus / qwen3.6-flash。
+2. 图像生成**必须走下方万相原生端点**（`_dashscope_image_gen`）：
+   官方兼容模式没有 /images/generations 路由（404），经 chat 列表 content 出图会
+   返回 200 但 message 里既无 content 也无 image —— 静默失败，不可依赖。
+3. 视觉理解（VL）在官方模式下可用：QIANAN_VL_MODEL=qwen3-vl-plus 实测能真实读图
+   （旧 TokenDance 网关无 VL，商品理解只能走纯文本路径）。
 4. 以图改图（图片编辑）已实测可用：content 列表追加 {"image": 参考图URL}，
    模型按提示词对参考图改写（白底化/场景化），保持商品本体不变。
+
+历史：原网关 TokenDance（tokendance.space/gateway/v1）的 key 于 2026-09-15 返回
+403 api_key_quota_exceeded，文本与图像同时不可用，已整体切换到官方端点。
 """
 from __future__ import annotations
 
@@ -44,7 +47,7 @@ def _load_server_env() -> None:
 _load_server_env()
 
 BASE_URL = os.getenv(
-    "BAILIAN_BASE_URL", "https://token-plan.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+    "BAILIAN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
 )
 TEXT_MODEL = os.getenv("QIANAN_TEXT_MODEL", "qwen3.7-max")
 IMAGE_MODEL = os.getenv("QIANAN_IMAGE_MODEL", "qwen-image-2.0")
@@ -65,6 +68,16 @@ DASHSCOPE_IMAGE_MODEL = os.getenv("QIANAN_DASHSCOPE_IMAGE_MODEL", "wan2.7-image"
 #: 额度保护：入门套餐张数有限，用完自动回退网关而不再调万相。
 #: 0 = 不限制。按 ¥0.2/张 估算，100 张 ≈ ¥20。
 DASHSCOPE_IMAGE_QUOTA = int(os.getenv("QIANAN_DASHSCOPE_IMAGE_QUOTA", "100"))
+#: 万相单次调用超时。出图正常 5–30s，60s 已经是很宽松的上限。
+#: 曾被设为 180s —— 云端一旦在某张图上卡住（实测详情图非预期地不返回），
+#: 180s 会被整段吃满且没有重试收益，直接拖垮整个 Agent 墙钟预算。
+DASHSCOPE_TIMEOUT = int(os.getenv("QIANAN_DASHSCOPE_TIMEOUT", "60"))
+#: 是否把出图 URL 转存到外部图床（litterbox）。
+#: 默认**关闭**：该图床已对数据中心 IP 返回 403/412，转存 100% 失败，
+#: 且每次失败都要白等满重试（实测单平台仅此一项就多耗 90s，吃光 Agent 墙钟预算）。
+#: 关闭后直接使用万相返回的 OSS 签名 URL —— 其有效期足够覆盖演示与评审全程。
+#: 将来接入可靠图床（如云存储）时置 1 即可恢复转存语义。
+IMAGE_PERSIST = os.getenv("QIANAN_IMAGE_PERSIST", "0") == "1"
 _QUOTA_FILE = "data/wan_image_quota.json"
 _quota_lock = threading.Lock()
 
@@ -126,14 +139,22 @@ def _persist_image(url: str) -> str:
 
     万相出图 URL 带 OSS 签名且会过期（Expires），直接交给前端会在若干小时后变死链。
     转存失败时**返回原 URL** —— 宁可将来过期，也不要当下没图。
-    """
-    try:
-        from .. import uploader
 
+    图床熔断后直接返回原 URL（连下载都省掉）：litterbox 对云函数出口 IP 返回 403，
+    转存必然失败，若不短路则每张图都要白等一轮下载+上传重试（实测单步出图因此耗掉 384s）。
+    """
+    if not IMAGE_PERSIST:
+        return url  # 默认关闭转存：直接用万相 OSS URL，见 IMAGE_PERSIST 说明
+
+    from .. import uploader
+
+    if uploader.is_circuit_open():
+        return url
+    try:
         raw = requests.get(url, timeout=60).content
         return uploader.upload_bytes(raw)
     except Exception as exc:  # noqa: BLE001
-        logger.warning("万相图片转存失败，使用临时 URL: %s", exc)
+        logger.info("图片转存失败，使用原始 URL: %s", exc)
         return url
 
 VL_MODEL = os.getenv("QIANAN_VL_MODEL", "")  # 留空 = 网关无 VL 模型
@@ -169,9 +190,69 @@ class _AsyncImageUnsupported(RuntimeError):
     """网关不支持异步 images/generations 任务接口（用于回退 DashScope chat 格式）。"""
 
 
+class BailianAuthFatal(RuntimeError):
+    """鉴权/额度/欠费类致命错误（401/403、api_key_quota_exceeded、Arrearage 等）。
+
+    这类错误不是网络抖动，重试无用，且一旦发生整个生成会硬崩。
+    调用方（ResilientClient）捕获后可降级到 Mock 模式，保证演示流程不中断。
+    """
+
+
+#: 响应体中代表「重试无用、必须人工处理」的致命字样。
+#: - api_key_quota_exceeded：阿里云额度上限（TokenDance 网关实测返回）
+#: - Arrearage / overdue-payment：阿里云账户欠费（code 为 Arrearage，HTTP 400）
+_FATAL_MARKERS = ("api_key_quota_exceeded", "Arrearage", "overdue-payment", "Free quota exhausted")
+
+
+def _is_fatal_error(status: int, body: str) -> bool:
+    """判断是否为鉴权/额度/欠费类致命错误（重试无用）。"""
+    return status in (401, 403) or any(m in body for m in _FATAL_MARKERS)
+
+
+# ---------------------------------------------------------------------------
+# BYOK（Bring Your Own Key）：请求级密钥覆盖
+#
+# 场景：评委/访客没有服务端预置的 API Key（或预置额度已耗尽），可以在前端填自己的
+# 百炼 Key，由请求头带到后端；该请求的所有模型调用改走他自己的额度。
+#
+# 实现用 ContextVar 而不是 os.environ：
+#   - ContextVar 在 asyncio 中按 Task 隔离，FastAPI 每请求一个 Task，天然并发安全；
+#   - 若临时改 os.environ，并发请求会互相覆盖 key（串号），绝不能那么做。
+# 注：asyncio.create_task / to_thread 都会复制当前 context，所以密钥能正确传入
+#     Agent 的后台任务与线程池。
+# ---------------------------------------------------------------------------
+from contextvars import ContextVar  # noqa: E402
+
+_req_api_key: ContextVar[str | None] = ContextVar("qianan_req_api_key", default=None)
+_req_dashscope_key: ContextVar[str | None] = ContextVar("qianan_req_dashscope_key", default=None)
+
+
+def _api_key() -> str:
+    """当前请求生效的文本/VL Key：请求级 BYOK > 服务端环境变量。"""
+    return _req_api_key.get() or os.environ.get("BAILIAN_API_KEY", "")
+
+
+def _dashscope_key() -> str:
+    """当前请求生效的万相出图 Key：请求级 BYOK > 服务端环境变量。"""
+    return _req_dashscope_key.get() or os.environ.get("QIANAN_DASHSCOPE_API_KEY", "")
+
+
+def set_request_keys(api_key: str | None = None, dashscope_key: str | None = None) -> None:
+    """在当前 context 绑定 BYOK 密钥。传空表示不覆盖，继续用服务端预置。"""
+    if api_key:
+        _req_api_key.set(api_key)
+    if dashscope_key:
+        _req_dashscope_key.set(dashscope_key)
+
+
+def has_byok() -> bool:
+    """当前请求是否携带了 BYOK 密钥（用于日志与响应标记）。"""
+    return bool(_req_api_key.get() or _req_dashscope_key.get())
+
+
 def _headers() -> dict:
     return {
-        "Authorization": f"Bearer {os.environ['BAILIAN_API_KEY']}",
+        "Authorization": f"Bearer {_api_key()}",
         "Content-Type": "application/json",
     }
 
@@ -235,7 +316,11 @@ def _post(payload: dict) -> dict:
         # JSON 解析失败同样不重试，维持原有解析与报错行为。
         data = resp.json()
         if status != 200 or "error" in data or (isinstance(data.get("code"), str) and "output" not in data):
-            raise RuntimeError(f"百炼调用失败({status}): {json.dumps(data, ensure_ascii=False)[:300]}")
+            preview = json.dumps(data, ensure_ascii=False)[:300]
+            # 鉴权/额度/欠费致命错误：重试无用，抛出专用异常交由 ResilientClient 降级 Mock
+            if _is_fatal_error(status, preview):
+                raise BailianAuthFatal(f"百炼调用鉴权/额度致命错误({status}): {preview}")
+            raise RuntimeError(f"百炼调用失败({status}): {preview}")
         return data
     raise RuntimeError("百炼调用失败：重试循环意外退出")  # 防御性兜底，正常流程不可达
 
@@ -249,7 +334,10 @@ def _message_content(data: dict):
         choices = data["choices"]
     if not isinstance(choices, list) or not choices:
         raise RuntimeError(f"网关返回中无 choices: {str(data)[:200]}")
-    return choices[0]["message"]["content"]
+    # 用 .get 而非直接索引：官方兼容模式经 chat 通道出图时会返回 200、但 message 里
+    # 既无 content 也无 image（usage 为 null）。直接索引会抛 KeyError 淹没真正原因，
+    # 这里统一降级为 None，由调用方给出可诊断的报错。
+    return (choices[0].get("message") or {}).get("content")
 
 
 class BailianClient:
@@ -258,8 +346,9 @@ class BailianClient:
     is_mock = False
 
     def __init__(self) -> None:
-        if not os.environ.get("BAILIAN_API_KEY"):
-            raise RuntimeError("BAILIAN_API_KEY 未配置")
+        # 用 _api_key()（运行时取值）而非 os.environ：BYOK 场景下请求级 key 也要算数
+        if not _api_key():
+            raise RuntimeError("BAILIAN_API_KEY 未配置（服务端未预置，且本请求未携带 BYOK Key）")
 
     @property
     def supports_vision(self) -> bool:
@@ -304,7 +393,7 @@ class BailianClient:
         model = model or IMAGE_MODEL
         # ① 阿里云百炼原生（万相 wan2.7-image）：阿里自研、¥0.2/张，比赛场景优先。
         #    失败一律回退到网关链路，账户欠费/未配置都不会让任务缺图。
-        if DASHSCOPE_KEY:
+        if _dashscope_key():
             try:
                 return self._dashscope_image_gen(prompt, DASHSCOPE_IMAGE_MODEL, ref_image)
             except Exception as exc:  # noqa: BLE001 —— 万相不可用必须静默降级
@@ -325,6 +414,10 @@ class BailianClient:
         result = _message_content(data)
         if isinstance(result, str):
             return result
+        if not result:
+            raise RuntimeError(
+                f"图片生成返回中无图片（该网关可能不支持经 chat 通道出图）: {str(data)[:200]}"
+            )
         for part in result:
             if isinstance(part, dict) and part.get("image"):
                 return part["image"]
@@ -348,7 +441,7 @@ class BailianClient:
                 f"达上限后自动回退网关，避免超出入门套餐"
             )
         headers = {
-            "Authorization": f"Bearer {DASHSCOPE_KEY}",
+            "Authorization": f"Bearer {_dashscope_key()}",
             "Content-Type": "application/json",
         }
         content: list[dict] = [{"text": prompt}]
@@ -361,21 +454,50 @@ class BailianClient:
             "input": {"messages": [{"role": "user", "content": content}]},
             "parameters": {"size": DASHSCOPE_IMAGE_SIZE, "n": 1},
         }
-        resp = requests.post(
-            f"{DASHSCOPE_NATIVE}/services/aigc/multimodal-generation/generation",
-            headers=headers,
-            json=payload,
-            timeout=180,
-        )
-        if resp.status_code >= 400:
-            raise RuntimeError(f"万相调用失败({resp.status_code}): {resp.text[:200]}")
-        data = resp.json() or {}
-        choices = ((data.get("output") or {}).get("choices") or [{}])
-        for part in ((choices[0].get("message") or {}).get("content") or []):
-            if isinstance(part, dict) and part.get("image"):
-                _quota_consume(int((data.get("usage") or {}).get("image_count") or 1))
-                return _persist_image(part["image"])
-        raise RuntimeError(f"万相返回中无图片: {str(data)[:200]}")
+        url = f"{DASHSCOPE_NATIVE}/services/aigc/multimodal-generation/generation"
+        # 万相偶发抖动（超时 / 5xx / 限流）是常态，而**回退链路在官方端点上兜不住**：
+        # 兼容模式经 chat 出图会返回 200 但 message 里既无 content 也无 image，
+        # 即一旦这里失败，这张图就彻底没救。所以重试必须做在万相本身上。
+        last_err: Exception | None = None
+        for attempt in range(1, _MAX_ATTEMPTS + 1):
+            try:
+                resp = requests.post(url, headers=headers, json=payload, timeout=DASHSCOPE_TIMEOUT)
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                last_err = exc
+                if attempt == _MAX_ATTEMPTS:
+                    raise
+                delay = _retry_delay(None, attempt)
+                logger.warning("万相调用第 %d/%d 次网络异常(%s)，%.1fs 后重试",
+                               attempt, _MAX_ATTEMPTS, type(exc).__name__, delay)
+                time.sleep(delay)
+                continue
+
+            if resp.status_code == 429 or resp.status_code >= 500:
+                last_err = RuntimeError(f"万相调用失败({resp.status_code}): {resp.text[:200]}")
+                if attempt == _MAX_ATTEMPTS:
+                    raise last_err
+                delay = _retry_delay(resp, attempt)
+                logger.warning("万相调用第 %d/%d 次失败(%s)，%.1fs 后重试",
+                               attempt, _MAX_ATTEMPTS, resp.status_code, delay)
+                resp.close()
+                time.sleep(delay)
+                continue
+
+            if resp.status_code >= 400:
+                body = resp.text[:200]
+                # 欠费/鉴权类重试无用，走致命错误通道（触发上层降级），其余参数错误直接抛
+                if _is_fatal_error(resp.status_code, body):
+                    raise BailianAuthFatal(f"万相鉴权/额度致命错误({resp.status_code}): {body}")
+                raise RuntimeError(f"万相调用失败({resp.status_code}): {body}")
+
+            data = resp.json() or {}
+            choices = ((data.get("output") or {}).get("choices") or [{}])
+            for part in ((choices[0].get("message") or {}).get("content") or []):
+                if isinstance(part, dict) and part.get("image"):
+                    _quota_consume(int((data.get("usage") or {}).get("image_count") or 1))
+                    return _persist_image(part["image"])
+            raise RuntimeError(f"万相返回中无图片: {str(data)[:200]}")
+        raise RuntimeError(f"万相调用重试耗尽: {last_err}")  # 防御性兜底
 
     def _async_image_gen(self, prompt: str, model: str, ref_image: str | None) -> str:
         """异步任务式图片生成（apimart 等聚合网关），含提交与轮询。"""
@@ -400,6 +522,8 @@ class BailianClient:
                     attempt, _MAX_ATTEMPTS, type(exc).__name__, delay,
                 )
                 time.sleep(delay)
+        if resp is not None and _is_fatal_error(resp.status_code, resp.text or ""):
+            raise BailianAuthFatal(f"图片生成鉴权/额度致命错误({resp.status_code}): {(resp.text or '')[:300]}")
         try:
             data = resp.json()
         except ValueError as exc:
@@ -486,7 +610,7 @@ class BailianClient:
         """
         model = model or VIDEO_MODEL
         headers = {
-            "Authorization": f"Bearer {os.environ['BAILIAN_API_KEY']}",
+            "Authorization": f"Bearer {_api_key()}",
             "Content-Type": "application/json",
             "X-DashScope-Async": "enable",
         }
@@ -571,14 +695,64 @@ class MockBailianClient:
         return "mock://generated-video.mp4"
 
 
+class _ResilientClient:
+    """真实客户端包装：首次遇到鉴权/额度致命错误（BailianAuthFatal）时，
+    自动降级到 MockBailianClient，保证生成流程不硬崩、演示不中断。
+
+    降级是会话内一次性切换：一旦触发，后续所有调用都走 Mock，
+    且 is_mock 翻为 True（/api/health 会如实反映）。
+    正常运行（密钥有效）时行为与直接使用 BailianClient 完全一致。
+    """
+
+    is_mock = False
+
+    def __init__(self, real: BailianLike) -> None:
+        self._real = real
+        self._mock: BailianLike | None = None
+
+    @property
+    def _active(self) -> BailianLike:
+        return self._mock if self._mock is not None else self._real
+
+    @property
+    def supports_vision(self) -> bool:
+        return self._active.supports_vision
+
+    def _guard(self, method: str, *args, **kwargs):
+        if self._mock is not None:
+            return getattr(self._mock, method)(*args, **kwargs)
+        try:
+            return getattr(self._real, method)(*args, **kwargs)
+        except BailianAuthFatal as exc:
+            logger.warning("百炼网关鉴权/额度致命错误，自动降级 Mock 模式以保证演示可用：%s", exc)
+            self._mock = MockBailianClient()
+            self.is_mock = True
+            return getattr(self._mock, method)(*args, **kwargs)
+
+    def chat(self, *a, **k):
+        return self._guard("chat", *a, **k)
+
+    def chat_with_tools(self, *a, **k):
+        return self._guard("chat_with_tools", *a, **k)
+
+    def image_gen(self, *a, **k):
+        return self._guard("image_gen", *a, **k)
+
+    def vision(self, *a, **k):
+        return self._guard("vision", *a, **k)
+
+    def video_gen(self, *a, **k):
+        return self._guard("video_gen", *a, **k)
+
+
 def get_client() -> BailianLike:
     if os.getenv("QIANAN_MOCK", "0") == "1":
         logger.warning("QIANAN_MOCK=1，使用模拟百炼客户端")
         return MockBailianClient()
-    if not os.getenv("BAILIAN_API_KEY"):
+    if not _api_key():
         logger.warning("未配置 BAILIAN_API_KEY，自动进入 Mock 模式")
         return MockBailianClient()
-    return BailianClient()
+    return _ResilientClient(BailianClient())
 
 
 def resolve_image_ref(image_url: str | None, image_base64: str | None) -> str | None:

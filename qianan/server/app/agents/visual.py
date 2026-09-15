@@ -113,9 +113,13 @@ class VisualAgent:
         listing: PlatformListing,
         image_ref: str | None = None,
     ) -> None:
-        """生成详情图（面料特写/正面全貌/上身场景/平铺搭配），写回 listing.detail_images。
+        """生成详情图（正面全貌/材质特写/使用场景/平铺搭配），写回 listing.detail_images。
 
         需要主图或原图作为参考（以图改图保持商品一致）；无参考图则跳过。
+
+        **并发发起**：4 张图彼此独立，串行会把出图耗时叠加四倍
+        （实测云端单步因此耗掉 373s，直接吃光整个 Agent 墙钟预算）。
+        单张失败不影响其余；结果顺序与 DETAIL_SHOTS 一致。
         """
         if self.client.is_mock:
             if not listing.detail_images:
@@ -127,14 +131,22 @@ class VisualAgent:
             logger.info("平台 %s 无参考图，跳过详情图生成", listing.platform)
             return
 
-        results: list[str] = []
-        for key, _label, prompt in DETAIL_SHOTS:
+        async def _one(key: str, prompt: str) -> str | None:
+            """单张详情图：以图改图优先，失败退回纯文生图，都失败才放弃。"""
             try:
-                url = await asyncio.to_thread(self.client.image_gen, prompt, None, ref)
-                results.append(url)
+                return await asyncio.to_thread(self.client.image_gen, prompt, None, ref)
+            except Exception as exc:  # noqa: BLE001 —— 参考图模式不可用时退文生图
+                logger.warning("详情图 %s 以图改图失败（%s），回退纯文生图: %s", key, listing.platform, exc)
+            try:
+                return await asyncio.to_thread(self.client.image_gen, prompt)
             except Exception as exc:  # noqa: BLE001 —— 单张详情图失败不阻塞其余
-                logger.warning("详情图 %s 生成失败（%s）: %s", key, listing.platform, exc)
-        listing.detail_images = results
+                logger.warning("详情图 %s 文生图也失败（%s）: %s", key, listing.platform, exc)
+                return None
+
+        results = await asyncio.gather(
+            *(_one(key, prompt) for key, _label, prompt in DETAIL_SHOTS)
+        )
+        listing.detail_images = [u for u in results if u]
 
     async def run_video(
         self,

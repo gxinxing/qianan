@@ -106,6 +106,25 @@ if _ENABLE_CORS:
     )
 
 
+def _client_for_request():
+    """按当前请求选客户端：只要本次请求带了 BYOK，就为它单独构造真实客户端。
+
+    为什么不能直接复用 _get_client_cached()（进程级单例）：
+      1. 服务端未预置 Key 时，单例是 MockBailianClient —— 复用它会导致访客填了
+         Key 却仍拿到 mock 数据（静默失效，最坑）；
+      2. 服务端 Key 存在但已失效/欠费时，单例是挂在无效 Key 上的真实客户端，
+         且首次调用后会被 _ResilientClient 降级成 mock —— 复用它同样吃掉 BYOK。
+
+    所以判定条件不能是「缓存是不是 mock」，而是「本请求有没有带 BYOK」。
+    get_client() 内部按 ContextVar 取值，因此这里每次新建都能拿到访客自己的 Key。
+    构造开销可忽略（只做一次非空检查），且不写回 _client，不污染其他请求。
+    """
+    from .bailian.client import has_byok
+    if has_byok():
+        return get_client()
+    return _get_client_cached()
+
+
 @app.get("/api/health")
 async def health():
     return {
@@ -528,6 +547,17 @@ async def chat(req: ChatRequest, request: Request, user: dict = Depends(cbauth.r
     # 限流：chat 是公开可访问的对话入口，一次请求会触发多轮模型调用与出图，
     # 没有限流的话一个公开地址被反复调用就能把模型额度烧完。与 /api/generate 同策略。
     cbauth.check_rate_limit(cbauth.client_ip(request))
+
+    # BYOK：访客可在前端填自己的百炼 Key，随请求头带来，本次调用走他自己的额度。
+    # 服务端预置额度耗尽或未配置时，这是让外部评审仍能真实跑通的唯一途径。
+    from .bailian.client import has_byok, set_request_keys
+    set_request_keys(
+        api_key=request.headers.get("x-bailian-api-key"),
+        dashscope_key=request.headers.get("x-dashscope-api-key"),
+    )
+    if has_byok():
+        logger.info("本次请求使用 BYOK（访客自带 Key）")
+
     """对话式 Agent 接口：Agent 用 function calling 自主编排上架全流程。
 
     与旧版（跑固定 pipeline）不同，新版让模型在对话中自主决定：
@@ -578,7 +608,7 @@ async def chat(req: ChatRequest, request: Request, user: dict = Depends(cbauth.r
     task = create_task(gen_req, owner_uid=owner)
     logger.info("chat 任务 %s 归属租户 %s", task.task_id, owner)
     _CHAT_CANCELLED.discard(task.task_id)  # 防御：task_id 复用时不要继承取消态
-    client = _get_client_cached()
+    client = _client_for_request()
 
     async def event_stream():
         """SSE 流：Agent 对话事件 + trace 事件合并推送。"""

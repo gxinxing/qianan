@@ -64,14 +64,27 @@ CHAT_SYSTEM = """你是千岸跨境上架 Agent。你的职责是在对话中帮
 - 生成后必须调用 review_listing 审核
 - 有 error 必须调用 revise_listing 修订（确定性保证有错必改）
 - 修订后再次 review 确认修复
+- **提示级问题（warn）不需要修订**：不要为了消除提示反复调用 revise_listing，
+  同一平台的修订不要超过 3 轮。改到 2 轮仍报同类问题时，立即停止修订、
+  进入出图与交付阶段，把剩余提示留给交付摘要如实披露。
 - 文案确认无误后调用 generate_images 和 generate_video
 - 全部完成后调用 submit_deliverable 交付
+- **出图与交付优先于文案完美**：预算有限时先保证每个平台都有主图并完成交付，
+  再考虑措辞优化。绝不可把全部时间花在打磨某一个平台的文案上。
 - 每一步都要先用文字告诉用户你在做什么，再调用工具
 - 如果用户信息不完整，先询问而不是猜测"""
 
 #: 允许的最大对话工具轮数（每轮可调多个工具）
 CHAT_MAX_ROUNDS = 25
-CHAT_DEADLINE_S = 300  # 5 分钟总预算
+#: Agent 总墙钟预算。实测 2 个平台的完整链路（理解+文案+审核+修订+出图）约需 150–250s，
+#: 5 个平台需更多；原 300s 会在出图阶段就被耗尽，导致永远交付不了含图的完整包。
+#: 取值须留出云函数超时（900s）与单步工具耗时（出图 60s / 视频轮询 300s）的余量。
+CHAT_DEADLINE_S = 420
+
+#: 单平台最大自动修订轮数。文案问题理论上"可修"，但模型会反复修出新问题
+#: （实测无上限时 Amazon 单平台空转 11 轮、烧光 300s 墙钟、图片 0 张）。
+#: 超限即停止修订，剩余问题如实留给交付闸门在交付摘要里披露。
+MAX_REVISE_ROUNDS = 3
 
 #: 阻断级 error 中「靠改文案修不掉、只能靠出图解决」的字段。
 #: 这类问题无论修订多少轮都修不掉，若纳入闸门会让模型反复 revise 直到超轮数，
@@ -79,10 +92,30 @@ CHAT_DEADLINE_S = 300  # 5 分钟总预算
 IMAGE_ONLY_FIELDS = {"mainImage"}
 
 
+def _platform_requires_bullets(platform: str, rules_map: dict | None) -> bool:
+    """该平台是否要求**独立的五点描述**。
+
+    只有 Amazon 要求（rules/amazon.json：count=5）；Shopee / Lazada / AliExpress /
+    TikTok Shop 的规则里明确写了 count=0、style="none"，卖点融入描述段落。
+
+    回归背景（2026-09-15 实测）：闸门曾对**所有平台**一律要求 bullets 非空，
+    而文案 Agent 的提示词按规则让非 Amazon 平台返回空数组 —— 两边直接打架，
+    于是 Shopee 永远被判「缺五点描述」，交付被无限拒绝，Agent 反复重新生成文案
+    直到撞上 25 轮上限，5 个平台一个都交付不了。
+
+    未提供 rules_map 时沿用旧行为（要求 bullets）：宁可保守，也不要静默放松判定。
+    """
+    if not rules_map:
+        return True
+    rule = (rules_map.get(platform) or {}).get("bullets") or {}
+    return int(rule.get("count") or 0) > 0
+
+
 def evaluate_delivery_gate(
     platforms: list[str],
     listings: dict[str, PlatformListing],
     reviewed: set[str],
+    rules_map: dict | None = None,
 ) -> dict:
     """交付闸门：判定当前状态是否**允许**宣称交付完成。
 
@@ -112,7 +145,8 @@ def evaluate_delivery_gate(
         # ① 必需产物完整（标题 / 卖点 / 主图，缺一即不可上架）
         if not (listing.title or "").strip():
             problems.append("缺标题")
-        if not listing.bullets:
+        # 五点描述按平台规则判断：只有 Amazon 要求，其余平台卖点融入描述段落
+        if _platform_requires_bullets(p, rules_map) and not listing.bullets:
             problems.append("缺五点描述")
         if not listing.images:
             problems.append("缺主图")
@@ -281,7 +315,12 @@ async def run_chat_agent(
                 semantic_issues = await review_listing(client, listing, state["understanding"])
                 if semantic_issues:
                     listing.compliance.extend(semantic_issues)
-                    errors.extend(semantic_issues)
+                    # 按严重度分流：只有「与事实档案直接矛盾」才计入阻断级 error。
+                    # 曾经无差别 extend 进 errors，于是「无事实支撑的夸大」也被当成 error
+                    # 强制 revise —— 而这类问题没有收敛点（改完又出现新的同类表述），
+                    # 实测让 Amazon 单平台空转 11 轮、耗尽 300s 预算且 0 张图产出。
+                    errors.extend(i for i in semantic_issues if i.severity == "error")
+                    warns.extend(i for i in semantic_issues if i.severity != "error")
             except Exception as exc:  # noqa: BLE001
                 logger.warning("语义审核失败: %s", exc)
 
@@ -310,6 +349,14 @@ async def run_chat_agent(
         errors = [i for i in listing.compliance if i.severity == "error" and i.field != "mainImage"]
         if not errors:
             return f"{platform} 没有需要修订的 error。"
+        # 硬上限：防止模型反复"修出新问题"把整个墙钟预算耗在一个平台上。
+        # 超限后把剩余问题交给交付闸门如实披露，而不是继续无谓地烧额度。
+        if listing.revised_count >= MAX_REVISE_ROUNDS:
+            return (
+                f"{platform} 已修订 {listing.revised_count} 轮，达到上限 {MAX_REVISE_ROUNDS} 轮，不再自动修订。"
+                "剩余问题属提示/可优化级，不影响上架交付。请继续调用 generate_images 出图，"
+                "或直接调用 submit_deliverable 交付。"
+            )
 
         display = listing.display_name or platform
         record(task, "heal", f"revise_listing[{platform}]", display, "修订中...")
@@ -415,7 +462,14 @@ async def run_chat_agent(
         if not listings:
             return "还没有生成任何上架内容。"
 
-        gate = evaluate_delivery_gate(req.platforms, state["listings"], state["reviewed"])
+        # 闸门按平台规则判断必需产物，因此必须先确保规则已加载
+        # （否则会退化成"所有平台都要五点描述"，把非 Amazon 平台永远挡在门外）
+        if state["rules_map"] is None:
+            state["rules_map"] = rules_agent.run(req.platforms)
+
+        gate = evaluate_delivery_gate(
+            req.platforms, state["listings"], state["reviewed"], state["rules_map"]
+        )
         if not gate["ok"]:
             task.stage = "交付前校验未通过"
             reason = "；".join(gate["blockers"])
@@ -577,6 +631,7 @@ async def run_chat_agent(
             req.platforms,
             {l.platform: l for l in task.listings},
             {l.platform for l in task.listings if l.compliance_passed},
+            RulesEngineAgent().run(req.platforms),
         )
         if not gate["ok"]:
             # 管线产物没达标就不能标 done，哪怕这是 mock
