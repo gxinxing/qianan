@@ -147,14 +147,19 @@ docker-compose up --build
 # 前端：http://localhost:3000
 ```
 
-## 复赛提交物
+## 决赛交付状态（2026-09-15 收口）
 
-| 项目 | 状态 | 链接 |
+| 项目 | 状态 | 链接 / 位置 |
 |---|---|---|
-| Demo URL | 🚧 待部署 | — |
-| 演示视频 | 🚧 待录制 | — |
-| 技术说明 | ✅ 见 `docs/03-复赛Demo开发计划.md` | — |
-| 源代码仓库 | 🚧 待推送 | — |
+| 公网 Demo（前端） | ✅ 已部署，HTTP 200 | https://ai-native-d5gfb0dm2a28d1fe9-1419921079.tcloudbaseapp.com |
+| 公网 API（真实模式） | ✅ 在线（mock:false） | https://ai-native-d5gfb0dm2a28d1fe9-1419921079.ap-shanghai.app.tcloudbase.com/api |
+| 源代码仓库 | ✅ 已推送 `main` | https://github.com/gxinxing/qianan （HEAD `0ceb8c0`） |
+| 技术说明 | ✅ | `submission/SimonStudio_千岸QianAn_复赛作品.docx` + `docs/` |
+| Agent 闭环验收测试 | ✅ 53 passed（含 4 条端到端） | `qianan/server/tests/test_agent_loop.py` |
+| 演示视频 | 🚧 待本机录屏 | 访问上方公网 Demo 即可录制（建议脚本见 `FINAL-DELIVERY.md`） |
+
+> 部署链路：`cloudbase/deploy.sh`（CloudBase 云函数 + 静态托管，9/7 全链路实测，今日含 P0 修复重部署）。
+> 限流与游客归属：`/api/chat` 接 `require_user` + `uid_of`（游客按 IP+UA 派生独立 uid）+ `check_rate_limit`，公开地址不会被反复调用烧完额度。
 
 ## 许可证
 
