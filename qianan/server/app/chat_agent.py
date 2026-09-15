@@ -242,6 +242,9 @@ async def run_chat_agent(
 
         listing = await copy_agent.run(req, understanding, platform, rules, memories=memories)
         state["listings"][platform] = listing
+        # 实时同步进 task.listings：周期全量快照(_listing_snapshot)只读 task.listings，
+        # 不同步会在生成中途发出空快照，前端整块替换把实时产物冲掉（闪现后消失）。
+        task.listings = list(state["listings"].values())
         record(task, "build", f"generate_listing[{platform}]", display, f"标题: {listing.title[:60]}...")
 
         title_preview = listing.title[:80] if listing.title else "(空)"
@@ -316,6 +319,7 @@ async def run_chat_agent(
         revised = await copy_agent.revise(listing, rules, errors)
         revised.revised_count += 1
         state["listings"][platform] = revised
+        task.listings = list(state["listings"].values())  # 同步，供周期快照渲染
 
         # 复检
         compliance.run(revised, rules, req.category)
