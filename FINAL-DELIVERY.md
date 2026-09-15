@@ -72,6 +72,24 @@ health: {"status":"ok","mock":false,"auth":{"ready":true,"require_auth":false}}
 - 前端 `next build` 成功（15 页静态导出），静态托管上传 75 文件。
 - 后端云函数更新完成，真实模式（BAILIAN_API_KEY 生效）在线。
 
+### 浏览器连通性验证（2026-09-15，真实 Chromium）
+
+> 说明：此前"HTTP 200 即连通"的判断过宽（`curl` 不执行 CORS 检查）。以下为**浏览器层面**的实测，口径收窄为"浏览器跨域读取已通过"。
+
+用真实 Chromium（无头）打开已部署前端域，在页面上下文（源 = `https://…tcloudbaseapp.com`）向 API（`https://…ap-shanghai.app.tcloudbase.com`）发起**跨域** fetch，由浏览器强制 CORS：
+
+```
+GET  /api/health          -> 200，响应体可读：{"status":"ok","mock":false,...}
+                             网络层 access-control-allow-origin: https://…tcloudbaseapp.com（单个）
+GET  /api/tasks/__probe__ -> 404，响应体可读：{"detail":"task not found"}
+                             网络层 access-control-allow-origin: https://…tcloudbaseapp.com（单个）
+```
+
+- 浏览器**成功读取响应体** ⇒ CORS 放行（若被拒，浏览器抛 `TypeError: Failed to fetch` 且读不到 body）。
+- 网络层原始头为**单个** `access-control-allow-origin`，无逗号拼接重复 ⇒ 无"重复头被浏览器拒绝"的问题。
+- （注：`response.headers.get('access-control-allow-origin')` 在页面脚本里返回 `null` 属**正常**——浏览器按设计不向脚本暴露 CORS 响应头，判断是否放行应以"能否读到 body"为准。）
+- 结论：**后端 API 与前端域之间的浏览器通信正常**；阻碍在**前端测试域名**本身（见第五节第 5 条）。
+
 ## 四、测试与构建
 
 - 后端：`pytest tests/` → **56 passed**（49 既有 + 4 条闭环）。
@@ -82,10 +100,14 @@ health: {"status":"ok","mock":false,"auth":{"ready":true,"require_auth":false}}
 1. **mock 模式下的"取消"未生效**：`run_chat_agent` 在 `client.is_mock` 时短路到 `run_pipeline` 直线，取消标志未传入。真实模式（公网默认）取消已生效。修复需把取消标志传进 `run_pipeline` 或让 mock 也走工具循环，待排期。
 2. **多 Agent 蜂群第 2–4 层仅规划/雏形**：黑板未落盘、平台 worker 未并行、无 waiting_user、未接多轮。第 1 层（完成真实性 / 交付闸门）已完整落地。蜂群默认关闭（`QIANAN_SWARM=1` 才开）。
 3. **公网 `/api/generate` 同步生成有 120s 云函数超时**：真实模式多平台/复杂商品可能超时（证据段已说明，演示走 `/api/chat` 或单平台规避）。如需公网大批量生成，建议提高 SCF 函数超时或改异步调用模式，待排期。
+4. **CORS：当前无重复头，已加固防复发**。CORS 头共有两层可能来源：① CloudBase 网关——对 `/api/**` 所有响应注入，实测回显请求里的 `Origin`（连 `http://localhost:3000` 也回显，即 reflect 模式）；② 后端 FastAPI `CORSMiddleware`——**仅当 `QIANAN_ENABLE_CORS=1` 时才启用**（`server/app/main.py:89`）。云端 `cloudbaserc.json` 未设该变量（默认关）→ 当前只有网关注入，实测所有端点（`/api/health` 200、`/api/tasks/{id}` 404、`OPTIONS` 预检 204）返回的 `access-control-allow-origin` 均为**单个、正确值**。历史上你看到的 `origin,origin` 重复头，唯一成因是**两层同时注入**（后端 `=1` + 网关同时写），与 `main.py:86-88` 的注释警告一致；现已在 `cloudbaserc.json` 显式写死 `"QIANAN_ENABLE_CORS": "0"`，每次部署归一为关，杜绝复发。
+5. **CloudBase 测试域名挡路（非 P0，但直接影响评审访问）**。前端测试域名 `*.tcloudbaseapp.com` 首次访问会先弹「页面访问提示（风险提醒）」页（需 4 秒倒计时后点「确定访问」）；且当前该页已显示「**当前访问量已达上限，如需继续访问，请联系开发者**」——测试域名访问配额已耗尽，**浏览器里进不去应用**。这是演示/评审的真实阻塞点，与 CORS 无关（后端 API 域不受影响）。解决：绑定已备案自有域名到静态托管（风险提示与配额限制同时消失），或按提示页链接「我是开发者，如何去掉当前页面？」在控制台处理；录屏演示亦可临时用本地 dev server。
 
 ## 六、演示视频录制建议（供本机录屏）
 
-1. 打开公网 Demo，上传一张白底商品图 + 粘贴中文卖点（如"USB-C 快充便携榨汁杯，易清洗"）。
+> ⚠️ 录制前先解决第五节第 5 条：公网测试域名当前被「访问量已达上限」挡住。稳妥做法是**用本地 dev server 录屏**（`server: python -m uvicorn app.main:app --port 8001`；`web: npm run dev`，`NEXT_PUBLIC_API_BASE=http://localhost:8001`），或先绑定自有域名。
+
+1. 打开 Demo（本地或自有域名），上传一张白底商品图 + 粘贴中文卖点（如"USB-C 快充便携榨汁杯，易清洗"）。
 2. 勾选 5 个平台，点生成，展示右侧 SSE 面板：单平台逐个 `listing_update` 实时出现，最后 `done`。
 3. 展开合规报告：47 项确定性校验，error 级问题自动回炉修订（留痕）。
 4. 指代码证据：`server/tests/test_agent_loop.py` 的 4 条端到端测试，证明"提前提交被拒 / 超限不成功 / 未审核不可交付 / 全审核才完成"。

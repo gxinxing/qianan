@@ -14,6 +14,7 @@
         "BAILIAN_API_KEY": "${env.BAILIAN_API_KEY}",
         "BAILIAN_BASE_URL": "https://tokendance.space/gateway/v1",
         "QIANAN_DATA_DIR": "/tmp/qianan-data",
+        "QIANAN_ENABLE_CORS": "0",
         "QIANAN_IMAGE_MODEL": "seedream-5.0-lite",
         "QIANAN_IMAGE_SIZE": "2048x2048",
         "QIANAN_JWT_SECRET": "${env.QIANAN_JWT_SECRET}",
