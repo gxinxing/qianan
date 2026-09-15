@@ -8,7 +8,7 @@ const DEPTH_META: Record<string, { label: string; cls: string }> = {
   deep: { label: "做深", cls: "bg-green-50 text-green-700" },
   reuse: { label: "机制复用", cls: "bg-brand-50 text-brand-700" },
   simple: { label: "简化", cls: "bg-amber-50 text-amber-600" },
-  standard: { label: "标准", cls: "bg-blue-50 text-blue-700" },
+  standard: { label: "标准", cls: "bg-brand-50 text-brand-700" },
 };
 
 const CHECK_TYPE: Record<string, string> = {

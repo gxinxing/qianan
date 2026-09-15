@@ -40,7 +40,7 @@ export function Sidebar({
     <aside className="flex flex-col w-64 flex-shrink-0 h-full bg-gray-900 border-r border-gray-800">
       {/* Logo */}
       <div className="h-14 px-4 flex items-center gap-2.5 border-b border-gray-800 flex-shrink-0">
-        <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20">
+        <div className="w-8 h-8 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-400 to-brand-500 shadow-lg shadow-brand-400/20">
           <Ship size={17} className="text-white" />
         </div>
         <div className="flex flex-col leading-tight">
@@ -53,7 +53,7 @@ export function Sidebar({
       <div className="p-3">
         <button
           onClick={onNewChat}
-          className="w-full flex items-center justify-center gap-1.5 text-[13px] font-medium py-2.5 rounded-xl text-white transition-all bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 shadow-lg shadow-cyan-600/20"
+          className="w-full flex items-center justify-center gap-1.5 text-[13px] font-medium py-2.5 rounded-xl text-white transition-all bg-gradient-to-r from-brand-500 to-brand-700 hover:from-brand-400 hover:to-brand-600 shadow-lg shadow-brand-500/20"
         >
           <Plus size={16} /> 新对话
         </button>
@@ -76,7 +76,7 @@ export function Sidebar({
               className="group flex items-center gap-2.5 px-2.5 py-2 rounded-xl cursor-pointer transition-all duration-150"
               style={{
                 backgroundColor: isActive ? "rgba(6, 182, 212, 0.1)" : "transparent",
-                boxShadow: isActive ? "inset 2px 0 0 #06b6d4" : "none",
+                boxShadow: isActive ? "inset 2px 0 0 #939b86" : "none",
               }}
               onClick={() => onSelectSession(session.id)}
               onMouseEnter={(e) => {
@@ -88,14 +88,14 @@ export function Sidebar({
             >
               {/* 图标 */}
               <div className="flex-shrink-0 w-[26px] h-[26px] rounded-lg flex items-center justify-center bg-gray-800 group-hover:bg-gray-700 transition-colors">
-                <Bot size={13} className={isActive ? "text-cyan-400" : "text-gray-400"} />
+                <Bot size={13} className={isActive ? "text-brand-400" : "text-gray-400"} />
               </div>
 
               {/* 标题 + 时间 */}
               <div className="flex-1 min-w-0">
                 <div
                   className={`truncate text-[13px] ${
-                    isActive ? "text-cyan-400 font-semibold" : "text-gray-300"
+                    isActive ? "text-brand-400 font-semibold" : "text-gray-300"
                   }`}
                 >
                   {session.title}
