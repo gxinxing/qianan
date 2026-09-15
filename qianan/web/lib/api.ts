@@ -13,10 +13,30 @@ const _nativeFetch: typeof fetch =
         return undefined;
       } as unknown as typeof fetch);
 
+/** BYOK：访客自带的百炼 Key 存在 localStorage，随每个请求带给后端。
+ *  服务端预置额度可用时不需要填；填了就优先用访客自己的额度。 */
+export const BYOK_STORAGE_KEY = "qianan_byok_key";
+const DASHSCOPE_STORAGE_KEY = "qianan_byok_dashscope_key";
+
+export function getByokKey(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(BYOK_STORAGE_KEY) || "";
+}
+
+export function getByokDashscopeKey(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(DASHSCOPE_STORAGE_KEY) || "";
+}
+
 export async function qfetch(input: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers || undefined);
   const token = getAccessToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
+  // BYOK：带上了就覆盖服务端预置额度（后端用 ContextVar 按请求隔离，并发安全）
+  const byok = getByokKey();
+  if (byok) headers.set("X-Bailian-Api-Key", byok);
+  const byokImg = getByokDashscopeKey();
+  if (byokImg) headers.set("X-Dashscope-Api-Key", byokImg);
   return _nativeFetch(input, { ...init, headers });
 }
 

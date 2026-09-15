@@ -38,9 +38,10 @@ def writable_dir(*parts) -> Path:
     pkg_path = _PKG_ROOT / rel
     try:
         pkg_path.mkdir(parents=True, exist_ok=True)
-        _test = pkg_path / ".wtest"
-        _test.touch()
-        _test.unlink(missing_ok=True)
+        # 写测试只需 touch 成功即证明目录可写；不再 unlink 清理 ——
+        # 删除临时文件在只读/受限环境下可能抛异常甚至中断进程，
+        # 而残留一个 0 字节 .wtest 无副作用（已在 .gitignore 中忽略）。
+        (pkg_path / ".wtest").touch()
         return pkg_path
     except (OSError, PermissionError):
         pass

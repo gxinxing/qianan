@@ -270,3 +270,65 @@ def test_run_tool_loop_normal_run_is_not_cancelled():
     )
     assert result["cancelled"] is False
     assert result["fallback"] is False
+
+
+# ------------------------------------------- 闸门 × 平台规则：五点描述差异 ★
+#
+# 回归背景（2026-09-15 实测）：闸门曾对**所有平台**一律要求 bullets 非空，
+# 而文案 Agent 的提示词按平台规则让非 Amazon 平台返回空数组
+# （rules/shopee.json 明写 count=0、style="none"，卖点融入描述段落）。
+# 两边打架 → Shopee 永远被判「缺五点描述」→ 交付被无限拒绝 →
+# Agent 反复重新生成文案直到撞上 25 轮上限，5 个平台一个都交付不了。
+
+
+def test_non_amazon_platform_without_bullets_is_not_blocked():
+    """Shopee 等平台按规则不需要独立五点描述，缺 bullets 不该阻断交付。"""
+    rules_map = {"shopee": {"bullets": {"count": 0, "style": "none"}}}
+    gate = evaluate_delivery_gate(
+        ["shopee"],
+        {"shopee": _listing("shopee", bullets=[])},
+        {"shopee"},
+        rules_map,
+    )
+    assert gate["ok"], gate["blockers"]
+    assert not any("五点描述" in b for b in gate["blockers"])
+
+
+def test_amazon_still_requires_bullets():
+    """Amazon 规则要求 5 条卖点，缺了仍必须阻断 —— 不能顺手放松这个。"""
+    rules_map = {"amazon": {"bullets": {"count": 5, "minCount": 3}}}
+    gate = evaluate_delivery_gate(
+        ["amazon"],
+        {"amazon": _listing("amazon", bullets=[])},
+        {"amazon"},
+        rules_map,
+    )
+    assert not gate["ok"]
+    assert any("缺五点描述" in b for b in gate["blockers"])
+
+
+def test_missing_rules_map_keeps_legacy_strict_behaviour():
+    """未提供规则时沿用旧行为（要求 bullets），避免静默放松判定。"""
+    gate = evaluate_delivery_gate(["shopee"], {"shopee": _listing("shopee", bullets=[])}, {"shopee"})
+    assert not gate["ok"]
+    assert any("缺五点描述" in b for b in gate["blockers"])
+
+
+def test_gate_uses_real_rule_files():
+    """用**真实**规则文件校验：Shopee 不阻断、Amazon 阻断。
+
+    这条锁定的是「规则文件改了，闸门行为要跟着改」——两边再打架就会被这里拦住。
+    """
+    from app.agents.rules_engine import RulesEngineAgent
+
+    rules_map = RulesEngineAgent().run(["amazon", "shopee"])
+    listings = {
+        "amazon": _listing("amazon", bullets=[]),
+        "shopee": _listing("shopee", bullets=[]),
+    }
+    gate = evaluate_delivery_gate(["amazon", "shopee"], listings, {"amazon", "shopee"}, rules_map)
+    assert not gate["ok"]
+    # blocker 用 display_name（大写）打头，这里按大小写无关匹配更稳
+    joined = "；".join(gate["blockers"]).lower()
+    assert "amazon" in joined and "缺五点描述" in joined
+    assert not any(b.startswith("SHOPEE") for b in gate["blockers"])
