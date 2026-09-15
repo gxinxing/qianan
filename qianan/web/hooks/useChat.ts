@@ -9,8 +9,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { Message, ContentBlock, ToolCall, ListingSnapshot, ListingItem } from "../lib/chat-types";
 import { useSessions } from "./useSessions";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "";
+import { API_BASE, qfetch } from "../lib/api";
 
 export interface UseChatOptions {
   /** 额外请求体字段，由调用方从产品表单收集 */
@@ -23,6 +22,7 @@ export function useChat(options: UseChatOptions = {}) {
   const { getExtraPayload, onListingEvent } = options;
   const sessions = useSessions();
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const abortRef = useRef<AbortController | null>(null);
   /** 当前流式任务的后端 id，用于「停止」时通知后端真正中断 Agent */
   const taskIdRef = useRef<string | null>(null);
@@ -43,6 +43,7 @@ export function useChat(options: UseChatOptions = {}) {
       const messageContent = text.trim();
       const hasImages = images && images.length > 0;
       if ((!messageContent && !hasImages) || isLoading) return;
+      setError("");
 
       // ---- 1. 确保有 session（首条消息时自动创建）----
       let sessionId = sessions.currentSessionId;
@@ -80,21 +81,43 @@ export function useChat(options: UseChatOptions = {}) {
       abortRef.current = controller;
 
       const extra = getExtraPayload?.() || {};
+      const priorMessages = sessions.currentSession?.messages || [];
+      const historyLines = priorMessages.slice(-8).map((message) => {
+        const blockText = message.contentBlocks
+          ?.filter((block) => block.type === "text")
+          .map((block) => block.type === "text" ? block.text : "")
+          .join("\n");
+        const content = (message.content || blockText || "").trim().slice(0, 800);
+        return content ? `${message.role === "user" ? "用户" : "Agent"}：${content}` : "";
+      }).filter(Boolean);
+      const firstUserMessage = priorMessages.find((message) => message.role === "user")?.content || messageContent;
+      const agentMessage = historyLines.length
+        ? `以下是同一会话的最近上下文，请基于它理解用户的追问或修改要求：\n${historyLines.join("\n")}\n\n用户当前消息：${messageContent || "请继续处理刚才的商品"}`
+        : messageContent;
 
       try {
-        const response = await fetch(`${API_BASE}/api/chat`, {
+        const response = await qfetch(`${API_BASE}/api/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            message: messageContent,
             ...extra,
+            message: agentMessage,
+            product_name: String(extra.product_name || firstUserMessage).slice(0, 200),
+            selling_points: String(extra.selling_points || firstUserMessage).slice(0, 2000),
             ...(hasImages ? { image_base64: images![0] } : {}),
           }),
           signal: controller.signal,
         });
 
         if (!response.ok || !response.body) {
-          throw new Error(`API ${response.status}`);
+          let detail = "";
+          try {
+            const payload = await response.json();
+            detail = typeof payload?.detail === "string" ? payload.detail : "";
+          } catch {
+            // Some gateways return an empty body for upstream errors.
+          }
+          throw new Error(detail || `对话服务暂时不可用（${response.status}）`);
         }
 
         const reader = response.body.getReader();
@@ -251,6 +274,14 @@ export function useChat(options: UseChatOptions = {}) {
                 );
                 continue;
               }
+
+              if (data.type === "error") {
+                const message = String(data.message || "Agent 执行失败，请重试");
+                setError(message);
+                currentText = message;
+                flush();
+                continue;
+              }
             } catch {
               // JSON 解析失败 — 忽略
             }
@@ -268,10 +299,12 @@ export function useChat(options: UseChatOptions = {}) {
           // 用户主动取消
         } else {
           console.error("Chat error:", err);
+          const message = err instanceof Error ? err.message : "对话连接失败，请重试";
+          setError(message);
           sessions.updateMessages(sessionId!, (prev) =>
             prev.map((m) =>
               m.id === assistantMessageId
-                ? { ...m, content: "发生错误，请重试", isStreaming: false }
+                ? { ...m, content: message, isStreaming: false }
                 : m,
             ),
           );
@@ -293,7 +326,7 @@ export function useChat(options: UseChatOptions = {}) {
     // ② 通知后端停止 —— 否则模型额度会一直烧到本轮工具结束
     const taskId = taskIdRef.current;
     if (taskId) {
-      fetch(`${API_BASE}/api/chat/${taskId}/cancel`, { method: "POST" }).catch(() => {
+      qfetch(`${API_BASE}/api/chat/${taskId}/cancel`, { method: "POST" }).catch(() => {
         // 取消是尽力而为：后端已结束或网络断开都不影响前端状态
       });
       taskIdRef.current = null;
@@ -310,6 +343,7 @@ export function useChat(options: UseChatOptions = {}) {
     selectSession: sessions.selectSession,
     // chat
     isLoading,
+    error,
     sendMessage,
     handleStop,
   };

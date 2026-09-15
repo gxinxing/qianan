@@ -1,5 +1,7 @@
 # 前端视觉与动效交接
 
+> 2026-09-15 最新变更：本文件原先描述的“首页任务入口 + 独立 Studio”已经废止。首页 `/` 现在直接使用 `/api/chat` SSE，显示连续消息、工具步骤和实时 Listing；第二轮起会携带最近 8 条对话上下文与首轮商品身份；`/studio` 重定向到 `/`。生产构建必须显式注入 CloudBase API 地址，参见 `cloudbase/deploy.sh`，否则 `.env.local` 会把 `localhost:8001` 打进线上包。
+
 更新日期：2026-09-15  
 项目：千岸 QianAn  
 前端目录：`qianan/web/`  
@@ -13,7 +15,7 @@
 
 **继续沿用：白底、暖灰侧栏、炭黑主按钮、少量灰绿色选中状态；以任务输入为中心。**
 
-避免重新加入深蓝大幅 Hero、多个并列输入框、复杂宣传卡片、过度弹跳。当前首页采用 Agent 风格的任务入口，提交后仍跳转结果页，并没有改成首页内流式聊天。
+避免重新加入深蓝大幅 Hero、多个并列输入框、复杂宣传卡片、过度弹跳。当前首页就是对话式 Agent 工作区，消息与实时产物均在当前页展示。
 
 动效参考原文：
 `/Users/simon/Documents/04_Knowledge & Efficiency/Obsidian Vault/3-Resources/编程提示词/动画提升Apple 级 Spring 动效.md`

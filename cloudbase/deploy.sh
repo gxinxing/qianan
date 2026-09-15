@@ -99,7 +99,11 @@ expect {
 ' | grep -E '✔|✖' || true
 
 echo "🌐 5/6 清缓存构建并部署前端静态托管 ..."
-(cd "$WEB_DIR" && rm -rf .next out && npm run build)
+(cd "$WEB_DIR" && \
+  rm -rf .next out && \
+  NEXT_PUBLIC_API_BASE="$API_URL" \
+  NEXT_PUBLIC_API_URL="$API_URL" \
+  npm run build)
 (cd "$SCRIPT_DIR" && tcb hosting deploy "$WEB_DIR/out" -e "$ENV_ID" --yes)
 
 echo "🧪 6/6 公网冒烟 ..."
