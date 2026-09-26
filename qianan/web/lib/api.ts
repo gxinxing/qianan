@@ -3,7 +3,7 @@ import { getAccessToken } from "./cloudbase";
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ||
   process.env.NEXT_PUBLIC_API_BASE ||
-  "http://localhost:8001";
+  "";
 
 /** 包装 fetch：自动带上 CloudBase 登录态的 access_token，供后端多租户隔离。 */
 const _nativeFetch: typeof fetch =
