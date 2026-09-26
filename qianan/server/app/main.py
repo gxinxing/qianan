@@ -258,7 +258,7 @@ async def audit(req: AuditRequest):
 from .paths import readonly_dir  # noqa: E402
 EVALS_REPORT = readonly_dir("data", "evals") / "report.json"
 
-from .cron_engine import cron_engine
+from .cron_engine import cron_engine  # noqa: E402
 
 _EMPTY_EVALS_REPORT = {
     "generated_at": None,

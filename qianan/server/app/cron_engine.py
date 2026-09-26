@@ -56,11 +56,16 @@ class AutonomousCronEngine:
         prod = AUTOMATED_PRODUCTS[self._counter % len(AUTOMATED_PRODUCTS)]
         self._counter += 1
 
+        name = str(prod["name"])
+        selling_points = str(prod["selling_points"])
+        category = str(prod["category"])
+        platforms = [str(p) for p in prod["platforms"]] if isinstance(prod["platforms"], list) else []
+
         req = GenerateRequest(
-            product_name=prod["name"],
-            selling_points=prod["selling_points"],
-            category=prod["category"],
-            platforms=prod["platforms"],
+            product_name=name,
+            selling_points=selling_points,
+            category=category,
+            platforms=platforms,
         )
 
         # 1. 判定核 preflight 校验
