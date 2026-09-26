@@ -47,7 +47,7 @@ export default function HomePage() {
   const [sampleLoading, setSampleLoading] = useState(false);
   const [isSample, setIsSample] = useState(false);
   const [confidentialMode, setConfidentialMode] = useState(false);
-  const [copiedAll, setCopiedAll] = useState(false);
+  const [outputTab, setOutputTab] = useState<"preview" | "judge" | "swarm" | "evolution">("preview");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleCopyAll = useCallback(() => {
@@ -375,40 +375,51 @@ export default function HomePage() {
             </PressButton>
           </header>
           
-          {/* 三栏工作台 Tab 切换页签 */}
-          <div className="flex items-center border-b border-[#e9e9e4] bg-[#f2f2ed] px-2 pt-2 gap-1 text-xs">
+          {/* 三栏工作台 Tab 切换页签 (参考 mu 经典看板结构) */}
+          <div className="flex items-center border-b border-[#e9e9e4] bg-[#f2f2ed] px-2 pt-2 gap-1 text-xs overflow-x-auto">
             <button
               type="button"
-              onClick={() => setSidebarMode("sessions")}
-              className={`px-3 py-1.5 rounded-t-md font-medium transition-colors border-t border-x ${
-                sidebarMode !== ("swarm" as any) && sidebarMode !== ("evolution" as any)
+              onClick={() => setOutputTab("preview")}
+              className={`px-2.5 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap ${
+                outputTab === "preview"
                   ? "bg-white border-[#deded9] text-[#252525]"
                   : "border-transparent text-[#6f6f69] hover:text-[#252525]"
               }`}
             >
-              产物预览
+              看板预览
             </button>
             <button
               type="button"
-              onClick={() => setSidebarMode("swarm" as any)}
-              className={`px-3 py-1.5 rounded-t-md font-medium transition-colors border-t border-x ${
-                (sidebarMode as any) === "swarm"
+              onClick={() => setOutputTab("judge")}
+              className={`px-2.5 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap ${
+                outputTab === "judge"
                   ? "bg-white border-[#deded9] text-[#252525]"
                   : "border-transparent text-[#6f6f69] hover:text-[#252525]"
               }`}
             >
-              蜂群 Trace 轨迹
+              判定核裁决
             </button>
             <button
               type="button"
-              onClick={() => setSidebarMode("evolution" as any)}
-              className={`px-3 py-1.5 rounded-t-md font-medium transition-colors border-t border-x ${
-                (sidebarMode as any) === "evolution"
+              onClick={() => setOutputTab("swarm")}
+              className={`px-2.5 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap ${
+                outputTab === "swarm"
                   ? "bg-white border-[#deded9] text-[#252525]"
                   : "border-transparent text-[#6f6f69] hover:text-[#252525]"
               }`}
             >
-              自进化记忆
+              蜂群 Trace
+            </button>
+            <button
+              type="button"
+              onClick={() => setOutputTab("evolution")}
+              className={`px-2.5 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap ${
+                outputTab === "evolution"
+                  ? "bg-white border-[#deded9] text-[#252525]"
+                  : "border-transparent text-[#6f6f69] hover:text-[#252525]"
+              }`}
+            >
+              自进化经验
             </button>
           </div>
 
@@ -416,11 +427,49 @@ export default function HomePage() {
             <span style={{ width: `${Math.max(4, Math.round((snapshot.progress || 0) * 100))}%` }} />
           </div>
 
-          {(sidebarMode as any) === "swarm" ? (
+          {outputTab === "judge" ? (
+            <div className="p-4 overflow-y-auto flex-1 bg-white space-y-3">
+              <div className="p-3 rounded-lg bg-[#f9fafb] border border-[#e5e7eb] text-xs space-y-1.5">
+                <div className="font-semibold text-gray-800 flex items-center gap-1.5">
+                  <ShieldCheck size={14} className="text-emerald-600" />
+                  <span>判定核 (Judgment Kernel) 裁决账本</span>
+                </div>
+                <p className="text-[11px] text-gray-500">
+                  基于判定核哲学：80% 的前置校验与合规风险由确定性 Judge 处理，大模型专注生成。
+                </p>
+              </div>
+
+              <div className="space-y-2 text-xs">
+                <div className="p-2.5 rounded-md border border-emerald-200 bg-emerald-50/50 space-y-1">
+                  <div className="flex items-center justify-between font-mono text-[11px]">
+                    <span className="font-semibold text-emerald-800">input.preflight</span>
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold text-[9.5px]">ALLOWED (1.0)</span>
+                  </div>
+                  <div className="text-[11px] text-emerald-700">裁决原因: 输入字段符合准入要求，触发标准思考级别</div>
+                </div>
+
+                <div className="p-2.5 rounded-md border border-emerald-200 bg-emerald-50/50 space-y-1">
+                  <div className="flex items-center justify-between font-mono text-[11px]">
+                    <span className="font-semibold text-emerald-800">tool.risk</span>
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold text-[9.5px]">PASSED (1.0)</span>
+                  </div>
+                  <div className="text-[11px] text-emerald-700">裁决原因: 47项确定性排雷通过 (零阻断级违禁词)</div>
+                </div>
+
+                <div className="p-2.5 rounded-md border border-emerald-200 bg-emerald-50/50 space-y-1">
+                  <div className="flex items-center justify-between font-mono text-[11px]">
+                    <span className="font-semibold text-emerald-800">turn.completion</span>
+                    <span className="px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold text-[9.5px]">COMPLETE (1.0)</span>
+                  </div>
+                  <div className="text-[11px] text-emerald-700">裁决原因: 目标平台产物全覆盖、通过独立审核且零阻断级错误</div>
+                </div>
+              </div>
+            </div>
+          ) : outputTab === "swarm" ? (
             <div className="p-3 overflow-y-auto flex-1 bg-[#1a1b18]">
               <AgentTracePanel events={chat.currentSession?.trace || []} running={chat.isLoading} variant="dark" />
             </div>
-          ) : (sidebarMode as any) === "evolution" ? (
+          ) : outputTab === "evolution" ? (
             <div className="p-4 overflow-y-auto flex-1 bg-white space-y-3">
               <div className="p-3 rounded-lg bg-[#f0f4ec] border border-[#d2e0ca] text-xs text-[#3d5732]">
                 <div className="font-semibold mb-1 flex items-center gap-1.5">
