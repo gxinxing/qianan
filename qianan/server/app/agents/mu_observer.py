@@ -36,7 +36,7 @@ class MuObserver:
         """无偏见审查千岸蜂群当前的运行动向与产物表现。"""
         actions = blackboard_snapshot.get("actions", [])
         status = blackboard_snapshot.get("status", "running")
-        
+
         anomalies = []
         # 1. 检查是否有重复无效的动作推演
         action_names = [a.get("action") for a in actions if isinstance(a, dict)]

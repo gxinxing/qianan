@@ -1,8 +1,6 @@
 """MuObserver 独立观察者 Agent 测试套件。"""
 from __future__ import annotations
 
-import pytest
-
 from app.agents.mu_observer import mu_observer
 from app.schemas import ComplianceIssue, PlatformListing
 
