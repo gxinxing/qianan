@@ -14,6 +14,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 HOME = Path.home()
 
@@ -57,7 +58,7 @@ def install_all() -> list[str]:
         for path in paths:
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
-                data: dict = {}
+                data: dict[str, Any] = {}
                 if path.exists():
                     try:
                         data = json.loads(path.read_text(encoding="utf-8"))
