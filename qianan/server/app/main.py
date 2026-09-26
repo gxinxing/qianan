@@ -10,6 +10,7 @@ import json
 import logging
 import os
 import re
+import sys
 import uuid
 import zipfile
 from contextlib import asynccontextmanager
@@ -137,6 +138,32 @@ async def health():
     }
 
 
+@app.get("/api/config/detect")
+async def detect_config():
+    """自动探测本机环境大模型凭证与 MCP 服务参数，供前端免密一键连通。"""
+    has_bailian = bool(os.getenv("BAILIAN_API_KEY"))
+    has_dashscope = bool(os.getenv("QIANAN_DASHSCOPE_API_KEY"))
+    server_dir = str(Path(__file__).resolve().parents[1])
+    return {
+        "auto_detected": True,
+        "has_bailian_key": has_bailian,
+        "has_dashscope_key": has_dashscope,
+        "text_model": os.getenv("QIANAN_TEXT_MODEL", "qwen3.7-max"),
+        "image_model": os.getenv("QIANAN_DASHSCOPE_IMAGE_MODEL", "wan2.7-image"),
+        "server_dir": server_dir,
+        "mcp_command": f"{sys.executable} -m app.mcp_server",
+        "mcp_snippet": {
+            "mcpServers": {
+                "qianan": {
+                    "command": sys.executable,
+                    "args": ["-m", "app.mcp_server"],
+                    "cwd": server_dir,
+                }
+            }
+        },
+    }
+
+
 @app.get("/api/me")
 async def me(user: dict = Depends(cbauth.current_user)):
     """当前身份。uid 来自自包含 JWT，前端改不了 —— 多租户的信任根。"""
@@ -231,6 +258,8 @@ async def audit(req: AuditRequest):
 from .paths import readonly_dir  # noqa: E402
 EVALS_REPORT = readonly_dir("data", "evals") / "report.json"
 
+from .cron_engine import cron_engine
+
 _EMPTY_EVALS_REPORT = {
     "generated_at": None,
     "total": 0,
@@ -240,6 +269,23 @@ _EMPTY_EVALS_REPORT = {
     "duration_ms": 0,
     "suites": [],
 }
+
+
+@app.post("/api/cron/trigger")
+async def trigger_cron_automation():
+    """手动/定时触发无人值守后台自动化上新与自进化闭环。"""
+    try:
+        res = await cron_engine.trigger_once()
+        return res
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=500, detail=f"Cron 自动化执行失败: {exc}") from exc
+
+
+@app.on_event("startup")
+async def start_autonomous_cron():
+    """服务启动时在后台开启无人值守自动化轮询任务。"""
+    if os.environ.get("QIANAN_CRON_AUTOSTART") == "1":
+        asyncio.create_task(cron_engine.start_loop(interval_seconds=180))
 
 
 @app.get("/api/evals")
