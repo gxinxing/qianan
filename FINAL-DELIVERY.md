@@ -10,7 +10,7 @@
 | 公网 Demo（前端） | ✅ 已部署，HTTP 200 | https://ai-native-d5gfb0dm2a28d1fe9-1419921079.tcloudbaseapp.com |
 | 公网 API | ✅ 真实模式在线（mock:false） | https://ai-native-d5gfb0dm2a28d1fe9-1419921079.ap-shanghai.app.tcloudbase.com/api |
 | 技术说明文档 | ✅ | `submission/SimonStudio_千岸QianAn_复赛作品.docx` + `docs/`（01–14） |
-| Agent 闭环验收测试 | ✅ 56 passed（含 4 条端到端） | `qianan/server/tests/test_agent_loop.py` |
+| Agent 闭环验收测试 | ✅ 82 passed（全套通过） | `qianan/server/tests/`（14 个套件） |
 | 最终提交整合包 | ✅ 已生成 | `submission/final-submission.zip`（含复赛 Word + 源码 ZIP + 本清单 + README）|
 | 演示视频 | 🚧 待本机录屏 | 访问上方公网 Demo 录制即可（脚本见第六节）|
 
@@ -49,7 +49,7 @@
   - "~90 秒 / 100% 合规"：限定为**已有测试样本下的实测值**，非普遍保证。
   - 多 Agent 蜂群默认关闭（`QIANAN_SWARM=1` 才开），演示范围已限定。
 
-> 新增测试锁定上述修复：`test_pipeline_gate.py`（缺主图→partial / 有主图→done 两条端到端）、`test_batch.py`（批量接口不再 NameError）。后端测试总数 **56 passed**。
+> 新增测试锁定上述修复：`test_pipeline_gate.py`、`test_batch.py`、`test_amazon_a9_insights.py` 等。后端测试总数 **82 passed**。
 
 ### 端到端完整流程证据（可复现，本次实测）
 
@@ -58,7 +58,10 @@
   - 双平台 Amazon+Shopee → Shopee 因产出 **0 条五点描述**被交付闸门拦下 → 整体 `partial`（**绝不标 done**）。
   - 这直接证明「缺必需产物就不宣称完成」的修复已落地，不是纸面声明。
 - **真实模型路径在线**：本地 `get_client()` 返回 `is_mock=False`（BAILIAN_API_KEY 生效）；公网 `/api/health` 返回 `mock:false`，真实模式在线。
-- **后端测试 56 passed**：含 4 条端到端驱动 `run_chat_agent` 主循环（提前提交被拒 / 循环超限不成功 / 未审核不可交付 / 全审核才完成）+ 闸门 + 批量，覆盖审计全部确定性故障。
+- **后端测试 82 passed**：含 4 条端到端驱动 `run_chat_agent` 主循环（提前提交被拒 / 循环超限不成功 / 未审核不可交付 / 全审核才完成）+ 闸门 + 批量 + A9 搜索词 249B 压测 + 差评反切映射 + 致命错误拦截，覆盖审计全部确定性故障。
+- **Amazon A9 埋词与竞品差评反切**：五点描述首部以大写方括号标签强制防御品类差评，A9 搜索词严格通过 ≤249 字节压测并注入 Flat File CSV。
+- **Model Context Protocol (MCP) 原生接入**：实现标准 stdio JSON-RPC 2.0 服务端（`app/mcp_server.py`），支持 Claude Desktop / Cursor 直连调度千岸 4 项出海能力，实现零手动配置 Key。
+- **侧边栏 6 维度设置与机密上新隐私模式**：参考 μ-Agent 架构，提供模型、平台、风控、物流、隐私与偏好全维度控制，支持 ZDR (Zero Data Retention) 用后即焚模式。
 - **公网 SCF 同步生成超时（已知限制，非本次 P0）**：`/api/generate` 在 `TENCENT_SCF=1` 下走同步分支（SCF 无后台进程，异步 task 会被冻结），叠加云函数 120s 超时，真实模式多平台/复杂商品可能超时。规避：演示走 `/api/chat`（SSE 流式，连接保持不超时）或单平台简单商品；或本地 `python -m uvicorn app.main:app --port 8001` 起服务（异步分支，立即返回 task_id + 前端轮询）。
 
 ## 三、公网冒烟证据（2026-09-15 部署后）
@@ -113,7 +116,7 @@ GET  /api/tasks/__probe__ -> 404，响应体可读：{"detail":"task not found"}
 
 ## 四、测试与构建
 
-- 后端：`pytest tests/` → **56 passed**（49 既有 + 4 条闭环）。
+- 后端：`pytest tests/` → **82 passed**（全套测试 100% 通过）。
 - 前端：`tsc --noEmit` → 0 error；`next build` 通过。
 
 ## 五、已知边界（诚实，非本次 P0 范围）

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import type { TraceEvent } from "@/lib/types";
+import type { TraceEvent } from "@/lib/api";
 
 const PHASE_LABEL: Record<string, string> = {
   plan: "规划",
@@ -9,6 +9,8 @@ const PHASE_LABEL: Record<string, string> = {
   heal: "自愈",
   reflect: "反思",
   evolve: "进化",
+  swarm: "蜂群",
+  guard: "断言",
 };
 
 const PHASE_STYLE: Record<string, string> = {
@@ -17,6 +19,8 @@ const PHASE_STYLE: Record<string, string> = {
   heal: "bg-amber-500/15 text-amber-300 border-amber-400/30",
   reflect: "bg-violet-500/15 text-violet-300 border-violet-400/30",
   evolve: "bg-teal-500/15 text-teal-300 border-teal-400/30",
+  swarm: "bg-fuchsia-500/15 text-fuchsia-300 border-fuchsia-400/30",
+  guard: "bg-rose-500/15 text-rose-300 border-rose-400/30",
 };
 
 const PHASE_STYLE_LIGHT: Record<string, string> = {
@@ -25,6 +29,8 @@ const PHASE_STYLE_LIGHT: Record<string, string> = {
   heal: "bg-amber-50 text-amber-700 border-amber-200",
   reflect: "bg-violet-50 text-violet-700 border-violet-200",
   evolve: "bg-teal-50 text-teal-700 border-teal-200",
+  swarm: "bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200",
+  guard: "bg-rose-50 text-rose-700 border-rose-200",
 };
 
 function clock(ts: number): string {

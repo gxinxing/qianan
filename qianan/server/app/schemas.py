@@ -287,6 +287,14 @@ class PlatformListing(BaseModel):
     compliance: list[ComplianceIssue] = Field(default_factory=list)
     compliance_passed: bool = True
     revised_count: int = 0
+    search_terms: str = Field(default="", description="Amazon A9 隐形后台搜索词（≤249 字节，去重无标点）")
+    pain_point_mapping: list[dict[str, str]] = Field(default_factory=list, description="竞品差评痛点反切对照矩阵")
+    keyword_strategy: Optional[dict[str, Any]] = Field(
+        default=None, description="SEO 关键词策略（核心词、修饰词、长尾词等）"
+    )
+    preflight_report: Optional[dict[str, Any]] = Field(
+        default=None, description="排雷体检报告：字符合规、违禁词拦截数、A9压测、白底实测等硬证据"
+    )
 
 
 class TaskRecord(BaseModel):

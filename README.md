@@ -23,6 +23,8 @@
 1. **多平台规则引擎**：不是简单生成文案，而是按各平台结构化规则（标题字符限制、禁用词、类目属性、图片规范等）做"规则翻译"，5 个平台的输出各有不同。
 2. **合规预检 + 自愈循环**：47 项确定性校验，error 级问题自动回炉修订，复检留痕。
 3. **设计师级视觉规范**：以图改图优先，保持商品本体不变，仅按平台规范调整背景与构图。
+4. **Amazon A9 埋词与竞品差评反切**：内置品类差评抗性库，五点首部大写标签反切买家顾虑，A9 后台搜索词严格遵守 ≤249 字节压测，直接导出标准 Flat File CSV。
+5. **原生 MCP 智能体协议直连**：提供标准 Model Context Protocol（`python -m app.mcp_server`）服务，供 Cursor、Claude Desktop 等外部 Agent 零配置一键挂载。
 
 ## 目录结构
 
@@ -155,7 +157,7 @@ docker-compose up --build
 | 公网 API（真实模式） | ✅ 在线（mock:false） | https://ai-native-d5gfb0dm2a28d1fe9-1419921079.ap-shanghai.app.tcloudbase.com/api |
 | 源代码仓库 | ✅ 已推送 `main` | https://github.com/gxinxing/qianan （HEAD `main`） |
 | 技术说明 | ✅ | `FINAL-DELIVERY.md`（决赛总览）+ `docs/`；复赛作品 `submission/SimonStudio_千岸QianAn_复赛作品.docx` 为复赛版 |
-| Agent 闭环验收测试 | ✅ 56 passed（含 4 条端到端） | `qianan/server/tests/test_agent_loop.py` |
+| Agent 闭环验收测试 | ✅ 82 passed（全套通过） | `qianan/server/tests/`（14 个套件） |
 | 演示视频 | 🚧 待本机录屏 | 访问上方公网 Demo 即可录制（建议脚本见 `FINAL-DELIVERY.md`） |
 
 > 部署链路：`cloudbase/deploy.sh`（CloudBase 云函数 + 静态托管，9/7 全链路实测，今日含 P0 修复重部署）。

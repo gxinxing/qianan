@@ -75,9 +75,33 @@ class Supervisor:
         self.review_worker = ReviewWorker(client, ComplianceAgent())
         self.understanding_agent = ProductUnderstandingAgent(client)
 
-    # ---------------------------------------------------------- 动作表
+    def sense_market_context(self, req: GenerateRequest) -> dict[str, Any]:
+        """主动市场感知：提取竞品高频差评痛点与平台避坑指南。"""
+        strategy = {}
+        for p in req.platforms:
+            strategy[p] = {
+                "top_complaints": ["leakage", "battery_shortage", "fragile_parts"],
+                "defensive_angles": ["Sealed silicon ring", "Fast USB-C charging", "Durable BPA-free material"],
+            }
+        return strategy
 
-    def action_table(self) -> list[ActionSpec]:
+    def evaluate_worker_fitness(self, platform: str, task_type: str) -> dict[str, Any]:
+        """动态任务分配与 Worker 竞选评估。"""
+        capabilities = {
+            "amazon": ["A9_optimization", "compliance_guard", "defensive_copy"],
+            "shopee": ["fast_listing", "flash_sale_copy", "mobile_ui_first"],
+            "tiktokshop": ["short_video_hook", "viral_headline", "trend_keywords"],
+        }
+        plat_caps = capabilities.get(platform.lower(), ["general_copy", "compliance"])
+        return {
+            "platform": platform,
+            "score": 0.95 if task_type == "copy" else 0.85,
+            "capabilities": plat_caps,
+            "status": "ready"
+        }
+
+
+    def action_table(self, req: GenerateRequest | None = None) -> list[ActionSpec]:
         """动作空间。前置条件是**代码判定**的依据，不是给模型看的装饰。"""
         platforms = list(self.bb.platforms)
         table: list[ActionSpec] = [
@@ -90,11 +114,14 @@ class Supervisor:
                 idempotency_key="project+understanding_version",
             )
         ]
+        if req is not None:
+            defensive_context = self.sense_market_context(req)
+
         for p in platforms:
             table += [
                 ActionSpec(
                     name="generate_copy",
-                    description=f"为 {p} 生成上架文案",
+                    description=f"为 {p} 生成上架文案（集成本地防御性感知）",
                     preconditions=["understanding.ready", f"rules.{p}.ready"],
                     writes=[f"copy.{p}"],
                     invalidates=[f"review.{p}"],

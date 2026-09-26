@@ -20,9 +20,60 @@ from ..agent_core.registry import ToolSpec
 from ..bailian.client import BailianLike
 from ..paths import writable_dir
 from ..rules_store import cache_clear
-from ..schemas import ALL_PLATFORMS
+from ..schemas import ALL_PLATFORMS, GenerateRequest, PlatformListing, MemoryLesson
 
 logger = logging.getLogger(__name__)
+
+
+class EvolutionAgent:
+    """自进化 Agent：基于任务执行历史与反思，自动蒸馏可复用的经验教训并回写记忆库。"""
+
+    def __init__(self, client: BailianLike | None = None) -> None:
+        self.client = client
+
+    def distill_experience(
+        self,
+        req: GenerateRequest,
+        listings: list[PlatformListing],
+        action_history: list[dict[str, Any]] | None = None,
+    ) -> list[MemoryLesson]:
+        """从已跑完的任务产物与自愈动作中蒸馏结构化教训。"""
+        lessons: list[MemoryLesson] = []
+        action_history = action_history or []
+
+        for listing in listings:
+            platform = listing.platform
+            # 1. 检查如果有合规问题或提示
+            if listing.compliance:
+                for issue in listing.compliance:
+                    if issue.severity in ("error", "warn"):
+                        lesson_text = f"在【{platform}】平台【{req.category}】类目，需防范[{issue.field}]相关问题：{issue.message}"
+                        lessons.append(
+                            MemoryLesson(
+                                lesson=lesson_text,
+                                platform=platform,
+                                hit_count=1,
+                                source_task="evolution",
+                            )
+                        )
+            
+            # 2. 检查五点描述与标题防御标签
+            if listing.bullets:
+                for b in listing.bullets:
+                    if b.startswith("[") and "]" in b:
+                        tag = b.split("]")[0] + "]"
+                        lesson_text = f"【{platform}】{req.category}商品五点描述宜增加防御性标签：{tag}"
+                        lessons.append(
+                            MemoryLesson(
+                                lesson=lesson_text,
+                                platform=platform,
+                                hit_count=1,
+                                source_task="evolution",
+                            )
+                        )
+
+        return lessons
+
 
 DATA_DIR = writable_dir("data", "evolution")
 PROPOSALS_FILE = DATA_DIR / "proposals.jsonl"
