@@ -26,6 +26,7 @@ from .agent_core.registry import ToolSpec
 from .agent_core.trace import record
 from .agents.compliance import ComplianceAgent
 from .agents.copywriting import CopywritingAgent
+from .agents.preflight import build_preflight_report
 from .agents.review import review_listing
 from .agents.rules_engine import RulesEngineAgent
 from .agents.understanding import ProductUnderstandingAgent
@@ -731,4 +732,8 @@ def _listing_detail(listing: PlatformListing) -> dict:
         "revised_count": listing.revised_count,
         "compliance_errors": sum(1 for i in listing.compliance if i.severity == "error"),
         "compliance_warns": sum(1 for i in listing.compliance if i.severity == "warn"),
+        "search_terms": listing.search_terms or "",
+        "pain_point_mapping": listing.pain_point_mapping or [],
+        "keyword_strategy": listing.keyword_strategy or None,
+        "preflight_report": listing.preflight_report or build_preflight_report(listing),
     }

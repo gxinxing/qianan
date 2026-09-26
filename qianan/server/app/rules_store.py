@@ -38,8 +38,12 @@ def load_rules(platform: str) -> dict:
 def all_platforms() -> dict[str, dict]:
     rules: dict[str, dict] = {}
     for path in sorted(RULES_DIR.glob("*.json")):
-        data = json.loads(path.read_text(encoding="utf-8"))
-        rules[data["platform"]] = _with_overlay(data["platform"], data)
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(data, dict) and "platform" in data:
+                rules[data["platform"]] = _with_overlay(data["platform"], data)
+        except Exception:
+            continue
     return rules
 
 

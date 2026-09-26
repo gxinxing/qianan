@@ -11,7 +11,6 @@
 from __future__ import annotations
 
 import json
-import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -64,7 +63,7 @@ def install_all() -> list[str]:
                         data = json.loads(path.read_text(encoding="utf-8"))
                     except Exception:
                         data = {}
-                
+
                 if "mcpServers" not in data or not isinstance(data["mcpServers"], dict):
                     data["mcpServers"] = {}
 
@@ -72,7 +71,7 @@ def install_all() -> list[str]:
                 path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
                 installed.append(agent_name)
                 break
-            except Exception as exc:  # noqa: BLE001
+            except Exception:  # noqa: BLE001
                 continue
 
     return installed

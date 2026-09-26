@@ -16,7 +16,7 @@ from .agents.evolution import EvolutionAgent
 from .agents.swarm import run_swarm
 from .bailian.client import get_client
 from .judge import JudgmentKernel
-from .schemas import GenerateRequest, TaskRecord
+from .schemas import GenerateRequest
 from .task_store import create_task
 
 logger = logging.getLogger(__name__)

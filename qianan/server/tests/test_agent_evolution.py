@@ -7,15 +7,13 @@
 """
 from __future__ import annotations
 
-import asyncio
 from typing import Any
-import pytest
 
+from app import memory_store
+from app.agents.evolution import EvolutionAgent
 from app.agents.swarm.blackboard import Blackboard
 from app.agents.swarm.supervisor import Supervisor
-from app.agents.evolution import EvolutionAgent
-from app import memory_store
-from app.schemas import GenerateRequest, Understanding, PlatformListing, ComplianceIssue
+from app.schemas import ComplianceIssue, GenerateRequest, PlatformListing
 
 
 class FakeBailian:
@@ -54,7 +52,7 @@ def test_market_sensing_defensive_strategy():
     """验证 Agent 能否基于品类自动感知抗性与竞品风险，生成防御性策略。"""
     bb = Blackboard(["amazon", "shopee"])
     sup = Supervisor(FakeBailian(), bb)
-    
+
     # 模拟感知步骤
     strategy = sup.sense_market_context(_mock_req())
     assert "amazon" in strategy
@@ -71,11 +69,11 @@ def test_worker_bidding_and_assignment():
     """验证 Supervisor 能够评估平台特性并进行 Worker 动态调度分发。"""
     bb = Blackboard(["amazon", "shopee"])
     sup = Supervisor(FakeBailian(), bb)
-    
+
     # Amazon Worker 竞选评估
     amz_bid = sup.evaluate_worker_fitness("amazon", "copy")
     shp_bid = sup.evaluate_worker_fitness("shopee", "copy")
-    
+
     assert amz_bid["score"] > 0.8
     assert any("A9" in cap for cap in amz_bid["capabilities"])
     assert shp_bid["score"] > 0.8
@@ -88,7 +86,7 @@ def test_evolution_agent_distill_lessons():
     """验证 Evolution Agent 在任务结束后蒸馏教训并回写记忆库。"""
     req = _mock_req()
     bb = Blackboard(["amazon"])
-    
+
     # 构建包含修补历史的列表
     listing = PlatformListing(
         platform="amazon",
@@ -101,11 +99,11 @@ def test_evolution_agent_distill_lessons():
             ComplianceIssue(check_id="rule_001", severity="warn", field="bullets", message="建议避免绝对化用语")
         ]
     )
-    
+
     # 进化 Agent 进行闭环蒸馏
     evo_agent = EvolutionAgent()
     lessons = evo_agent.distill_experience(req, [listing], bb.action_history)
-    
+
     assert len(lessons) > 0
     lesson = lessons[0]
     assert lesson.platform == "amazon"

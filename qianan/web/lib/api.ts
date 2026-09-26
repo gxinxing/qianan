@@ -98,6 +98,13 @@ export interface PlatformListing {
   compliance_passed: boolean;
   import_files?: Record<string, string>;
   revised_count?: number;
+  search_terms?: string;
+  pain_point_mapping?: Array<{
+    complaint: string;
+    counter_feature: string;
+    bullet_tag: string;
+  }>;
+  keyword_strategy?: Record<string, any> | null;
 }
 
 export interface TraceEvent {

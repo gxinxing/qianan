@@ -273,6 +273,28 @@ export default function SidebarSettings({
                 </button>
               </div>
 
+              {/* 生图 / 生视频服务商通道选择 */}
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
+                <span className="text-[11px] font-semibold text-[#414638] block">视觉生成服务通道 (生图/生视频)</span>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] text-gray-500 block">白底与主图生成服务商：</label>
+                  <select className="w-full bg-[#fcfcfb] border border-[#deded9] rounded-lg px-2 py-1.5 text-xs text-[#252525] outline-none">
+                    <option value="auto">🤖 Agent 自主竞选最佳模型 (Auto Auction)</option>
+                    <option value="bailian">阿里云百炼 Wanx 2.7 (默认旗舰通道)</option>
+                    <option value="tokendance">TokenDance 跨境急速 Seedream 5.0</option>
+                    <option value="hunyuan">腾讯混元 Visual Pro</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5 pt-1">
+                  <label className="text-[10px] text-gray-500 block">展示视频生成服务商：</label>
+                  <select className="w-full bg-[#fcfcfb] border border-[#deded9] rounded-lg px-2 py-1.5 text-xs text-[#252525] outline-none">
+                    <option value="auto">🤖 Agent 自主竞选视频服务商</option>
+                    <option value="wan2.7-i2v">百炼 Wanx 2.7-i2v 图生视频</option>
+                    <option value="minimax-video">MiniMax Hailuo 视频生成</option>
+                  </select>
+                </div>
+              </div>
+
               {/* 大模型接入模式分栏：MCP / 本地自适应 */}
               <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
                 <span className="text-[11px] font-semibold text-[#414638] block">MCP 协议与环境探测</span>

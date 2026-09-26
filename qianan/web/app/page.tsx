@@ -47,6 +47,7 @@ export default function HomePage() {
   const [sampleLoading, setSampleLoading] = useState(false);
   const [isSample, setIsSample] = useState(false);
   const [confidentialMode, setConfidentialMode] = useState(false);
+  const [copiedAll, setCopiedAll] = useState(false);
   const [outputTab, setOutputTab] = useState<"preview" | "judge" | "swarm" | "evolution">("preview");
   const fileRef = useRef<HTMLInputElement>(null);
 

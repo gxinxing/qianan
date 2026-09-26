@@ -217,6 +217,10 @@ export function useChat(options: UseChatOptions = {}) {
                   revised_count: data.revised_count || 0,
                   compliance_errors: data.compliance_errors || 0,
                   compliance_warns: data.compliance_warns || 0,
+                  search_terms: data.search_terms || "",
+                  pain_point_mapping: data.pain_point_mapping || [],
+                  keyword_strategy: data.keyword_strategy || null,
+                  preflight_report: data.preflight_report || undefined,
                 };
                 const prev = snapshotRef.current;
                 const listings = (prev?.listings ?? []).filter(

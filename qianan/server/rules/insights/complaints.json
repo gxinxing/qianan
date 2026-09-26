@@ -1,0 +1,175 @@
+{
+  "version": "1.0",
+  "categories": {
+    "home_kitchen": {
+      "name": "家居与厨房器具",
+      "top_complaints": [
+        {
+          "complaint": "容易漏水漏液，放包里弄脏物品",
+          "root_cause": "密封圈材质差或螺纹咬合不紧",
+          "counter_tag": "LEAK-PROOF ASSURANCE",
+          "suggested_antidote": "采用双层食品级加厚硅胶密封圈与精密螺纹锁扣，360°倾倒剧烈摇晃不滴水",
+          "keywords": ["leak proof", "spill proof", "silicone seal", "airtight"]
+        },
+        {
+          "complaint": "电机动力弱，刀头易卡死，无法粉碎坚硬食材或冰块",
+          "root_cause": "电机转速低或刀片材质刚性不足",
+          "counter_tag": "POWERFUL CRUSHING PERFORMANCE",
+          "suggested_antidote": "升级高扭矩纯铜电机与304不锈钢多维立体刀组，10秒强劲碎冰无卡顿",
+          "keywords": ["powerful motor", "stainless steel blades", "crush ice", "20000 rpm"]
+        },
+        {
+          "complaint": "杯底与刀头死角极难清洗，易藏污纳垢产生异味",
+          "root_cause": "结构非全拆卸设计，缝隙死角多",
+          "counter_tag": "EFFORTLESS ONE-TOUCH CLEAN",
+          "suggested_antidote": "全可拆卸模块化设计，刀头底座直接冲洗或一键自清洁模式",
+          "keywords": ["easy to clean", "dishwasher safe", "self cleaning", "detachable"]
+        },
+        {
+          "complaint": "材质有廉价塑料味，担心有害物质析出",
+          "root_cause": "使用回收塑料或非食品接触级原料",
+          "counter_tag": "BPA-FREE & FOOD GRADE",
+          "suggested_antidote": "严格选用婴儿奶瓶级 Tritan 或高硼硅材质，0 双酚 A 且无化学异味",
+          "keywords": ["bpa free", "food grade tritan", "odorless", "safe material"]
+        },
+        {
+          "complaint": "电池续航差，充电几次后无法开机",
+          "root_cause": "电芯容量虚标或缺乏过充保护",
+          "counter_tag": "LONG-LASTING TYPE-C CHARGING",
+          "suggested_antidote": "配备高能量密度安全电芯与通用 Type-C 快充，单次充满支持 15+ 杯连续使用",
+          "keywords": ["long battery life", "usb-c rechargeable", "quick charge", "battery safety"]
+        }
+      ]
+    },
+    "electronics": {
+      "name": "3C电子与数码",
+      "top_complaints": [
+        {
+          "complaint": "电池虚标，使用不到宣称时间的一半",
+          "root_cause": "劣质电芯与高静态功耗",
+          "counter_tag": "EXTENDED ALL-DAY BATTERY",
+          "suggested_antidote": "搭载真实容量低内阻电芯与智能低功耗芯片，实测超长续航拒绝虚标",
+          "keywords": ["all day battery", "true capacity", "extended playtime", "power management"]
+        },
+        {
+          "complaint": "连接不稳定，经常断连、延迟高",
+          "root_cause": "低版本蓝牙协议或天线抗干扰弱",
+          "counter_tag": "SEAMLESS ULTRA-STABLE CONNECTION",
+          "suggested_antidote": "采用最新蓝牙 5.3+ 高性能芯片与抗干扰陶瓷天线，即开即连零卡顿",
+          "keywords": ["bluetooth 5.3", "instant pairing", "ultra low latency", "stable signal"]
+        },
+        {
+          "complaint": "发热严重，长时间使用发烫降频",
+          "root_cause": "缺乏散热架构或电路设计不良",
+          "counter_tag": "INTELLIGENT HEAT DISSIPATION",
+          "suggested_antidote": "多重石墨烯导热层与智能温控芯片，长时间高负载运行始终保持温凉",
+          "keywords": ["overheat protection", "cool running", "smart temperature control"]
+        },
+        {
+          "complaint": "按键或外壳容易损坏磨损，做工粗糙塑料感强",
+          "root_cause": "外壳薄脆无防摔防磨涂层",
+          "counter_tag": "DURABLE REINFORCED BUILD",
+          "suggested_antidote": "高强度环保工程材料与亲肤防指纹磨砂涂层，耐磨防摔抗刮花",
+          "keywords": ["durable construction", "scratch resistant", "anti fingerprint"]
+        }
+      ]
+    },
+    "apparel": {
+      "name": "服饰鞋包",
+      "top_complaints": [
+        {
+          "complaint": "水洗后严重缩水变形或褪色",
+          "root_cause": "面料未经预缩防褪色处理",
+          "counter_tag": "SHRINK & FADE RESISTANT",
+          "suggested_antidote": "面料经高温预缩水洗定型工艺与活性环保印染，多次机洗不缩水不褪色",
+          "keywords": ["pre shrunk", "colorfast", "anti deformation", "machine washable"]
+        },
+        {
+          "complaint": "尺码严重偏小，与标准欧美尺码不符",
+          "root_cause": "直接沿用亚规尺码未做欧美合体度修正",
+          "counter_tag": "TRUE TO US STANDARD SIZE",
+          "suggested_antidote": "依据标准欧美体型人机工学打版立体剪裁，贴合真实尺码表无需特意买大一码",
+          "keywords": ["true to size", "us standard sizing", "tailored fit"]
+        },
+        {
+          "complaint": "闷热不透气，贴身穿着刺痒粗糙",
+          "root_cause": "化纤材质透气率低且表面纤维粗硬",
+          "counter_tag": "BREATHABLE & CLOUD-SOFT",
+          "suggested_antidote": "高支密超细纤维结构，带来优异排汗透气微循环与丝滑亲肤触感",
+          "keywords": ["breathable fabric", "moisture wicking", "skin friendly", "ultra soft"]
+        }
+      ]
+    },
+    "beauty": {
+      "name": "美妆个护",
+      "top_complaints": [
+        {
+          "complaint": "质地黏腻厚重，不易吸收甚至闷痘堵塞毛孔",
+          "root_cause": "配方油脂结构不合理或分子量偏大",
+          "counter_tag": "LIGHTWEIGHT FAST ABSORPTION",
+          "suggested_antidote": "清爽微乳化轻盈水感质地，秒速渗透吸收，深层滋养不闷痘零油光",
+          "keywords": ["non greasy", "fast absorbing", "non comedogenic", "lightweight"]
+        },
+        {
+          "complaint": "成分刺激敏感肌泛红不适",
+          "root_cause": "添加酒精、人工香精或高刺激防腐剂",
+          "counter_tag": "GENTLE & HYPOALLERGENIC",
+          "suggested_antidote": "温和纯净配方，无酒精、无人工香精添加，敏感肌舒缓安抚可用",
+          "keywords": ["gentle formula", "hypoallergenic", "fragrance free", "sensitive skin safe"]
+        },
+        {
+          "complaint": "泵头或包装容易卡死、漏液、断裂",
+          "root_cause": "包材密封与按压结构强度不足",
+          "counter_tag": "LEAK-PROOF PRECISION DISPENSER",
+          "suggested_antidote": "真空按压锁鲜泵头搭配旋锁保护盖，出料精准定量且随身携带不漏液",
+          "keywords": ["airless pump", "precision dosing", "travel safe leak proof"]
+        }
+      ]
+    },
+    "sports": {
+      "name": "运动户外",
+      "top_complaints": [
+        {
+          "complaint": "宣称防水但遇雨渗水湿透",
+          "root_cause": "面料无压胶防水膜或仅有弱泼水涂层",
+          "counter_tag": "TRUE IPX RATED WATERPROOF",
+          "suggested_antidote": "高密度防撕裂抗水面料结合接缝全压胶工艺，暴雨恶劣户外环境下持久干爽",
+          "keywords": ["waterproof rating", "taped seams", "rain protection", "weatherproof"]
+        },
+        {
+          "complaint": "高强度使用接缝撕裂、配件断裂",
+          "root_cause": "缝纫线强度差、关键受力点未加固",
+          "counter_tag": "HEAVY-DUTY REINFORCED",
+          "suggested_antidote": "关键受力点采用打枣加固缝线与高韧合金扣件，抗撕裂耐重力耐磨损",
+          "keywords": ["ripstop", "reinforced stitching", "heavy duty", "durability tested"]
+        }
+      ]
+    },
+    "general": {
+      "name": "通用商品",
+      "top_complaints": [
+        {
+          "complaint": "做工廉价粗糙，与图片质感严重不符",
+          "root_cause": "用料缩水与表面处理简陋",
+          "counter_tag": "PREMIUM CRAFTSMANSHIP",
+          "suggested_antidote": "高标准选材与严苛精工品质把控，所见即所得，耐用度远超同类平价款",
+          "keywords": ["premium quality", "superior craftsmanship", "solid construction"]
+        },
+        {
+          "complaint": "安装或使用极其繁琐，说明书语焉不详",
+          "root_cause": "缺乏人机交互考量与清晰指引",
+          "counter_tag": "PLUG & PLAY READY",
+          "suggested_antidote": "开箱即用极简人性化设计，附图解清晰操作指南与贴心快速上手卡",
+          "keywords": ["easy setup", "tool free", "ready to use", "clear instructions"]
+        },
+        {
+          "complaint": "出现质量瑕疵无法获得售后支持",
+          "root_cause": "无售后质保体系",
+          "counter_tag": "WORRY-FREE SATISFACTION GUARANTEE",
+          "suggested_antidote": "提供 24 小时快速响应专业客服与无忧质保支持，售后无忧",
+          "keywords": ["worry free guarantee", "responsive support", "customer satisfaction"]
+        }
+      ]
+    }
+  }
+}

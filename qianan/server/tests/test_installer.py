@@ -1,8 +1,6 @@
 """Agent 自动识别与 MCP 挂载测试。"""
 from __future__ import annotations
 
-import pytest
-
 from app.installer import install_all
 
 

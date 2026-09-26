@@ -1,5 +1,7 @@
 /** 千岸对话式 Agent 前端 — 类型定义 */
 
+import type { TraceEvent } from "@/lib/api";
+
 export interface ToolCall {
   id: string;
   name: string;
@@ -30,6 +32,7 @@ export interface Session {
   model: string;
   createdAt: number;
   messages: Message[];
+  trace?: TraceEvent[];
 }
 
 /** 后端 listing 事件中的单个平台产物 */
@@ -46,6 +49,32 @@ export interface ListingItem {
   revised_count: number;
   compliance_errors: number;
   compliance_warns: number;
+  search_terms?: string;
+  pain_point_mapping?: Array<{
+    complaint: string;
+    counter_feature: string;
+    bullet_tag: string;
+  }>;
+  keyword_strategy?: {
+    core_seed?: string;
+    differentiator?: string;
+    target_audience_kw?: string;
+  } | null;
+  preflight_report?: {
+    status: string;
+    passed_rules_count: number;
+    total_rules: number;
+    errors_count: number;
+    warns_count: number;
+    checks: Array<{
+      code: string;
+      label: string;
+      detail: string;
+      status: string;
+    }>;
+    revised_count: number;
+    verdict_summary: string;
+  };
 }
 
 /** 后端 listing 事件快照 */

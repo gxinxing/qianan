@@ -13,6 +13,7 @@ import logging
 import threading
 import time
 import uuid
+from typing import Any
 
 from .. import collector, memory_store, prompt_store
 from ..agent_core.loop import run_tool_loop
@@ -56,7 +57,7 @@ class EvolutionAgent:
                                 source_task="evolution",
                             )
                         )
-            
+
             # 2. 检查五点描述与标题防御标签
             if listing.bullets:
                 for b in listing.bullets:

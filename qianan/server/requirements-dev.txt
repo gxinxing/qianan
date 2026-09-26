@@ -1,4 +1,4 @@
-# 开发/测试依赖（版本与本地 .venv 实测一致，== 锁定）
-pytest==9.1.1
-pytest-asyncio==1.4.0
-ruff==0.16.6
+# 开发/测试依赖（与 CI 兼容的兼容版本）
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+ruff>=0.4.0

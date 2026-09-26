@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import asyncio
-import pytest
 
 from app.cron_engine import cron_engine
 

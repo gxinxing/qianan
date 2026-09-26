@@ -1,8 +1,6 @@
 """判定核 (Judgment Kernel) 测试套件。"""
 from __future__ import annotations
 
-import pytest
-
 from app.judge import JudgmentKernel
 from app.schemas import ComplianceIssue, GenerateRequest, PlatformListing
 

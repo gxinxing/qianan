@@ -17,7 +17,7 @@ import logging
 from dataclasses import dataclass, field
 from typing import Any
 
-from .schemas import ComplianceIssue, GenerateRequest, PlatformListing
+from .schemas import GenerateRequest, PlatformListing
 
 logger = logging.getLogger(__name__)
 
@@ -107,8 +107,8 @@ class JudgmentKernel:
             )
 
         has_blocking = False
-        for p, l in listings.items():
-            if any(i.severity == "error" for i in (l.compliance or [])):
+        for _p, item in listings.items():
+            if any(i.severity == "error" for i in (item.compliance or [])):
                 has_blocking = True
                 break
 

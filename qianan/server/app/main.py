@@ -15,6 +15,7 @@ import uuid
 import zipfile
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Optional
 from urllib.parse import unquote
 
 from fastapi import Depends, FastAPI, HTTPException, Request
@@ -521,10 +522,10 @@ class ChatRequest(BaseModel):
     product_name: str = ""
     selling_points: str = ""
     category: str = "home_kitchen"
-    image_url: str | None = None
-    image_base64: str | None = None
-    platforms: list[str] = None  # None = 全 5 平台
-    ablation: dict | None = None
+    image_url: Optional[str] = None
+    image_base64: Optional[str] = None
+    platforms: Optional[list[str]] = None  # None = 全 5 平台
+    ablation: Optional[dict] = None
 
 
 def _sse_line(data: dict) -> bytes:

@@ -44,6 +44,7 @@ def _amazon(product_name: str, l: PlatformListing) -> str:
         "other-image-url1": l.images[1] if len(l.images) > 1 else "",
         "item-type": l.attributes.get("category", "home-goods"),
         "target-audience": l.attributes.get("target_audience", "adults"),
+        "generic-keywords": l.search_terms or "",
     }
     for i in range(1, 6):
         row[f"bullet-point{i}"] = l.bullets[i - 1] if len(l.bullets) >= i else ""

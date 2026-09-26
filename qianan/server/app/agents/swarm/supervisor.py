@@ -115,7 +115,7 @@ class Supervisor:
             )
         ]
         if req is not None:
-            defensive_context = self.sense_market_context(req)
+            self.sense_market_context(req)
 
         for p in platforms:
             table += [

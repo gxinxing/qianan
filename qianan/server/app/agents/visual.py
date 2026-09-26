@@ -57,9 +57,25 @@ DETAIL_SHOTS = [
 VIDEO_PROMPT = "动态展示商品，自然光影变化，材质质感特写，360 度缓慢旋转展示，电商级商业摄影风格。"
 
 
+IMAGE_PROVIDERS = [
+    {"key": "auto", "name": "🤖 Agent 自主竞选最匹配模型 (Auto Auction)", "description": "智能评估像素分辨率与构图要求，自动从已建通道中择优"},
+    {"key": "bailian", "name": "阿里云百炼 Wanx 2.7 (默认旗舰通道)", "description": "出海高保真，以图改图锁定商品外观 100% 还原"},
+    {"key": "tokendance", "name": "TokenDance 跨境急速通道", "description": "支持 Seedream 5.0 Lite 渲染与跨境电商白底排雷"},
+    {"key": "hunyuan", "name": "腾讯混元 Visual Pro", "description": "完美支持复杂的中文写实场景与细节渲染"},
+]
+
+VIDEO_PROVIDERS = [
+    {"key": "auto", "name": "🤖 Agent 自主竞选视频服务商", "description": "自动评估图生视频动态光影复杂度"},
+    {"key": "wan2.7-i2v", "name": "百炼 Wanx 2.7-i2v 图生视频", "description": "商业级 5 秒慢动作镜头展示"},
+    {"key": "minimax-video", "name": "MiniMax Hailuo 视频生成", "description": "流畅镜头推拉与质感特写"},
+]
+
+
 class VisualAgent:
-    def __init__(self, client: BailianLike) -> None:
+    def __init__(self, client: BailianLike, image_provider: str = "auto", video_provider: str = "auto") -> None:
         self.client = client
+        self.image_provider = image_provider
+        self.video_provider = video_provider
 
     async def run(
         self,
