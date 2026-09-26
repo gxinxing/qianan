@@ -424,6 +424,15 @@ async def run_chat_agent(
             return f"请先为 {platform} 生成文案。"
         if platform not in state["images_done"]:
             return f"请先为 {platform} 生成图片。"
+        # 运维开关：QIANAN_ENABLE_VIDEO=0 时直接跳过（与 pipeline / swarm 路径同口径），
+        # 不记「生成视频中」、不进 video_done —— 摘要不会误报「已生成展示视频」。
+        if os.environ.get("QIANAN_ENABLE_VIDEO", "1") != "1":
+            display = listing.display_name or platform
+            record(
+                task, "build", f"generate_video[{platform}]", display,
+                "视频生成已由 QIANAN_ENABLE_VIDEO=0 关闭，跳过",
+            )
+            return f"{display} 视频生成已由运维开关关闭，跳过。"
         understanding = state["understanding"]
         if not understanding:
             return "请先理解商品。"

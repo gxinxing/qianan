@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from ..bailian.client import BailianLike
 from ..schemas import PlatformListing, Understanding
@@ -170,6 +171,11 @@ class VisualAgent:
         listing: PlatformListing,
     ) -> None:
         """基于主图生成展示视频（图生视频），写回 listing.video_url。"""
+        # 运维开关：QIANAN_ENABLE_VIDEO=0 时跳过视频（图生视频耗时/耗额度，按需开启）。
+        # 不动规划语义 —— 规划仍可决定生成视频，执行层尊重运维开关。
+        if os.environ.get("QIANAN_ENABLE_VIDEO", "1") != "1":
+            logger.info("视频生成已由 QIANAN_ENABLE_VIDEO=0 关闭，跳过平台 %s", listing.platform)
+            return
         if self.client.is_mock:
             listing.video_url = f"mock://video/{listing.platform}.mp4"
             return

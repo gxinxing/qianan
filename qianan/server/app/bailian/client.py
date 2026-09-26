@@ -49,6 +49,11 @@ _load_server_env()
 BASE_URL = os.getenv(
     "BAILIAN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"
 )
+#: 独立生图网关（文本网关不暴露 /images/generations 时必须分开，如 Codely 本地代理）。
+#: 留空 = 与 BAILIAN_BASE_URL 相同（历史行为，TokenDance 等图文同源网关）。
+IMAGE_BASE_URL = os.getenv("QIANAN_IMAGE_BASE_URL", "").rstrip("/") or BASE_URL
+#: 独立生图网关 Key。留空 = 沿用文本网关凭据（含请求级 BYOK，历史行为）。
+IMAGE_API_KEY = os.getenv("QIANAN_IMAGE_API_KEY", "")
 TEXT_MODEL = os.getenv("QIANAN_TEXT_MODEL", "qwen3.7-max")
 IMAGE_MODEL = os.getenv("QIANAN_IMAGE_MODEL", "qwen-image-2.0")
 #: 直连式图像网关（如 TokenDance seedream）的出图尺寸；部分模型有最小像素要求（如 ≥1920×1920）
@@ -151,7 +156,7 @@ def _persist_image(url: str) -> str:
     if uploader.is_circuit_open():
         return url
     try:
-        raw = requests.get(url, timeout=60).content
+        raw = _session.get(url, timeout=60).content
         return uploader.upload_bytes(raw)
     except Exception as exc:  # noqa: BLE001
         logger.info("图片转存失败，使用原始 URL: %s", exc)
@@ -257,6 +262,22 @@ def _headers() -> dict:
     }
 
 
+#: 服务端网关调用统一共享 Session：显式直连（trust_env=False）。
+#: 曾实测 macOS 开着系统代理（Clash 7890）时，requests 会把 127.0.0.1 本地网关
+#: 请求转给系统代理而被拒（502 空体，本地代理日志无记录）；甚至系统例外列表的
+#: `127.*` 通配也不被 requests 正确匹配。服务端网络拓扑必须显式化，
+#: 不受用户桌面代理开关影响；上游本身不可达时才应失败（而非静默被代理劫持）。
+_session = requests.Session()
+_session.trust_env = False
+
+
+def _image_headers() -> dict:
+    """生图网关鉴权头：独立 key 优先，未配置则沿用文本网关凭据（历史行为）。"""
+    if IMAGE_API_KEY:
+        return {"Authorization": f"Bearer {IMAGE_API_KEY}", "Content-Type": "application/json"}
+    return _headers()
+
+
 def _resp_preview(resp) -> str:
     """响应体预览（用于错误信息）：能解析为 JSON 则序列化，否则取纯文本前 300 字符。"""
     try:
@@ -286,7 +307,7 @@ def _post(payload: dict) -> dict:
     url = f"{BASE_URL}/chat/completions"
     for attempt in range(1, _MAX_ATTEMPTS + 1):
         try:
-            resp = requests.post(url, headers=_headers(), json=payload, timeout=TIMEOUT)
+            resp = _session.post(url, headers=_headers(), json=payload, timeout=TIMEOUT)
         except (requests.Timeout, requests.ConnectionError) as exc:
             # 超时/连接错误：网关瞬时抖动所致；chat 推理接口无服务端副作用，重发安全。
             # 重试耗尽后保留原始异常类型原样抛出（与旧版行为一致）。
@@ -461,7 +482,7 @@ class BailianClient:
         last_err: Exception | None = None
         for attempt in range(1, _MAX_ATTEMPTS + 1):
             try:
-                resp = requests.post(url, headers=headers, json=payload, timeout=DASHSCOPE_TIMEOUT)
+                resp = _session.post(url, headers=headers, json=payload, timeout=DASHSCOPE_TIMEOUT)
             except (requests.Timeout, requests.ConnectionError) as exc:
                 last_err = exc
                 if attempt == _MAX_ATTEMPTS:
@@ -509,8 +530,8 @@ class BailianClient:
         resp = None
         for attempt in range(1, _MAX_ATTEMPTS + 1):
             try:
-                resp = requests.post(
-                    f"{BASE_URL}/images/generations", headers=_headers(), json=payload, timeout=120
+                resp = _session.post(
+                    f"{IMAGE_BASE_URL}/images/generations", headers=_image_headers(), json=payload, timeout=120
                 )
                 break
             except (requests.Timeout, requests.ConnectionError) as exc:
@@ -551,7 +572,7 @@ class BailianClient:
         while time.monotonic() < deadline:
             time.sleep(4)
             try:
-                r = requests.get(f"{BASE_URL}/tasks/{tid}", headers=_headers(), timeout=30)
+                r = _session.get(f"{IMAGE_BASE_URL}/tasks/{tid}", headers=_image_headers(), timeout=30)
             except (requests.Timeout, requests.ConnectionError):
                 continue  # 轮询请求抖动直接进下一轮，不消耗任务进度
             try:
@@ -628,7 +649,7 @@ class BailianClient:
         }
         # 提交任务
         submit_url = f"{VIDEO_BASE_URL}/services/aigc/video-generation/video-synthesis"
-        resp = requests.post(submit_url, headers=headers, json=payload, timeout=120)
+        resp = _session.post(submit_url, headers=headers, json=payload, timeout=120)
         data = resp.json()
         if resp.status_code != 200:
             raise RuntimeError(f"视频任务提交失败({resp.status_code}): {str(data)[:300]}")
@@ -642,7 +663,7 @@ class BailianClient:
         while time.monotonic() < deadline:
             time.sleep(5)
             try:
-                r = requests.get(poll_url, headers=headers, timeout=30)
+                r = _session.get(poll_url, headers=headers, timeout=30)
                 d = r.json()
             except (requests.Timeout, requests.ConnectionError, ValueError):
                 continue

@@ -249,6 +249,13 @@ class Supervisor:
         listing = self.listings.get(platform)
         if listing is None:
             return f"无法执行 generate_video({platform})：请先生成文案。"
+        # 运维开关：与 pipeline 路径的 VisualAgent.run_video 同口径，执行层短路不动规划语义
+        if os.environ.get("QIANAN_ENABLE_VIDEO", "1") != "1":
+            self.bb.log_action(
+                "generate_video", "guard", True,
+                f"{platform} 视频生成由 QIANAN_ENABLE_VIDEO=0 关闭，跳过",
+            )
+            return f"{platform} 视频生成已由运维开关关闭，跳过。"
         try:
             await self.platform_worker.visual_agent.run_video(self.understanding, listing)
         except Exception as exc:  # noqa: BLE001 —— 视频是加分项，失败不阻断
