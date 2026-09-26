@@ -723,6 +723,10 @@ class _ResilientClient:
     降级是会话内一次性切换：一旦触发，后续所有调用都走 Mock，
     且 is_mock 翻为 True（/api/health 会如实反映）。
     正常运行（密钥有效）时行为与直接使用 BailianClient 完全一致。
+
+    例外：配置独立生图网关（QIANAN_IMAGE_API_KEY）时生图链路豁免 ——
+    文本网关欠费/fatal 不牵连生图（独立凭证独立链路，云端真实拓扑：
+    文本降级 Mock 时 apimart 生图仍真实）；仅生图自身 fatal 才降级生图。
     """
 
     is_mock = False
@@ -730,6 +734,7 @@ class _ResilientClient:
     def __init__(self, real: BailianLike) -> None:
         self._real = real
         self._mock: BailianLike | None = None
+        self._image_downgraded = False  # 生图链路独立降级标志，与文本降级互不牵连
 
     @property
     def _active(self) -> BailianLike:
@@ -738,6 +743,32 @@ class _ResilientClient:
     @property
     def supports_vision(self) -> bool:
         return self._active.supports_vision
+
+    @property
+    def image_live(self) -> bool:
+        """生图链路是否仍走真实网关。
+
+        独立生图网关（IMAGE_API_KEY）时与文本降级解耦；
+        未配置时与文本同降级（历史行为）。MockBailianClient 无此属性，
+        调用方用 getattr(client, "image_live", not client.is_mock) 兼容取值。
+        """
+        if IMAGE_API_KEY:
+            return not self._image_downgraded
+        return self._mock is None
+
+    def image_gen(self, prompt: str, *args, **kwargs):
+        """生图入口：见类 docstring —— 独立生图网关时豁免文本降级。"""
+        if not IMAGE_API_KEY:
+            return self._guard("image_gen", prompt, *args, **kwargs)  # 历史行为：随文本降级
+        if not self._image_downgraded:
+            try:
+                return self._real.image_gen(prompt, *args, **kwargs)
+            except BailianAuthFatal as exc:
+                logger.warning("生图网关鉴权/额度致命错误，仅降级生图链路：%s", exc)
+                self._image_downgraded = True
+        if self._mock is not None:
+            return self._mock.image_gen(prompt, *args, **kwargs)
+        return MockBailianClient().image_gen(prompt, *args, **kwargs)
 
     def _guard(self, method: str, *args, **kwargs):
         if self._mock is not None:
@@ -755,9 +786,6 @@ class _ResilientClient:
 
     def chat_with_tools(self, *a, **k):
         return self._guard("chat_with_tools", *a, **k)
-
-    def image_gen(self, *a, **k):
-        return self._guard("image_gen", *a, **k)
 
     def vision(self, *a, **k):
         return self._guard("vision", *a, **k)

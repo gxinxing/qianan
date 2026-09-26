@@ -19,6 +19,16 @@ from ..schemas import PlatformListing, Understanding
 
 logger = logging.getLogger(__name__)
 
+
+def _image_live(client: BailianLike) -> bool:
+    """生图链路是否真实可用。
+
+    独立生图网关（QIANAN_IMAGE_API_KEY）时与文本降级解耦：
+    文本欠费降级 Mock 后生图仍走真实网关；无此属性（Mock/裸客户端）
+    则回退到 is_mock 判定（历史行为）。
+    """
+    return bool(getattr(client, "image_live", not client.is_mock))
+
 REF_PROMPT = """Reference image 1 (图1) is the real product photo. Keep the exact same product (shape, color, pattern, material, every detail) — do NOT redesign or reimagine it.
 基于这张真实商品照生成电商主图：
 商品：{product}
@@ -90,7 +100,7 @@ class VisualAgent:
         有上传图（image_ref）时优先以图改图；失败（如参考图不可用）回退纯文生图。
         """
         image_rules = _image_brief(rules)
-        if self.client.is_mock:
+        if not _image_live(self.client):
             # 只填主图：详情图 / 视频分别由 run_detail_shots / run_video 负责。
             # 这里若一并预填，规划器跳过这两个动作时会看不出效果（假阴性）。
             listing.images.append(f"mock://image/{listing.platform}.jpg")
@@ -138,7 +148,7 @@ class VisualAgent:
         （实测云端单步因此耗掉 373s，直接吃光整个 Agent 墙钟预算）。
         单张失败不影响其余；结果顺序与 DETAIL_SHOTS 一致。
         """
-        if self.client.is_mock:
+        if not _image_live(self.client):
             if not listing.detail_images:
                 listing.detail_images = [f"mock://detail/{listing.platform}_{s[0]}.jpg" for s in DETAIL_SHOTS]
             return

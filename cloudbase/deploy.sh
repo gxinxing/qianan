@@ -32,7 +32,15 @@ ENV_ID="ai-native-d5gfb0dm2a28d1fe9"
 UIN="1419921079"
 API_URL="https://$ENV_ID-$UIN.ap-shanghai.app.tcloudbase.com"
 FRONT_URL="https://$ENV_ID-$UIN.tcloudbaseapp.com"
-SERVER_ENV="$SERVER_DIR/.env"
+
+# 云端配置源：.env.cloud（云端专属拓扑）优先，否则回退本地 .env。
+# 云端与本地拓扑不同（如本地文本走 Codely 本地代理 127.0.0.1，云端不可达），
+# 部署时勿把本地拓扑推上云。
+if [ -f "$SERVER_DIR/.env.cloud" ]; then
+  SERVER_ENV="$SERVER_DIR/.env.cloud"
+else
+  SERVER_ENV="$SERVER_DIR/.env"
+fi
 TMP_RC="$(mktemp /tmp/qianan-cloudbaserc.XXXXXX.json)"
 trap 'rm -f "$TMP_RC"' EXIT
 
@@ -52,7 +60,7 @@ for arg in "$@"; do
   esac
 done
 
-for k in BAILIAN_API_KEY QIANAN_DASHSCOPE_API_KEY QIANAN_JWT_SECRET; do
+for k in BAILIAN_API_KEY QIANAN_JWT_SECRET; do
   grep -q "^$k=" "$SERVER_ENV" || { echo "❌ $SERVER_ENV 缺少 $k"; exit 1; }
 done
 
@@ -90,9 +98,20 @@ for line in open(env_path):
         env[k.strip()] = v.strip()
 cfg = json.load(open(src))
 ev = cfg["functions"][0]["envVariables"]
-# 密钥不落仓：部署时从 .env 物化进临时配置，脚本本身与 cloudbaserc.json 只有 ${env.X} 占位符
-for k in ("BAILIAN_API_KEY", "QIANAN_DASHSCOPE_API_KEY", "QIANAN_JWT_SECRET"):
-    ev[k] = env[k]
+# 密钥不落仓：部署时从配置源物化进临时配置，脚本本身与 cloudbaserc.json 只有 ${env.X} 占位符。
+# 网关解耦后云端需注入的完整清单（生图独立网关/视频开关等，缺项则云端用代码默认值）；
+# 空值也注入（如 QIANAN_DASHSCOPE_API_KEY= 语义为关闭 DashScope 原生生图）。
+CLOUD_KEYS = (
+    "BAILIAN_API_KEY", "BAILIAN_BASE_URL", "QIANAN_JWT_SECRET", "QIANAN_MOCK",
+    "QIANAN_TEXT_MODEL", "QIANAN_VL_MODEL",
+    "QIANAN_IMAGE_BASE_URL", "QIANAN_IMAGE_API_KEY",
+    "QIANAN_IMAGE_MODEL", "QIANAN_IMAGE_SIZE",
+    "QIANAN_DASHSCOPE_API_KEY", "QIANAN_DASHSCOPE_IMAGE_MODEL",
+    "QIANAN_ENABLE_VIDEO",
+)
+for k in CLOUD_KEYS:
+    if k in env:
+        ev[k] = env[k]
 json.dump(cfg, open(dst, "w"), ensure_ascii=False, indent=2)
 PY
 
