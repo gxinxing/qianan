@@ -12,9 +12,11 @@
 """
 from __future__ import annotations
 
+import json
 import time
 import uuid
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 # ---------------------------------------------------------------- 平台状态
@@ -93,6 +95,7 @@ class Blackboard:
         self.status: str = "running"  # running/waiting_user/waiting_approval/partial/completed/cancelled
         self.last_error: str = ""
         self.started_at: float = time.monotonic()
+        self._elapsed_offset: float = 0.0  # resume 恢复时承接的已耗时（秒）
         self.budget: dict[str, float] = {
             "max_seconds": 300.0,
             "max_actions": 40,
@@ -226,6 +229,102 @@ class Blackboard:
             "budget": self.budget,
             "last_error": self.last_error,
         }
+
+    # ---- 持久化：save / load / resume ----
+
+    @property
+    def elapsed(self) -> float:
+        """已经过时间（秒）；load 恢复后从保存点续算，不归零。"""
+        return round(self._elapsed_offset + time.monotonic() - self.started_at, 2)
+
+    def _to_json(self) -> dict:
+        """可序列化为 JSON 的完整状态字典（比 snapshot 多保留恢复所需字段）。"""
+        platforms_full: dict = {}
+        for p, st in self.platforms.items():
+            platforms_full[p] = {
+                "platform": st.platform,
+                "display_name": st.display_name,
+                "stage": st.stage,
+                "copy_version": st.copy_version,
+                "review_version": st.review_version,
+                "image_version": st.image_version,
+                "video_version": st.video_version,
+                "issues": st.issues,
+                "error": st.error,
+                "skipped": st.skipped,
+                "skip_reason": st.skip_reason,
+            }
+        return {
+            "project_id": self.project_id,
+            "run_id": self.run_id,
+            "goal": self.goal,
+            "missing": self.missing,
+            "understanding_version": self.understanding_version,
+            "platforms": platforms_full,
+            "rules": self.rules,
+            "open_issues": self.open_issues,
+            "action_history": self.action_history,
+            "status": self.status,
+            "last_error": self.last_error,
+            "elapsed": self.elapsed,
+            "budget": self.budget,
+        }
+
+    def save(self, path: Path) -> None:
+        """将黑板状态以 JSON 格式写盘（人类可读，不用 pickle）。"""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(json.dumps(self._to_json(), ensure_ascii=False, indent=2), encoding="utf-8")
+        tmp.replace(path)  # 原子替换，避免半写文件
+
+    @classmethod
+    def load(cls, path: Path) -> "Blackboard":
+        """从 JSON 文件恢复 Blackboard（只恢复可序列化字段，understanding 对象需调用方重建）。"""
+        data = json.loads(path.read_text(encoding="utf-8"))
+        platform_keys = list(data["platforms"].keys())
+        bb = cls(platform_keys, goal=data.get("goal", "full_package"))
+        bb.project_id = data.get("project_id", bb.project_id)
+        bb.run_id = data.get("run_id", bb.run_id)
+        bb.missing = data.get("missing", [])
+        bb.understanding_version = data.get("understanding_version", 0)
+        bb.open_issues = data.get("open_issues", [])
+        bb.action_history = data.get("action_history", [])
+        bb.status = data.get("status", "running")
+        bb.last_error = data.get("last_error", "")
+        bb.rules = data.get("rules", {})
+        bb.budget = data.get("budget", bb.budget)
+        bb._elapsed_offset = data.get("elapsed", 0.0)  # 恢复计时：从保存点续算
+        # 恢复平台详细状态
+        for p, pdata in data["platforms"].items():
+            st = bb.platforms.get(p)
+            if st is None:
+                st = PlatformState(platform=p)
+                bb.platforms[p] = st
+            st.display_name = pdata.get("display_name", "")
+            st.stage = pdata.get("stage", "pending")
+            st.copy_version = pdata.get("copy_version", 0)
+            st.review_version = pdata.get("review_version", -1)
+            st.image_version = pdata.get("image_version", 0)
+            st.video_version = pdata.get("video_version", 0)
+            st.issues = pdata.get("issues", [])
+            st.error = pdata.get("error", "")
+            st.skipped = pdata.get("skipped", False)
+            st.skip_reason = pdata.get("skip_reason", "")
+        return bb
+
+    @classmethod
+    def resume(cls, task_id: str, data_dir: Path | None = None) -> "Blackboard | None":
+        """按 task_id 从持久化文件恢复黑板。找不到文件则返回 None。
+
+        data_dir 默认使用 writable_dir("data", "swarm")。
+        """
+        if data_dir is None:
+            from ...paths import writable_dir  # 延迟导入，避免循环依赖
+            data_dir = writable_dir("data", "swarm")
+        target = data_dir / f"{task_id}.json"
+        if not target.exists():
+            return None
+        return cls.load(target)
 
 
 # ---------------------------------------------------------------- 动作规格

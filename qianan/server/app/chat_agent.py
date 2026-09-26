@@ -621,7 +621,7 @@ async def run_chat_agent(
         if on_event:
             on_event("text", "正在快速生成上架内容...")
         from .orchestrator import run_pipeline
-        await run_pipeline(task, client)
+        await run_pipeline(task, client, should_stop=should_stop)
 
         gate = evaluate_delivery_gate(
             req.platforms,

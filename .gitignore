@@ -97,6 +97,9 @@ CODELY.md
 qianan/server/data/owners.json
 qianan/server/data/evals/
 
+# ===== 蜂群黑板落盘（运行时状态快照，崩溃后供回放/resume，不入库）=====
+qianan/server/data/swarm/
+
 # ===== 构建实验残留垃圾（2026-09-07 清理，防复发）=====
 qianan/web/.next.trash*/
 qianan/web/.next-trash*/

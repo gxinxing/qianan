@@ -14,6 +14,7 @@ import asyncio
 import json
 import logging
 import time
+from collections.abc import Callable
 
 from .agent_core.loop import run_tool_loop
 from .agent_core.registry import ToolSpec
@@ -380,12 +381,33 @@ async def _generate_strategy_report(
     return await _aio.to_thread(client.chat, system, user)
 
 
-async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
+class _TaskCancelled(Exception):
+    """should_stop 触发的内部取消信号；由 run_pipeline 统一转为 cancelled 终态。"""
+
+
+async def run_pipeline(
+    task: TaskRecord,
+    client: BailianLike,
+    should_stop: "Callable[[], bool] | None" = None,
+) -> None:
+    """驱动一次完整上新任务，结果写回 task。
+
+    should_stop：取消检查统一入口。在每个阶段边界（await 点之间）检查，
+    触发即抛 _TaskCancelled，由本函数统一转为 cancelled 终态；
+    同步检查点之间的执行不打断，取消延迟 ≤ 一个阶段。
+    """
     req = task.request
     abl = req.ablation  # Optional[AblationConfig], None = 完整管线
     task.status = TaskStatus.running
+    _stop: Callable[[], bool] = should_stop or (lambda: False)  # 取消检查统一入口
+
+    def _check_stop() -> None:
+        if _stop():
+            raise _TaskCancelled()
+
     try:
         # ⓪a 输入理解②：意图 —— 决定本次动作空间（未写诉求时不调模型，零额外成本）
+        _check_stop()
         intent = await IntentAgent(client).run(req)
         if intent.platforms:
             # 诉求里明确点名了平台 → 覆盖请求里的选择（卖家说的算）
@@ -436,11 +458,13 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
         understanding = await ProductUnderstandingAgent(client).run(req, image_ref)
         task.understanding = understanding
         task.progress = 0.25
+        _check_stop()  # 取消检查点：理解完成
 
         # ② 规则引擎（非 LLM）
         task.stage = "匹配平台规则"
         rules_map = RulesEngineAgent().run(req.platforms)
         task.progress = 0.3
+        _check_stop()  # 取消检查点：规则匹配完成（含方案预览分支）
 
         # 【意图：方案预览】读懂商品 + 匹配规则即止 —— 产出上新策略报告，不生成上架物料。
         # 不产出上架包 ⇒ 没有可上架的东西 ⇒ 合规体检与反思不适用于本次意图
@@ -498,6 +522,7 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
             listing = await copy_agent.run(
                 req, understanding, platform, rules, focus=plan.get("focus", ""), memories=memories
             )
+            _check_stop()  # 取消检查点：单平台文案完成
             _advance(name, "生成视觉素材")
             try:
                 await visual_agent.run(understanding, listing, rules, image_ref)
@@ -513,6 +538,7 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
             except Exception as exc:  # noqa: BLE001
                 logger.warning("平台 %s 视觉素材生成失败: %s", platform, exc)
                 record(task, "build", f"visual[{platform}]", "视觉素材生成", f"部分失败: {exc}", "error")
+            _check_stop()  # 取消检查点：视觉阶段完成（视觉失败不阻断，取消仍要生效）
             _advance(name, "自检合规")
             if abl and abl.disable_heal:
                 compliance.run(listing, rules, req.category)
@@ -528,7 +554,16 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
             _advance(name, "已就绪")
             return listing
 
-        task.listings = await asyncio.gather(*(build_one(p) for p in req.platforms))
+        # 逐平台建 task 再 gather：任一协程异常/取消时，其余平台协程同步撤销，不留孤儿烧 token
+        _build_tasks = [asyncio.create_task(build_one(p)) for p in req.platforms]
+        try:
+            task.listings = await asyncio.gather(*_build_tasks)
+        except BaseException:
+            for _t in _build_tasks:
+                _t.cancel()
+            await asyncio.gather(*_build_tasks, return_exceptions=True)  # 回收协程，不外泄取消噪声
+            raise
+        _check_stop()  # 取消检查点：全平台构建完成
 
         # ⑥ 生成上新策略报告（用户可读交付物，对标 mzsleep 策略文档）
         if not (abl and abl.disable_plan):
@@ -542,6 +577,7 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
         if abl and abl.disable_reflect:
             record(task, "reflect", "self_reflect", "ABLATED", "反思阶段已消融 · 不回写记忆", "ablated")
         else:
+            _check_stop()  # 取消检查点：进入反思前
             await self_reflect(task, client)
 
         task.stage = "完成"
@@ -559,6 +595,11 @@ async def run_pipeline(task: TaskRecord, client: BailianLike) -> None:
             task.status = TaskStatus.partial
             task.error = "交付闸门未通过：" + "；".join(gate["blockers"])
             record(task, "guard", "delivery_gate", "拒绝 finish", task.error[:200], "warn")
+    except _TaskCancelled:
+        # 用户取消：不是失败——绝不能落入下面的 failed 分支，也不标 done/partial。
+        task.status = TaskStatus.cancelled
+        task.stage = "已取消"
+        record(task, "plan", "cancel", "用户取消", "收到停止信号，任务已取消", "warn")
     except Exception as exc:  # noqa: BLE001 —— Demo 阶段全量捕获，保证任务有终态
         logger.exception("pipeline 失败")
         task.status = TaskStatus.failed

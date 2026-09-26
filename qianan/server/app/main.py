@@ -80,6 +80,9 @@ def _get_client_cached():
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _get_client_cached()
+    # 原 @app.on_event("startup") 逻辑迁移至此（消除弃用警告）
+    if os.environ.get("QIANAN_CRON_AUTOSTART") == "1":
+        asyncio.create_task(cron_engine.start_loop(interval_seconds=180))
     yield
 
 
@@ -280,13 +283,6 @@ async def trigger_cron_automation():
         return res
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=f"Cron 自动化执行失败: {exc}") from exc
-
-
-@app.on_event("startup")
-async def start_autonomous_cron():
-    """服务启动时在后台开启无人值守自动化轮询任务。"""
-    if os.environ.get("QIANAN_CRON_AUTOSTART") == "1":
-        asyncio.create_task(cron_engine.start_loop(interval_seconds=180))
 
 
 @app.get("/api/evals")

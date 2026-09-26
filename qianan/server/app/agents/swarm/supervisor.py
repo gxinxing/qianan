@@ -21,8 +21,10 @@
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+import os
 from typing import Any
 
 from ...bailian.client import BailianLike, resolve_image_ref
@@ -64,6 +66,10 @@ class Supervisor:
         self.listings: dict[str, PlatformListing] = {}
         self.understanding: Any = None
         self.image_ref: str | None = None
+        # 黑板落盘路径：默认按 run_id；run() 拿到 task 后改用 task.id（一任务一文件，覆盖式存最新）
+        from ...paths import writable_dir
+
+        self._save_path = writable_dir("data", "swarm") / f"{bb.run_id}.json"
 
         # 执行 agent（延迟导入，避免 swarm 包内某个 worker 缺失时整个包不可用）
         from .platform_worker import PlatformWorker
@@ -74,6 +80,16 @@ class Supervisor:
         )
         self.review_worker = ReviewWorker(client, ComplianceAgent())
         self.understanding_agent = ProductUnderstandingAgent(client)
+
+    def _checkpoint(self) -> None:
+        """黑板落盘（best-effort）：崩溃/取消后轨迹可查，也可供 Blackboard.resume() 恢复。
+
+        落盘失败只告警不影响主流程——黑板在内存中始终是唯一真相源。
+        """
+        try:
+            self.bb.save(self._save_path)
+        except Exception as exc:  # noqa: BLE001 —— 持久化属旁路能力，绝不阻断主流程
+            logger.warning("黑板落盘失败: %s", exc)
 
     def sense_market_context(self, req: GenerateRequest) -> dict[str, Any]:
         """主动市场感知：提取竞品高频差评痛点与平台避坑指南。"""
@@ -257,6 +273,11 @@ class Supervisor:
 
         self.image_ref = resolve_image_ref(req.image_url, req.image_base64)
         self.req = req  # handler 通过 self 取，避免闭包传参出错
+        # 有任务记录时改用 task.id 作落盘文件名：一任务一文件，重启后可按任务回放黑板轨迹
+        if task is not None and getattr(task, "id", None):
+            from ...paths import writable_dir
+
+            self._save_path = writable_dir("data", "swarm") / f"{task.id}.json"
         self.bb.rules.update(RulesEngineAgent().run(list(self.bb.platforms)))
 
         # ---- 把动作表转成工具；每个 handler 执行前先由代码校验前置条件 ----
@@ -273,6 +294,7 @@ class Supervisor:
                 )
             out = await coro_factory()
             self.bb.log_action(spec.name, "worker", True, str(out)[:120])
+            self._checkpoint()  # 每个动作完成后落盘，崩溃后轨迹可查
             return out
 
         async def h_understand() -> str:
@@ -330,6 +352,7 @@ class Supervisor:
         if result.get("cancelled"):
             self.bb.status = "cancelled"
             self.bb.log_action("cancel", "guard", True, result.get("reason", "用户取消"))
+            self._checkpoint()  # 取消也要留盘：供事后回放取消前的轨迹与进度
             return {
                 "status": self.bb.status,
                 "listings": list(self.listings.values()),
@@ -343,6 +366,8 @@ class Supervisor:
         # ---- 降级：模型没走完就用确定性路径补齐，最差也是一条流水线 ----
         if self.bb.status != "completed":
             await self.deterministic_finish(req)
+
+        self._checkpoint()  # 终态落盘：completed/partial 的最终黑板状态
 
         return {
             "status": self.bb.status,
@@ -379,16 +404,38 @@ class Supervisor:
 
     # ---------------------------------------------------------- 确定性兜底
 
+    async def _parallel_copy(self, req: GenerateRequest, platforms: list[str]) -> None:
+        """并行为多个平台生成文案（QIANAN_SWARM_PARALLEL=0 时降级串行）。
+
+        写黑板无需额外锁：asyncio 单线程事件循环下，同步方法（mark_copy 等）
+        在 await 点之间不会被打断，天然无竞争；listings 字典赋值同理原子。
+        """
+        if os.environ.get("QIANAN_SWARM_PARALLEL", "1") == "0" or len(platforms) <= 1:
+            for p in platforms:
+                await self._act_copy(req, p)
+            return
+
+        async def _copy_one(p: str) -> None:
+            listing = await self.platform_worker.run_copy(self.bb, req, p)
+            if listing is not None:
+                self.listings[p] = listing
+
+        await asyncio.gather(*[_copy_one(p) for p in platforms])
+
     async def deterministic_finish(self, req: GenerateRequest) -> None:
         """模型没走完时，用确定性路径补齐必备步骤。
 
-        只补「上架必需」的：理解 → 文案 → 审核 → 修订重审。
+        只补「上架必需」的：理解 → 文案（并行）→ 审核 → 修订重审。
         图片/视频不补（加分项，且耗时）。
         保证最差退化成流水线，不会比改造前更差。
         """
         try:
             if self.understanding is None:
                 await self._act_understand(req)
+            # 并行生成所有还没有文案的平台
+            need_copy = [p for p, st in self.bb.platforms.items() if not st.has_copy]
+            if need_copy:
+                await self._parallel_copy(req, need_copy)
             for p in self.bb.platforms:
                 st = self.bb.platforms[p]
                 for _ in range(2):  # 最多修订一轮
@@ -414,6 +461,7 @@ class Supervisor:
             self.bb.open_issues.append(f"未完成平台：{', '.join(unfinished)}")
         elif self.bb.status != "completed":
             self.bb.status = "completed"
+        self._checkpoint()  # 兕底路径终态也落盘
 
     @staticmethod
     def to_task_status(bb_status: str) -> TaskStatus:
