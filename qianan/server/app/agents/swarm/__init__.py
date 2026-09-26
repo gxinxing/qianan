@@ -13,7 +13,8 @@ import logging
 from typing import Any
 
 from ...bailian.client import BailianLike
-from ...schemas import GenerateRequest, TaskRecord
+from ...judge import JudgmentKernel
+from ...schemas import GenerateRequest, TaskRecord, TaskStatus
 from .blackboard import ActionSpec, Blackboard
 from .supervisor import Supervisor
 
@@ -46,22 +47,21 @@ async def run_swarm(
             except Exception:  # noqa: BLE001 —— 事件推送失败不影响主流程
                 logger.warning("swarm 事件推送失败: %s", kind)
 
-        # 第一步：判定核 [input.preflight] 校验
-        from .judge import JudgmentKernel
-        preflight_verdict = JudgmentKernel().judge_input_preflight(req)
-        if not preflight_verdict.allowed:
-            task.status = TaskStatus.failed
-            task.error = preflight_verdict.reason
-            _emit("error", preflight_verdict.reason)
-            return {
-                "status": "failed",
-                "reason": preflight_verdict.reason,
-                "listings": [],
-                "blackboard": bb.snapshot(),
-                "actions": bb.action_history,
-                "fallback": False,
-                "cancelled": False,
-            }
+    # 第一步：判定核 [input.preflight] 校验
+    preflight_verdict = JudgmentKernel().judge_input_preflight(req)
+    if not preflight_verdict.allowed:
+        task.status = TaskStatus.failed
+        task.error = preflight_verdict.reason
+        _emit("error", preflight_verdict.reason)
+        return {
+            "status": "failed",
+            "reason": preflight_verdict.reason,
+            "listings": [],
+            "blackboard": bb.snapshot(),
+            "actions": bb.action_history,
+            "fallback": False,
+            "cancelled": False,
+        }
 
     try:
         result = await supervisor.run(req, task, should_stop=should_stop)
