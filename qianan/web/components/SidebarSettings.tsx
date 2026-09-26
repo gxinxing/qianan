@@ -207,52 +207,206 @@ export default function SidebarSettings({
           );
         })}
 
-        {/* 详情浮层扩展配置内容 */}
+        {/* 详情浮层扩展配置内容：根据 selectedKey 渲染真实交互功能 */}
         <div className="pt-2 border-t border-[#e5e5e1] space-y-3 pb-6">
-          {/* 提供商配置 (BYOK & MCP) */}
-          {(selectedKey === "providers" || selectedKey === "default_model") && (
-            <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
-              <span className="text-[11px] font-semibold text-[#414638] block">API Token 凭证</span>
-              <input
-                type="password"
-                value={byokKey}
-                onChange={(e) => setByokKey(e.target.value)}
-                placeholder="千岸统一 API Token (sk-...)"
-                className="w-full bg-[#fcfcfb] border border-[#deded9] rounded-lg px-2.5 py-1.5 text-xs text-[#252525] outline-none font-mono placeholder:text-[#a0a09a]"
-              />
-              <button
-                type="button"
-                onClick={onSaveByok}
-                className="w-full py-1.5 rounded-lg bg-[#272824] hover:bg-[#414638] text-white text-xs font-medium transition-colors"
-              >
-                保存配置
-              </button>
-            </div>
-          )}
-
-          {/* 判定核 (Judge) */}
-          {selectedKey === "judge_kernel" && (
-            <div className="bg-[#f0f5ee] border border-[#cbd9c3] rounded-xl p-3 space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-semibold text-[#2d521d] flex items-center gap-1.5">
-                  <ShieldCheck size={13} />
-                  <span>判定核 (Judgment Kernel)</span>
-                </span>
-                <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-white text-[#2d521d] border border-[#b2cca5] font-medium">
-                  ACTIVE
-                </span>
+          {/* 外观 / 偏好 */}
+          {(selectedKey === "appearance" || selectedKey === "system_pref" || selectedKey === "chat_pref") && (
+            <div className="space-y-3">
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
+                <span className="text-[11px] font-semibold text-[#414638] block">主题与工作区外观</span>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <button type="button" className="p-2 border border-[#5e6752] bg-[#f0f2eb] rounded-lg text-center text-xs font-medium">
+                    极简纸色 (Default)
+                  </button>
+                  <button type="button" className="p-2 border border-[#deded9] bg-white rounded-lg text-center text-xs text-gray-500 hover:bg-gray-50">
+                    暗黑极客 (Dark)
+                  </button>
+                </div>
               </div>
-              <p className="text-[10.5px] text-[#416330] leading-relaxed">
-                轻量确定性判定核已启用，在输入、风险动作与完成度 35+ 个节点精准裁决。
-              </p>
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
+                <span className="text-[11px] font-semibold text-[#414638] block">思考与推理深度 (Thinking Level)</span>
+                <div className="grid grid-cols-3 gap-1">
+                  {[
+                    { key: "high", label: "深入思考" },
+                    { key: "medium", label: "标准运营" },
+                    { key: "low", label: "极速出稿" },
+                  ].map((lvl) => (
+                    <button
+                      key={lvl.key}
+                      type="button"
+                      onClick={() => {
+                        setThinkingLevel(lvl.key);
+                        localStorage.setItem("qianan_thinking_level", lvl.key);
+                      }}
+                      className={`p-1.5 border text-center text-[10.5px] rounded-md transition-colors ${
+                        thinkingLevel === lvl.key
+                          ? "border-[#5e6752] bg-[#f0f2eb] font-semibold text-[#272824]"
+                          : "border-[#deded9] bg-white text-gray-500"
+                      }`}
+                    >
+                      {lvl.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           )}
 
-          {/* 默认兜底面板 */}
-          {selectedKey !== "providers" && selectedKey !== "default_model" && selectedKey !== "judge_kernel" && (
-            <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs text-xs space-y-1 text-gray-500">
-              <div className="font-semibold text-gray-700">配置节点已就绪</div>
-              <p className="text-[11px]">该分类配置参数已同源链接至千岸 Agent 运行时。</p>
+          {/* 模型 / 提供商 */}
+          {(selectedKey === "providers" || selectedKey === "default_model") && (
+            <div className="space-y-3">
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
+                <span className="text-[11px] font-semibold text-[#414638] block">API Token 凭证</span>
+                <input
+                  type="password"
+                  value={byokKey}
+                  onChange={(e) => setByokKey(e.target.value)}
+                  placeholder="千岸统一 API Token (sk-...)"
+                  className="w-full bg-[#fcfcfb] border border-[#deded9] rounded-lg px-2.5 py-1.5 text-xs text-[#252525] outline-none font-mono placeholder:text-[#a0a09a]"
+                />
+                <button
+                  type="button"
+                  onClick={onSaveByok}
+                  className="w-full py-1.5 rounded-lg bg-[#272824] hover:bg-[#414638] text-white text-xs font-medium transition-colors"
+                >
+                  保存 API Token
+                </button>
+              </div>
+
+              {/* 大模型接入模式分栏：MCP / 本地自适应 */}
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
+                <span className="text-[11px] font-semibold text-[#414638] block">MCP 协议与环境探测</span>
+                <button
+                  type="button"
+                  onClick={handleDetect}
+                  disabled={detecting}
+                  className="w-full py-1.5 rounded-lg border border-[#deded9] hover:bg-[#f0f2eb] text-xs font-medium flex items-center justify-center gap-1.5 transition-colors"
+                >
+                  <Cpu size={13} />
+                  <span>{detecting ? "探测中..." : "一键探测本机大模型环境"}</span>
+                </button>
+                {detectedInfo && (
+                  <div className="p-2 rounded-lg bg-[#f0f5ee] border border-[#cbd9c3] text-[10px] text-[#2d521d] space-y-0.5">
+                    <div>✓ 文本模型: {detectedInfo.text_model || "Qwen3.7-Max"}</div>
+                    <div>✓ 视觉模型: {detectedInfo.image_model || "Wan2.7-Image"}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* 内核 / 判定器 */}
+          {(selectedKey === "judge_kernel" || selectedKey === "features") && (
+            <div className="space-y-3">
+              <div className="bg-[#f0f5ee] border border-[#cbd9c3] rounded-xl p-3 space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-[#2d521d] flex items-center gap-1.5">
+                    <ShieldCheck size={13} />
+                    <span>判定核 (Judgment Kernel)</span>
+                  </span>
+                  <span className="text-[9.5px] px-1.5 py-0.5 rounded bg-white text-[#2d521d] border border-[#b2cca5] font-semibold">
+                    ACTIVE
+                  </span>
+                </div>
+                <p className="text-[10.5px] text-[#416330] leading-relaxed">
+                  判定核已挂载：在 input.preflight / tool.risk / turn.completion 等 35+ 个节点触发确定性裁决。
+                </p>
+              </div>
+
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
+                <span className="text-[11px] font-semibold text-[#414638] block">合规审查严格度</span>
+                <select className="w-full bg-[#fcfcfb] border border-[#deded9] rounded-lg px-2.5 py-1.5 text-xs text-[#252525] outline-none">
+                  <option value="strict">严苛防封店模式 (47 项全开 · 阻断级自动回炉)</option>
+                  <option value="standard">标准运营模式 (拦截绝对化用语与溢出)</option>
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* 判定点 (Decision Points: input, context, memory, tools, turn, swarm) */}
+          {selectedKey.startsWith("dec_") && (
+            <div className="space-y-3">
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold text-[#414638] capitalize">
+                    判定点裁决配置: {selectedKey.replace("dec_", "")}
+                  </span>
+                  <span className="text-[9.5px] text-[#5e6752] font-mono bg-[#f0f2eb] px-1.5 py-0.5 rounded">
+                    Mode: Active
+                  </span>
+                </div>
+                <div className="text-[10.5px] text-gray-600 leading-relaxed">
+                  {selectedKey === "dec_input" && "input.preflight：评估输入请求格式、思考级别与目标平台覆盖。"}
+                  {selectedKey === "dec_context" && "context.compact：动态判断产物上下文膨胀度，只把必须的信息拉入 Prompt。"}
+                  {selectedKey === "dec_memory" && "memory.recall：从 Evolution Agent 沉淀库中自动召回店铺 SOP 历史教训。"}
+                  {selectedKey === "dec_tools" && "tool.risk：监测输出中是否包含医疗宣称、极端的绝对化营销词汇。"}
+                  {selectedKey === "dec_turn" && "turn.completion：交付闸门判定，确定性验证平台全覆盖与零 blocker。"}
+                  {selectedKey === "dec_swarm" && "swarm.routing：Supervisor 在共享黑板上进行基于 Worker 能力竞选的任务派发。"}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 能力 (Skills, Tools, Assistants, Browser) */}
+          {(selectedKey === "skills" || selectedKey === "tools" || selectedKey === "assistants" || selectedKey === "browser") && (
+            <div className="space-y-3">
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs space-y-2">
+                <span className="text-[11px] font-semibold text-[#414638] block">目标平台集成 ({platforms.length}/5)</span>
+                <div className="space-y-1">
+                  {PLATFORM_META.map((p) => {
+                    const isSelected = platforms.includes(p.key);
+                    return (
+                      <div
+                        key={p.key}
+                        onClick={() => {
+                          setPlatforms((cur) =>
+                            isSelected ? cur.filter((k) => k !== p.key) : [...cur, p.key]
+                          );
+                        }}
+                        className={`flex items-center justify-between p-2 rounded-lg border cursor-pointer text-xs transition-colors ${
+                          isSelected
+                            ? "border-[#bdc4b1] bg-[#f0f2eb] text-[#272824] font-medium"
+                            : "border-[#e5e5e1] bg-white text-[#73736c]"
+                        }`}
+                      >
+                        <span>{p.name}</span>
+                        {isSelected && <Check size={14} className="text-[#5e6752]" />}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 系统 (Archived, About) */}
+          {(selectedKey === "archived" || selectedKey === "about") && (
+            <div className="space-y-3">
+              <div className="bg-white border border-[#deded9] rounded-xl p-3 shadow-xs flex items-center justify-between">
+                <div>
+                  <span className="text-[11px] font-semibold text-[#272824] block flex items-center gap-1.5">
+                    <Lock size={12} className="text-[#059669]" />
+                    <span>机密上新：用后即焚</span>
+                  </span>
+                  <span className="text-[10px] text-[#73736c]">
+                    任务导出后物理擦除服务端临时存储
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={confidentialMode}
+                  onChange={(e) => {
+                    setConfidentialMode(e.target.checked);
+                    localStorage.setItem("qianan_confidential_mode", e.target.checked ? "1" : "0");
+                  }}
+                  className="accent-[#5e6752] w-4 h-4 cursor-pointer"
+                />
+              </div>
+
+              <div className="bg-[#fafaf8] border border-[#e5e5e1] rounded-xl p-3 space-y-1.5 text-[10.5px] text-[#64645e]">
+                <div className="font-semibold text-[#272824]">关于千岸 Agent v2.0</div>
+                <p className="leading-relaxed">基于 mu (qybaihe/mu) 设计哲学构建的智能跨境上新与自进化 Agent。</p>
+              </div>
             </div>
           )}
         </div>
