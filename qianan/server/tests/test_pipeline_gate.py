@@ -143,3 +143,50 @@ def test_run_pipeline_with_image_is_done(monkeypatch):
     asyncio.run(run_pipeline(task, MockBailianClient()))
     assert task.status == TaskStatus.done, f"产物齐备应 done，实际 {task.status}（{task.error}）"
     assert task.error is None
+
+
+# ------------------------------------------------------------ 生图解耦：mock 文本 + 真实图
+
+
+class _MockTextRealImageClient(MockBailianClient):
+    """模拟云端降级拓扑：文本链路已降级 mock（is_mock=True），但生图走独立网关仍真实。
+
+    对应 _ResilientClient 文本降级后的真实形态：is_mock=True 且 image_live=True
+    （独立生图网关与文本降级解耦；MockBailianClient 本身无 image_live 属性，
+    必须显式暴露才能走真实生图分支）。
+    """
+
+    image_live = True
+
+    def image_gen(self, prompt, model=None, ref_image=None):
+        return "https://getapib.org/real-image-task.png"
+
+
+def test_pipeline_mock_text_real_image(monkeypatch):
+    """mock 文本 + image_live 生图：pipeline 全流程走完，产物图片为真实 URL、终态 done。
+
+    这是云端「文本欠费降级 + apimart 生图真实」拓扑的核心保障 ——
+    生图判定不能因文本 is_mock 而走 mock:// 占位图。
+    """
+    from app.agents.visual import VisualAgent
+
+    class _RealVisual(VisualAgent):
+        """用真实 VisualAgent 逻辑（不 stub run），走 _image_live 判定分支。"""
+
+        pass
+
+    _install_stubs(monkeypatch, FakeCopyWithImage, NoopVisual)
+    # 覆写回真实 VisualAgent，只让文案/理解保持确定性替身
+    monkeypatch.setattr(orch, "VisualAgent", _RealVisual)
+
+    client = _MockTextRealImageClient()
+    task = _make_task(["amazon"])
+    asyncio.run(run_pipeline(task, client))
+
+    assert task.status == TaskStatus.done, f"应 done，实际 {task.status}（{task.error}）"
+    urls = [str(u) for u in task.listings[0].images]
+    assert urls, "产物应有主图"
+    assert all(not u.startswith("mock://") for u in urls), (
+        f"生图不应因文本降级变 mock 占位图，实际 {urls}"
+    )
+    assert any("real-image-task" in u for u in urls), f"应包含独立网关真实出图，实际 {urls}"

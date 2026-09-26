@@ -137,19 +137,20 @@ for i in $(seq 1 30); do
   [ "$i" = "30" ] && echo "   ⚠️ 等待超时（120s），仍尝试更新配置"
 done
 
-# config update 有两处交互确认（y / Override 回车），用 expect 驱动
+# config update 有两处交互确认：全量更新 y / 环境变量更新方式选默认（覆盖），用 expect 驱动。
+# ★ 提示语是中文（曾用英文模式 "update method" 匹配失败三次，改为中英文兼容）
 for attempt in 1 2 3; do
   OUT=$(TMP_RC="$TMP_RC" expect -c '
 set timeout 300
 spawn tcb config update fn qianan-api --all --config-file $env(TMP_RC)
 expect {
-  -re "Update all" { send "y\r"; exp_continue }
-  -re "update method" { send "\r"; exp_continue }
-  eof
+    -re "(y/N)" { send "y\r"; exp_continue }
+    -re "环境变量更新方式|update method" { sleep 1; send "\r"; exp_continue }
+    eof
 }
 ' 2>&1 || true)
   echo "$OUT" | grep -E '✔|✖' || true
-  if echo "$OUT" | grep -q "configuration updated successfully"; then
+  if echo "$OUT" | grep -q "配置成功\|configuration updated successfully"; then
     break
   fi
   echo "   ⚠️ 配置更新第 ${attempt} 次未成功，${attempt}s 后重试..."

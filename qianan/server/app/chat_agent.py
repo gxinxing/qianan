@@ -667,6 +667,21 @@ async def run_chat_agent(
             ),
         )
 
+        # —— 循环中途文本网关 fatal 降级（如云端百炼欠费）：回退流水线路径补齐 ——
+        # 循环开场时是真实模式，第一个工具调用触发 BailianAuthFatal 后 client 降级 mock，
+        # 模型不再能正常选工具 → 循环空转收敛。回退 run_pipeline：mock 文本下全流程走完、
+        # 闸门口径一致（done/partial 由 pipeline 自判）；配置了独立生图网关时
+        # 生图仍真实出图（image_live 与文本降级解耦），不被文本欠费牵连。
+        if client.is_mock and task.status != TaskStatus.done and not stop_check():
+            record(task, "plan", "fallback_pipeline", "降级回退", "文本网关致命错误，转流水线补齐产物", "warn")
+            if on_event:
+                on_event("text", "文本网关不可用，已切换快速模式补齐（图片仍为真实生成）...")
+            from .orchestrator import run_pipeline
+            await run_pipeline(task, client, should_stop=should_stop)
+            if on_event:
+                on_event("done", f"生成结束（快速模式 · {task.status.value}）。")
+            return
+
         # 确保最终产物写入 task
         if state["listings"]:
             task.listings = list(state["listings"].values())
