@@ -156,7 +156,7 @@ expect {
   echo "   ⚠️ 配置更新第 ${attempt} 次未成功，${attempt}s 后重试..."
   sleep $((attempt * 5))
 done
-if ! echo "${OUT:-}" | grep -q "configuration updated successfully"; then
+if ! echo "${OUT:-}" | grep -q "configuration updated successfully\|配置成功\|成功更新"; then
   echo "❌ 环境变量未能推送到云端 —— 云端可能仍用旧密钥，请手动执行："
   echo "   tcb config update fn qianan-api --all --config-file <物化后的配置>"
   exit 1
@@ -170,7 +170,7 @@ else
     rm -rf .next out && \
     NEXT_PUBLIC_API_BASE="$API_URL" \
     NEXT_PUBLIC_API_URL="$API_URL" \
-    npm run build)
+    npm run build:export)
   (cd "$SCRIPT_DIR" && tcb hosting deploy "$WEB_DIR/out" -e "$ENV_ID" --yes)
 fi
 

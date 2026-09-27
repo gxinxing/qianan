@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:export": "node scripts/build-export.mjs"
   },
   "dependencies": {
     "@cloudbase/js-sdk": "^3.9.2",
