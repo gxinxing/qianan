@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>千岸 QianAn — 1688 跨境商品素材一键优化 (AI Listing 商业级全流程)</title>
+  <style>
+    /* ==================== 100% 独立原生内嵌 CSS (零外链，离线秒开) ==================== */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      background-color: #FCFCFC;
+      color: #1C1C1E;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 顶栏 */
+    .header {
+      height: 46px;
+      border-bottom: 1px solid #F0F0F2;
+      background-color: #FFFFFF;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      user-select: none;
+      z-index: 30;
+    }
+    .traffic-lights {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .dot-red { background: #FF5F56; border: 1px solid #E0443E; }
+    .dot-yellow { background: #FFBD2E; border: 1px solid #DEA123; }
+    .dot-green { background: #27C93F; border: 1px solid #1AAB29; }
+
+    .header-center {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .gem-icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1C1C1E, #555555);
+      color: #FFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+    }
+    .logo-text {
+      font-size: 13.5px;
+      font-weight: 600;
+      letter-spacing: -0.2px;
+    }
+    .tag-suite {
+      font-size: 10px;
+      background: #F0FDF4;
+      color: #15803D;
+      border: 1px solid #BBF7D0;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      font-weight: 600;
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-top {
+      font-size: 12px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      color: #1C1C1E;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .btn-top:hover { background: #F2F2F7; }
+    .btn-sync {
+      background: #1C1C1E;
+      color: #FFFFFF;
+    }
+    .btn-sync:hover { background: #000000; }
+
+    /* 主布局 */
+    .main-body {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* 左侧极窄功能 Dock */
+    .dock {
+      width: 52px;
+      border-right: 1px solid #F0F0F2;
+      background-color: #FAFAFA;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 0;
+      flex-shrink: 0;
+      user-select: none;
+    }
+    .dock-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+    .dock-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #8E8E93;
+      cursor: pointer;
+      background: none;
+      border: none;
+      transition: all 0.15s;
+    }
+    .dock-icon:hover { color: #1C1C1E; background: rgba(0,0,0,0.04); }
+    .dock-icon.active {
+      background: #FFFFFF;
+      color: #1C1C1E;
+      border: 1px solid #D1D1D6;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+    .avatar-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #E5E5EA;
+      color: #48484A;
+      font-size: 11px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 对话与卡片居中区 (单栏 780px) */
+    .chat-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background-color: #FCFCFC;
+      position: relative;
+      overflow: hidden;
+    }
+    .thread-scroll {
+      flex: 1;
+      width: 100%;
+      max-width: 800px;
+      padding: 24px 24px 130px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    /* 右侧：用户提问气泡 */
+    .user-row {
+      display: flex;
+      justify-content: flex-end;
+      width: 100%;
+    }
+    .user-bubble {
+      max-width: 80%;
+      background-color: #F2F2F7;
+      color: #1C1C1E;
+      border-radius: 20px;
+      border-top-right-radius: 4px;
+      padding: 12px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .user-attachment {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11.5px;
+      color: #636366;
+      padding-bottom: 6px;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    /* 左侧：Muse 回答流 */
+    .agent-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      width: 100%;
+    }
+    .agent-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #1C1C1E, #636366);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-top: 4px;
+    }
+    .agent-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      font-size: 14.5px;
+      line-height: 1.75;
+      color: #1C1C1E;
+    }
+
+    /* 成果卡片 (支持内联直接改字、多平台切换、一键回填与下载) */
+    .material-card {
+      background: #FFFFFF;
+      border: 1px solid #E5E5EA;
+      border-radius: 18px;
+      padding: 22px;
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.02);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* 卡片顶部的平台选择 Tab (Amazon / TEMU / Shopee) */
+    .plat-tab-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #F2F2F7;
+      padding-bottom: 12px;
+    }
+    .plat-tabs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #F2F2F7;
+      padding: 3px;
+      border-radius: 10px;
+    }
+    .plat-tab-btn {
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      color: #636366;
+      background: none;
+      transition: all 0.15s;
+    }
+    .plat-tab-btn.active {
+      background: #FFFFFF;
+      color: #1C1C1E;
+      font-weight: 600;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    /* 可编辑字段区域 */
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .field-label-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10.5px;
+      font-family: monospace;
+      color: #8E8E93;
+    }
+    .editable-box {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1C1C1E;
+      background: #F9F9FA;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px dashed #D1D1D6;
+      line-height: 1.55;
+      outline: none;
+      transition: all 0.15s;
+    }
+    .editable-box:focus {
+      background: #FFFFFF;
+      border-color: #059669;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+    .edit-hint {
+      font-size: 10px;
+      color: #059669;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    /* 视觉素材双联排 (白底抠图 + 生活场景) */
+    .visual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .visual-card {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #E5E5EA;
+      background: #F9F9FA;
+      aspect-ratio: 1 / 1;
+      position: relative;
+    }
+    .visual-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .visual-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0,0,0,0.72);
+      backdrop-filter: blur(4px);
+      color: #FFF;
+      font-size: 9.5px;
+      font-family: monospace;
+      padding: 2px 7px;
+      border-radius: 4px;
+    }
+    .visual-action-overlay {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      display: flex;
+      gap: 5px;
+    }
+    .btn-visual-opt {
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.1);
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 10.5px;
+      font-weight: 500;
+      color: #1C1C1E;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-visual-opt:hover { background: #FFFFFF; }
+
+    /* 五点卖点可编辑条目 */
+    .bullet-row {
+      padding: 10px 12px;
+      background: #F9F9FA;
+      border: 1px dashed #D1D1D6;
+      border-radius: 8px;
+      font-size: 12.5px;
+      line-height: 1.5;
+      outline: none;
+      transition: all 0.15s;
+    }
+    .bullet-row:focus {
+      background: #FFFFFF;
+      border-color: #059669;
+      box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    }
+
+    /* 卡片底栏操作 (一键回填 + 素材打包下载) */
+    .card-bottom-actions {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 14px;
+      border-top: 1px solid #F2F2F7;
+      font-size: 12px;
+    }
+    .action-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-action-primary {
+      padding: 7px 14px;
+      background: #1C1C1E;
+      color: #FFFFFF;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s;
+    }
+    .btn-action-primary:hover { background: #000000; }
+    .btn-action-ghost {
+      padding: 7px 12px;
+      background: #FFFFFF;
+      border: 1px solid #D1D1D6;
+      color: #1C1C1E;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: background 0.15s;
+    }
+    .btn-action-ghost:hover { background: #F2F2F7; }
+
+    /* 底部胶囊输入条 */
+    .composer-wrap {
+      position: absolute;
+      bottom: 16px;
+      width: 100%;
+      max-width: 800px;
+      padding: 0 24px;
+      z-index: 20;
+    }
+    .composer-pill {
+      height: 52px;
+      background: #FFFFFF;
+      border: 1px solid #E5E5EA;
+      border-radius: 9999px;
+      padding: 0 12px 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 25px -4px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
+      transition: border-color 0.2s;
+    }
+    .composer-pill:focus-within {
+      border-color: #8E8E93;
+    }
+    .btn-plus {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: none;
+      background: none;
+      color: #8E8E93;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      line-height: 1;
+    }
+    .btn-plus:hover { color: #1C1C1E; background: #F2F2F7; }
+    .input-text {
+      flex: 1;
+      border: none;
+      background: transparent;
+      outline: none;
+      font-size: 14.5px;
+      color: #1C1C1E;
+      margin: 0 12px;
+    }
+    .input-text::placeholder { color: #8E8E93; }
+    .btn-send {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #1C1C1E;
+      color: #FFFFFF;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .btn-send:hover { background: #000000; }
+    .btn-send:active { transform: scale(0.94); }
+
+    /* 浮层提示 Toast */
+    .toast-msg {
+      position: fixed;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1C1C1E;
+      color: #FFFFFF;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: opacity 0.2s, transform 0.2s;
+    }
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+  <!-- Toast 提示框 -->
+  <div id="toast" class="toast-msg hidden">
+    <span id="toastIcon"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg></span>
+    <span id="toastText">操作成功</span>
+  </div>
+
+  <!-- ==================== 1. 顶栏 ==================== -->
+  <header class="header">
+    <div style="display:flex; align-items:center;">
+      <div class="traffic-lights">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+      </div>
+      <span style="font-size: 12px; color:#8E8E93; margin-left: 12px;">千岸 · 1688 跨境素材一键优化</span>
+    </div>
+
+    <div class="header-center">
+      <div class="gem-icon"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg></div>
+      <span class="logo-text">AI Listing 工坊</span>
+      <span class="tag-suite">一键优化 · 二次精修 · 回填导出</span>
+    </div>
+
+    <div class="top-actions">
+      <button class="btn-top btn-sync" onclick="syncToSellerCentral()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+        <span>一键回填到店铺后台</span>
+      </button>
+      <button class="btn-top" onclick="downloadAllMaterialZip()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        <span>素材打包下载</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== 2. 主体区 (极窄 Dock + 单栏纯粹对话) ==================== -->
+  <div class="main-body">
+
+    <!-- 左侧极窄 Dock -->
+    <aside class="dock">
+      <div class="dock-group">
+        <button class="dock-icon" title="搜索 1688 货源">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
+        <button class="dock-icon active" title="智能上架会话">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+        </button>
+        <button class="dock-icon" title="素材与主图库">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </button>
+        <button class="dock-icon" title="平台规则库">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>
+        </button>
+      </div>
+
+      <div class="avatar-icon">S</div>
+    </aside>
+
+    <!-- 中间：单栏对话与可交互精修卡片 -->
+    <main class="chat-area">
+      
+      <div class="thread-scroll" id="threadScroll">
+
+        <!-- ===== 轮次 1：右侧【卖家导入 1688 货源诉求】 ===== -->
+        <div class="user-row">
+          <div class="user-bubble">
+            <div class="user-attachment">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+              <span>1688货源：便携电动榨汁杯_带中文水印图.jpg</span>
+            </div>
+            <p>从 1688 导入了这款便携榨汁杯。帮我消除原图里的中文水印和牛皮癣，智能抠出纯白底主图；并改写为地道英文，按亚马逊和 TEMU 的规则生成五点卖点和搜索词，我需要能直接在页面上精修改字。</p>
+          </div>
+        </div>
+
+        <!-- ===== 轮次 1：左侧【Muse 智能体回复与可编辑 Listing 卡片】 ===== -->
+        <div class="agent-row">
+          <div class="agent-avatar"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg></div>
+          <div class="agent-content">
+
+            <!-- 状态标签 -->
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="display:inline-flex; align-items:center; gap:6px; background:#F2F2F7; padding:4px 12px; border-radius:9999px; font-size:12px; font-weight:500;">
+                <span style="width:6px; height:6px; border-radius:50%; background:#10B981; display:inline-block;"></span>
+                <span>AI 素材清洗完成 · 消除水印 · 智能抠白底 · 47项排雷</span>
+              </span>
+            </div>
+
+            <!-- 自然语言操作交代 -->
+            <p>
+              已为你完成 1688 原始素材的<strong>深度清洗与跨平台改写</strong>：
+            </p>
+
+            <ul style="padding-left: 20px; font-size: 13.5px; color: #3A3A3C; line-height: 1.8;">
+              <li><strong>【智能消除与抠图】</strong>：已自动识别并过滤原图中的“全国包邮”、“爆款热卖”中文牛皮癣；分离主体，生成了符合平台规范的 <strong>300DPI 纯白底主图</strong>。</li>
+              <li><strong>【地道改写】</strong>：基于 Marco 翻译与 A9 算法公式，重构了标题与五点卖点，严禁侵权词与夸大宣称。</li>
+              <li><strong>【支持二次精修】</strong>：下方卡片里的<strong>标题和卖点均可直接点击改字</strong>，修改后点「一键回填」即可同步更新。</li>
+            </ul>
+
+            <!-- ==================== 核心：AI Listing 商业级卡片 (支持多平台Tab + 原地改字 + 视觉精修) ==================== -->
+            <div class="material-card">
+              
+              <!-- 顶部平台切换 Tab (Amazon / TEMU / Shopee) -->
+              <div class="plat-tab-bar">
+                <div class="plat-tabs">
+                  <button id="tab-amz" class="plat-tab-btn active" onclick="switchPlatView('amazon')">Amazon (美国站)</button>
+                  <button id="tab-temu" class="plat-tab-btn" onclick="switchPlatView('temu')">TEMU (全托管模式)</button>
+                  <button id="tab-shp" class="plat-tab-btn" onclick="switchPlatView('shopee')">Shopee (东南亚)</button>
+                </div>
+                <div class="edit-hint">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>
+                  <span>虚线框内容点击即可直接修改</span>
+                </div>
+              </div>
+
+              <!-- 1. 标题 (支持点击原地修改) -->
+              <div class="field-block">
+                <div class="field-label-bar">
+                  <span>TITLE (已自动改写凸显核心卖点 · 点击直接修改)</span>
+                  <span id="charCountNotice" style="color:#059669;">168 字符 · 前置核心破壁词</span>
+                </div>
+                <div id="editableTitle" class="editable-box" contenteditable="true" spellcheck="false" onblur="handleTextSave('标题已更新保存')">
+                  FreshJuice Portable Blender 350ml, 20000RPM High Speed Personal Smoothie Maker with 6-Blade, Type-C Rechargeable Leak-Proof Mini Juicer Cup for Travel and Office
+                </div>
+              </div>
+
+              <!-- 2. 视觉素材：智能抠图白底主图 + 生活场景图 (带消除与重新生成操作) -->
+              <div class="field-block">
+                <div class="field-label-bar">
+                  <span>PRODUCT VISUALS (已消除 1688 水印 · 智能抠白底)</span>
+                  <span>阿里万相 Wan2.7 · 1024×1024 纯净底图</span>
+                </div>
+                <div class="visual-grid">
+                  <!-- 纯白底图 (合规主图) -->
+                  <div class="visual-card">
+                    <img id="mainWhiteImg" src="https://images.unsplash.com/photo-1570857502809-08184874388e?auto=format&fit=crop&w=800&q=80" alt="White Background">
+                    <span class="visual-badge">智能抠图 · 纯白底主图</span>
+                    <div class="visual-action-overlay">
+                      <button class="btn-visual-opt" onclick="triggerInpainting('白底主图')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 4-3 3 7 7 3-3a2.1 2.1 0 0 0 0-3l-4-4a2.1 2.1 0 0 0-3 0Z"/><path d="m9 10-6 6a2.8 2.8 0 0 0 0 4h12l-6-6Z"/></svg> 智能消除</button>
+                      <button class="btn-visual-opt" onclick="alert('图片裁剪与精修工具已就绪')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg> 尺寸裁切</button>
+                    </div>
+                  </div>
+                  <!-- 生活场景图 -->
+                  <div class="visual-card">
+                    <img id="lifestyleImg" src="https://images.unsplash.com/photo-1553530666-ba11a7da3888?auto=format&fit=crop&w=800&q=80" alt="Lifestyle Detail">
+                    <span class="visual-badge">场景扩展 · 碎冰细节图</span>
+                    <div class="visual-action-overlay">
+                      <button class="btn-visual-opt" onclick="regenerateScene()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 21h5v-5"/></svg> 换一套场景</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 3. 五点描述 (点击每一条均可精修) -->
+              <div class="field-block">
+                <div class="field-label-bar">
+                  <span>BULLET POINTS (5 点卖点反差评矩阵 · 可逐条精修编辑)</span>
+                  <span>带 [方括号] 场景标签</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                  <div class="bullet-row" contenteditable="true" spellcheck="false" onblur="handleTextSave('五点描述已更新保存')">
+                    <strong>[20000RPM 6-BLADE CRUSH]</strong> 纯铜高扭矩电机配合 6 叶精钢破壁刀，30秒碎冰打坚果，击穿竞品“动力衰减”核心痛点。
+                  </div>
+                  <div class="bullet-row" contenteditable="true" spellcheck="false" onblur="handleTextSave('五点描述已更新保存')">
+                    <strong>[100% LEAK-PROOF SILICONE SEAL]</strong> 双层食品级硅胶密封圈，倒置摇晃零漏水，随手装包更安心。
+                  </div>
+                  <div class="bullet-row" contenteditable="true" spellcheck="false" onblur="handleTextSave('五点描述已更新保存')">
+                    <strong>[TYPE-C QUICK CHARGING]</strong> 内置 2000mAh 电池，充一次连打 15 杯，电脑/车载即插即充。
+                  </div>
+                </div>
+              </div>
+
+              <!-- 4. 后台搜索词 (A9 Generic Keywords) -->
+              <div class="field-block">
+                <div class="field-label-bar">
+                  <span>A9 GENERIC KEYWORDS (SEO 隐形埋词)</span>
+                  <span style="color:#059669;">198 / 249 Bytes (未超限 · 纯小写空格分隔)</span>
+                </div>
+                <div class="bullet-row" style="font-family:monospace; font-size:11.5px;" contenteditable="true" spellcheck="false" onblur="handleTextSave('后台搜索词已保存')">
+                  cordless portable juicer rechargeable blender cup personal shake mixer travel blender camping juice maker 6 blades fruit crusher bpa free blender
+                </div>
+              </div>
+
+              <!-- 卡片底栏：一键回填 + 素材打包下载 -->
+              <div class="card-bottom-actions">
+                <div style="display:flex; align-items:center; gap:6px; font-size:11.5px; color:#15803D;">
+                  <span style="font-weight:600;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 47 项规则引擎确定性排雷全通过</span>
+                  <span style="color:#8E8E93;">· 随时可上架</span>
+                </div>
+
+                <div class="action-group">
+                  <button class="btn-action-ghost" onclick="copyCurrentListingToClipboard()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                    <span>复制当前文案</span>
+                  </button>
+                  <button class="btn-action-ghost" onclick="downloadAllMaterialZip()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                    <span>打包下载素材 (ZIP)</span>
+                  </button>
+                  <button class="btn-action-primary" onclick="syncToSellerCentral()">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+                    <span>一键回填到店铺</span>
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- 结语 -->
+            <p style="color: #636366;">
+              上方卡片里的每一处文字你都可以直接改，改完后点击「一键回填」，我就会把最新精修后的文案同步上传到店铺后台草稿箱。
+            </p>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== 3. 底部极简胶囊输入框 ==================== -->
+      <div class="composer-wrap">
+        <div class="composer-pill">
+          <div class="composer-left" style="display:flex; align-items:center; flex:1;">
+            <button class="btn-plus" title="上传 1688 货源图片">+</button>
+            <input type="text" id="userInput" class="input-text" placeholder="继续吩咐智能体（例如：“把标题缩到 140 字符”、“换一套马卡龙色系图”）…" onkeydown="if(event.key==='Enter') sendFollowUpMessage()">
+          </div>
+          <button class="btn-send" onclick="sendFollowUpMessage()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- 脚本：交互与回填逻辑 -->
+  <script>
+    function showToast(text, isSuccess = true) {
+      const toast = document.getElementById('toast');
+      const textSpan = document.getElementById('toastText');
+      const iconSpan = document.getElementById('toastIcon');
+      textSpan.innerText = text;
+      iconSpan.innerText = isSuccess ? '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 2200);
+    }
+
+    function handleTextSave(msg) {
+      showToast(msg);
+    }
+
+    function switchPlatView(platform) {
+      ['amz', 'temu', 'shp'].forEach(id => {
+        document.getElementById('tab-' + id).classList.remove('active');
+      });
+
+      const title = document.getElementById('editableTitle');
+      const notice = document.getElementById('charCountNotice');
+
+      if (platform === 'amazon') {
+        document.getElementById('tab-amz').classList.add('active');
+        title.innerText = "FreshJuice Portable Blender 350ml, 20000RPM High Speed Personal Smoothie Maker with 6-Blade, Type-C Rechargeable Leak-Proof Mini Juicer Cup for Travel and Office";
+        notice.innerText = "168 字符 · Amazon A9 破壁公式";
+      } else if (platform === 'temu') {
+        document.getElementById('tab-temu').classList.add('active');
+        title.innerText = "350ml Wireless Portable Mini Juicer Cup, 6 Stainless Steel Blades Fast Fruit Blender, Type-C Rechargeable USB Personal Mixer";
+        notice.innerText = "126 字符 · 符合 TEMU 全托管纯白底规范";
+      } else {
+        document.getElementById('tab-shp').classList.add('active');
+        title.innerText = "[Ready Stock] 350ML Macaron Mini Portable Blender Wireless Fast Charging 6 Blades Crusher Smoothie Maker For Student & Travel";
+        notice.innerText = "132 字符 · 东南亚移动端爆款短标题";
+      }
+      showToast("已切换为 " + platform.toUpperCase() + " 专属规则视图");
+    }
+
+    function triggerInpainting(targetName) {
+      showToast("正在调用万相 AI 消除「" + targetName + "」残留水印与牛皮癣...");
+      setTimeout(() => {
+        showToast("<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 图像擦除完成，背景已修复为 100% 纯净白底");
+      }, 1000);
+    }
+
+    function regenerateScene() {
+      showToast("正在调用阿里万相重新渲染生活场景图...");
+      setTimeout(() => {
+        document.getElementById('lifestyleImg').src = "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=800&q=80";
+        showToast("<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 新的生活场景图渲染完成 (露营阳光草地)");
+      }, 1200);
+    }
+
+    function copyCurrentListingToClipboard() {
+      const text = document.getElementById('editableTitle').innerText;
+      navigator.clipboard.writeText(text);
+      showToast("<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 当前 Listing 文案已复制到剪贴板");
+    }
+
+    function downloadAllMaterialZip() {
+      showToast("正在打包优化前后全量素材与高清原图...");
+      setTimeout(() => {
+        alert("<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="2" x2="12" y2="15"/></svg> 已为您打包生成：\n1. 【优化前原始素材】(1688 原始图文记录)\n2. 【优化后各平台素材】：\n   - Amazon A9 规范 Flat File (CSV)\n   - TEMU 全托管商品导入表 (XLSX)\n   - Shopee 移动端文案 (TXT)\n3. 【阿里万相高清商用图包】：\n   - 纯净白底抠图主图 (300DPI JPG)\n   - 露营实景渲染图 (300DPI JPG)\n4. 【47 项确定性合规排雷检测报告】(PDF)");
+      }, 500);
+    }
+
+    function syncToSellerCentral() {
+      showToast("正在通过 API 一键回填到电商平台店铺后台...");
+      setTimeout(() => {
+        alert("<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg> 一键回填成功！\n\n已为您将最新精修后的图文素材推送到：\n- Amazon Seller Central (待发布草稿箱)\n- TEMU 商家后台 (商品管理 · 待审核)\n- Shopee 卖家中心 (商品列表 · 草稿)\n\n商家可直接登录各平台后台一键点击正式上架！");
+      }, 800);
+    }
+
+    function sendFollowUpMessage() {
+      const inp = document.getElementById('userInput');
+      const val = inp.value.trim();
+      if (!val) return;
+      inp.value = "";
+
+      const scroll = document.getElementById('threadScroll');
+      
+      // 1. 用户提问
+      const uRow = document.createElement('div');
+      uRow.className = "user-row";
+      uRow.style.paddingTop = "10px";
+      uRow.innerHTML = `<div class="user-bubble"><p>${val}</p></div>`;
+      scroll.appendChild(uRow);
+      scroll.scrollTop = scroll.scrollHeight;
+
+      // 2. 智能体响应
+      setTimeout(() => {
+        const aRow = document.createElement('div');
+        aRow.className = "agent-row";
+        aRow.innerHTML = `
+          <div class="agent-avatar"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg></div>
+          <div class="agent-content">
+            <p>已收到指令：「${val}」。正在为您微调上方卡片中对应的文字与视觉素材，已自动同步保存至当前草稿箱。</p>
+          </div>
+        `;
+        scroll.appendChild(aRow);
+        scroll.scrollTop = scroll.scrollHeight;
+        showToast("卡片内容已根据最新对话完成同步更新");
+      }, 400);
+    }
+  </script>
+
+</body>
+</html>

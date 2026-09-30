@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>千岸 · 你的跨境上新搭档</title>
+<link rel="stylesheet" href="muse-chat.css">
+</head>
+<body>
+<header class="header">
+  <div class="brand"><span class="brand-mark"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg></span><span>千岸<small>跨境上新搭档</small></span></div>
+  <div class="header-actions"><button class="text-button" onclick="showHistory()" aria-label="查看历史上新">历史上新</button><button class="new-button" onclick="newConversation()">＋ 新商品</button></div>
+</header>
+<main class="chat-area">
+  <div class="thread-scroll" id="threadScroll" aria-label="上新对话">
+    <section class="welcome" id="welcomeMessage">
+      <div class="eyebrow">从一份商品资料，到一套上架物料</div>
+      <h1>这次，想把什么<br>卖向世界<span>？</span></h1>
+      <p>把商品图和卖点交给我。我们一起确定市场，完成文案、图片和平台检查，<br class="desktop-break">把能交付的物料留在这段对话里。</p>
+      <div class="starters">
+        <button onclick="usePrompt('我有一款商品，想做跨境上新。')"><span>↗</span> 我有商品，开始上新</button>
+        <button onclick="startAudit()"><span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg></span> 检查现有 Listing</button>
+        <button onclick="showHistory()"><span>↶</span> 继续上次的商品</button>
+      </div>
+      <div class="welcome-foot">商品事实 <i>·</i> 平台规则 <i>·</i> 本地化物料 <i>·</i> 检查与交付</div>
+    </section>
+  </div>
+  <div class="composer-wrap">
+    <div id="contextBar" class="context-bar" hidden></div>
+    <div class="composer">
+      <div id="attachmentPreview" class="attachment" hidden></div>
+      <textarea id="userInput" rows="2" aria-label="商品信息与上新需求" placeholder="发一张商品图，或说说你的商品与目标市场…" onkeydown="if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){event.preventDefault();sendUserMessage()}"></textarea>
+      <div class="composer-tools"><div><input id="imageInput" type="file" accept="image/jpeg,image/png,image/webp" hidden onchange="attachImage(this)"><button class="btn-plus" title="添加商品图片" aria-label="添加商品图片" onclick="document.getElementById('imageInput').click()">＋</button><span class="composer-hint">商品图 / 中文卖点 / 修改要求</span></div><button class="btn-send" aria-label="发送" onclick="sendUserMessage()">↑</button></div>
+    </div>
+    <div class="composer-caption"><span id="agentNotice" role="status">由你确认商品事实，由千岸处理平台差异。</span><span class="keyboard-hint">Enter 发送 · Shift Enter 换行</span></div>
+  </div>
+</main>
+<dialog id="imagePreview"><button class="text-button" onclick="document.getElementById('imagePreview').close()" aria-label="关闭图片预览">关闭 ×</button><img id="previewImage" alt="商品物料原图"></dialog>
+<script src="muse-agent-client.js"></script>
+</body>
+</html>

@@ -50,7 +50,7 @@
     <!-- 中间：居中 Muse Logo 标识 (对齐截图位置) -->
     <div class="flex items-center gap-1.5 cursor-pointer">
       <div class="h-4 w-4 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-500 flex items-center justify-center text-white text-[9px] shadow-2xs">
-        ✦
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg>
       </div>
       <span class="font-semibold text-xs tracking-tight text-[#1C1C1E]">Muse</span>
     </div>
@@ -159,7 +159,7 @@
                   <span class="font-semibold text-xs text-[#1C1C1E]">Amazon.com 官方 Listing 成果</span>
                 </div>
                 <span class="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  ✓ 47项排雷全绿通过
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 47项排雷全绿通过
                 </span>
               </div>
 
@@ -311,12 +311,12 @@
       const text = document.getElementById('amz-title') ? "FreshJuice Portable Blender 350ml, 20000RPM High Speed Personal Smoothie Maker with 6-Blade..." : "";
       navigator.clipboard.writeText(text);
       const btn = document.getElementById('cardCopyBtn');
-      btn.innerText = "✓ 已复制文案";
+      btn.innerText = "<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 已复制文案";
       setTimeout(() => { btn.innerText = "复制文案"; }, 2000);
     }
 
     function downloadAllPackage() {
-      alert("📦 已为您打包生成：\n- 5大平台 Listing 完整文案 (TXT)\n- Amazon Flat File 导入表 (CSV)\n- 阿里万相 300DPI 商用渲染原图包 (JPG)\n- 47项合规排雷检测报告 (JSON)");
+      alert("<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="2" x2="12" y2="15"/></svg> 已为您打包生成：\n- 5大平台 Listing 完整文案 (TXT)\n- Amazon Flat File 导入表 (CSV)\n- 阿里万相 300DPI 商用渲染原图包 (JPG)\n- 47项合规排雷检测报告 (JSON)");
     }
 
     function handleSend() {

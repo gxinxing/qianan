@@ -50,7 +50,7 @@
     <!-- 中间：居中 Muse Logo 标识 (对齐截图位置) -->
     <div class="flex items-center gap-1.5 cursor-pointer">
       <div class="h-4 w-4 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-500 flex items-center justify-center text-white text-[9px] shadow-2xs">
-        ✦
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg>
       </div>
       <span class="font-semibold text-xs tracking-tight text-[#1C1C1E]">Muse</span>
     </div>
@@ -120,7 +120,7 @@
         <div class="flex items-start gap-3.5">
           <!-- Muse 头像 -->
           <div class="h-7 w-7 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-600 text-white flex items-center justify-center flex-shrink-0 text-[11px] shadow-2xs mt-1">
-            ✦
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg>
           </div>
 
           <!-- Muse 内容主体 -->
@@ -171,7 +171,7 @@
                   <span class="font-semibold text-xs text-[#1C1C1E]">Amazon.com 官方 Listing 成果</span>
                 </div>
                 <span class="text-[11px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                  ✓ 47项排雷全绿通过
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 47项排雷全绿通过
                 </span>
               </div>
 
@@ -260,13 +260,13 @@
         <!-- ==================== 轮次 2：左侧【Muse 助手回复】 ==================== -->
         <div class="flex items-start gap-3.5 pt-1">
           <div class="h-7 w-7 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-600 text-white flex items-center justify-center flex-shrink-0 text-[11px] shadow-2xs mt-1">
-            ✦
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg>
           </div>
 
           <div class="flex-1 space-y-4">
             <div>
               <span class="inline-flex items-center gap-1.5 bg-[#F2F2F7] text-[#1C1C1E] font-medium text-xs px-3 py-1 rounded-full">
-                <span>✦ 已完成局部针对性自愈 (无需从头重跑)</span>
+                <span><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg> 已完成局部针对性自愈 (无需从头重跑)</span>
               </span>
             </div>
 
@@ -336,7 +336,7 @@
           <span>Amazon 美区 Listing 完整原图预览</span>
         </div>
         <button onclick="closeArtifactModal()" class="h-8 w-8 rounded-full bg-neutral-100 flex items-center justify-center text-neutral-600 hover:text-black">
-          ✕
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
 
@@ -373,12 +373,12 @@
       const text = "FreshJuice Portable Blender 350ml, 20000RPM High Speed Personal Smoothie Maker with 6-Blade, Type-C Rechargeable Leak-Proof Mini Juicer Cup for Travel, Gym and Office";
       navigator.clipboard.writeText(text);
       const btn = document.getElementById('cardCopyBtn');
-      btn.innerText = "✓ 已复制文案";
+      btn.innerText = "<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 已复制文案";
       setTimeout(() => { btn.innerText = "复制文案"; }, 2000);
     }
 
     function downloadAllPackage() {
-      alert("📦 已为您打包生成：\n- 5大平台 Listing 完整文案 (TXT)\n- Amazon Flat File 导入表 (CSV)\n- 阿里万相 300DPI 商用渲染原图包 (JPG)\n- 47项合规排雷检测报告 (JSON)");
+      alert("<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="2" x2="12" y2="15"/></svg> 已为您打包生成：\n- 5大平台 Listing 完整文案 (TXT)\n- Amazon Flat File 导入表 (CSV)\n- 阿里万相 300DPI 商用渲染原图包 (JPG)\n- 47项合规排雷检测报告 (JSON)");
     }
 
     function handleSend() {
@@ -407,12 +407,12 @@
         agentWrap.className = "flex items-start gap-3.5 pt-1 animate-in fade-in";
         agentWrap.innerHTML = `
           <div class="h-7 w-7 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-600 text-white flex items-center justify-center flex-shrink-0 text-[11px] shadow-2xs mt-1">
-            ✦
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg>
           </div>
           <div class="flex-1 space-y-3 leading-[1.75]">
             <p>收到你的要求：「${val}」。千岸出海总监正在为你针对性调优当前商品的对应字段，已完成合规性复检。</p>
             <div class="p-3 bg-neutral-50 rounded-xl border border-neutral-200 text-xs text-neutral-700">
-              ✓ 对应字段已完成更新，可直接上传卖家后台或导出。
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 对应字段已完成更新，可直接上传卖家后台或导出。
             </div>
           </div>
         `;

@@ -59,7 +59,7 @@
     <!-- 中间：Logo + 真实模型标签 -->
     <div class="flex items-center gap-2">
       <div class="h-4 w-4 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-500 flex items-center justify-center text-white text-[9px] shadow-2xs">
-        ✦
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg>
       </div>
       <span class="font-semibold text-xs tracking-tight text-[#1C1C1E]">千岸 · Muse (真实多模态流式)</span>
       <span id="liveStatusBadge" class="text-[9.5px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
@@ -100,7 +100,7 @@
         <!-- 初始系统欢迎气泡 -->
         <div class="flex items-start gap-3.5 pt-2">
           <div class="h-7 w-7 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-600 text-white flex items-center justify-center flex-shrink-0 text-[11px] shadow-2xs mt-0.5">
-            ✦
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg>
           </div>
           <div class="space-y-2 text-sm text-[#1C1C1E] leading-relaxed max-w-[90%]">
             <p class="font-medium text-[#111111]">你好！我是千岸 Muse 跨境上架智能体。</p>
@@ -122,10 +122,10 @@
         <div class="flex items-center gap-2 overflow-x-auto text-[11px] pb-2.5">
           <span class="text-neutral-400 whitespace-nowrap">点击立即实测:</span>
           <button onclick="quickTest('便携榨汁杯，USB-C快充，350ml，六叶刀头，帮我上架到亚马逊美区')" class="px-3 py-1 rounded-full bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-800 whitespace-nowrap transition-colors shadow-2xs font-medium">
-            ⚡ 便携榨汁杯 (Amazon A9 埋词 + 万相生图)
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 便携榨汁杯 (Amazon A9 埋词 + 万相生图)
           </button>
           <button onclick="quickTest('智能数显保温杯，500ml，316不锈钢，带茶水分离，做东南亚Shopee')" class="px-3 py-1 rounded-full bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-800 whitespace-nowrap transition-colors shadow-2xs font-medium">
-            ⚡ 智能保温杯 (Shopee 移动端爆款短文案)
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> 智能保温杯 (Shopee 移动端爆款短文案)
           </button>
         </div>
 
@@ -209,7 +209,7 @@
       userBubble.className = "flex justify-end pt-2 animate-in fade-in";
       userBubble.innerHTML = `
         <div class="max-w-[80%] bg-[#F2F2F7] text-[#1C1C1E] rounded-3xl rounded-tr-md px-4 py-3 text-sm sm:text-[14.5px] leading-relaxed shadow-2xs space-y-1.5">
-          ${attachedBase64 ? `<div class="text-xs text-emerald-800 font-medium">📸 已附带商品实拍图 (开启 Qwen-VL 视觉认知)</div>` : ''}
+          ${attachedBase64 ? `<div class="text-xs text-emerald-800 font-medium"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> 已附带商品实拍图 (开启 Qwen-VL 视觉认知)</div>` : ''}
           <p>${text || "请根据上传的商品图进行多模态分析与全套上架生成"}</p>
         </div>
       `;
@@ -226,7 +226,7 @@
 
       museWrap.innerHTML = `
         <div class="h-7 w-7 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-600 text-white flex items-center justify-center flex-shrink-0 text-[11px] shadow-2xs mt-1">
-          ✦
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block"><polygon points="12 2 15 9 22 12 15 15 12 22 9 15 2 12 9 9"/></svg>
         </div>
         <div class="flex-1 space-y-3 leading-[1.75]">
           <div class="flex items-center gap-2">
@@ -319,7 +319,7 @@
               else if (ev.type === "done") {
                 statusBox.innerHTML = `
                   <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-                  <span>✓ 任务完成 · 全部物料与万相出图已就绪</span>
+                  <span><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 任务完成 · 全部物料与万相出图已就绪</span>
                 `;
               }
             } catch (err) {
@@ -369,7 +369,7 @@
             <span class="font-bold text-xs text-neutral-900">${name} 官方成果</span>
           </div>
           <span class="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-            ✓ 47项排雷通过
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="display:inline-block;vertical-align:middle;margin-right:2px"><polyline points="20 6 9 17 4 12"/></svg> 47项排雷通过
           </span>
         </div>
 
