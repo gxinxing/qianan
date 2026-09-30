@@ -1,0 +1,69 @@
+<Slide style={{ width: 1280, height: 720, background: '#F7F7F5', padding: '32px 64px 0 64px', fontFamily: 'PingFang SC' }}>
+    <Box style={{ height: 88 }}>
+        <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.8, color: '#5E6752' }}>PROBLEM · 现状</Text>
+        <Text style={{ fontSize: 32, fontWeight: 700, color: '#20211E', letterSpacing: -0.4, marginTop: 6, lineHeight: 1.25 }}>一个新品，五套素材，三到七天</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 48 }}>
+        <Box style={{ width: 640, justifyContent: 'center' }}>
+            <Box style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
+                <Text style={{ fontSize: 96, fontWeight: 700, color: '#20211E', lineHeight: 1, letterSpacing: -2 }}>3–7</Text>
+                <Text style={{ fontSize: 24, fontWeight: 600, color: '#64645E', marginBottom: 14 }}>天</Text>
+            </Box>
+            <Text style={{ fontSize: 13, color: '#858580', marginTop: 12 }}>单款产品 A+ / 详情页全套素材的外包周期</Text>
+
+            <Box style={{ width: '100%', height: 1, background: '#DEDED9', marginTop: 44, marginBottom: 40 }} />
+
+            <Box style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 14 }}>
+                <Text style={{ fontSize: 72, fontWeight: 700, color: '#20211E', lineHeight: 1, letterSpacing: -1.5 }}>1000–3300</Text>
+                <Text style={{ fontSize: 24, fontWeight: 600, color: '#64645E', marginBottom: 10 }}>元</Text>
+            </Box>
+            <Text style={{ fontSize: 13, color: '#858580', marginTop: 12 }}>单款全套素材外包成本 · CSDN / 什么值得买 调研</Text>
+        </Box>
+
+        <Box style={{
+            width: 464,
+            background: '#FFFFFF',
+            border: '1px solid #DEDED9',
+            borderRadius: 12,
+            padding: 30,
+            boxShadow: '0 1px 2px rgba(26,32,39,0.05)',
+        }}>
+            <Text style={{ fontSize: 21, fontWeight: 600, color: '#20211E', lineHeight: 1.4 }}>真正堆不完的，是规则</Text>
+            <Text style={{ fontSize: 14, color: '#64645E', lineHeight: 1.6, marginTop: 10 }}>同一件商品，五个平台五套规范，没有任何一套能照抄。</Text>
+
+            <Box style={{ marginTop: 22, gap: 13 }}>
+                <Box style={{ flexDirection: 'row', gap: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752', width: 96 }}>Amazon</Text>
+                    <Text style={{ fontSize: 14, color: '#64645E', flex: 1, lineHeight: 1.4 }}>标题 ≤200 字符、五点描述、A+ 模块结构</Text>
+                </Box>
+                <Box style={{ flexDirection: 'row', gap: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752', width: 96 }}>Shopee</Text>
+                    <Text style={{ fontSize: 14, color: '#64645E', flex: 1, lineHeight: 1.4 }}>主图禁水印与边框、各站点字符限制不同</Text>
+                </Box>
+                <Box style={{ flexDirection: 'row', gap: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752', width: 96 }}>速卖通 / Lazada</Text>
+                    <Text style={{ fontSize: 14, color: '#64645E', flex: 1, lineHeight: 1.4 }}>类目属性必填、多语言标题</Text>
+                </Box>
+                <Box style={{ flexDirection: 'row', gap: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752', width: 96 }}>TikTok Shop</Text>
+                    <Text style={{ fontSize: 14, color: '#64645E', flex: 1, lineHeight: 1.4 }}>商品卡文案 + 短视频脚本</Text>
+                </Box>
+            </Box>
+
+            <Box style={{ background: '#EFEFEB', borderRadius: 8, padding: 18, marginTop: 22 }}>
+                <Text style={{ fontSize: 30, fontWeight: 700, color: '#20211E', lineHeight: 1 }}>×5</Text>
+                <Text style={{ fontSize: 12, color: '#64645E', marginTop: 8, lineHeight: 1.6 }}>1 套素材 × 5 站点 × 多语种，人工成本与周期直接翻五倍</Text>
+            </Box>
+
+            <Box style={{ marginTop: 'auto', paddingTop: 18, borderTop: '1px solid #EDEDE9' }}>
+                <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.6 }}>钱和天数是标价，背规则、踩雷、被下架才是人力堆不完的那部分。</Text>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 60, borderTop: '1px solid #DEDED9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 0.3 }}>千岸 QianAn · Simon Studio</Text>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 1.2 }}>02 / 10</Text>
+    </Box>
+</Slide>

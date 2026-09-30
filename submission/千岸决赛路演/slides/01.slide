@@ -1,0 +1,25 @@
+<Slide style={{ width: 1280, height: 720, background: '#F7F7F5', position: 'relative', overflow: 'hidden', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', fontFamily: 'PingFang SC' }}>
+    <Box style={{ position: 'absolute', top: -200, left: -160, width: 560, height: 560, background: 'radial-gradient(circle, rgba(94,103,82,0.10) 0%, rgba(94,103,82,0) 70%)' }} />
+
+    <Box style={{ position: 'relative', zIndex: 1, width: 620, paddingLeft: 88, justifyContent: 'center' }}>
+        <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 2.4, color: '#5E6752' }}>QIANAN · 一稿多岸的跨境上新 AGENT</Text>
+        <Text style={{ fontSize: 72, fontWeight: 700, color: '#20211E', lineHeight: 1.08, letterSpacing: -1.5, marginTop: 24 }}>千岸 QianAn</Text>
+        <Text style={{ fontSize: 23, fontWeight: 400, color: '#64645E', marginTop: 18, lineHeight: 1.5 }}>一稿多岸的跨境上新 Agent</Text>
+        <Box style={{ width: 56, height: 2, background: '#5E6752', marginTop: 28 }} />
+        <Text style={{ fontSize: 18, color: '#20211E', marginTop: 28, lineHeight: 1.7 }}>
+            一张商品图 + 一段中文卖点，进。<br />
+            五个平台的合规上架包，出。
+        </Text>
+        <Text style={{ fontSize: 12, color: '#858580', marginTop: 52, lineHeight: 1.8, letterSpacing: 0.4 }}>
+            Simon Studio · 阿里「AI+跨境黑客松巅峰赛」<br />
+            场景一 · AI 智能上新 · 决赛路演
+        </Text>
+    </Box>
+
+    <Box style={{ position: 'relative', zIndex: 1, width: 520, paddingRight: 80 }}>
+        <Image
+            src='assets/gen_scene.png'
+            style={{ width: 440, height: 440, objectFit: 'cover', borderRadius: 14, border: '1px solid #DEDED9' }}
+        />
+    </Box>
+</Slide>

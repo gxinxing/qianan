@@ -1,0 +1,47 @@
+<Slide style={{ width: 1280, height: 720, background: '#F7F7F5', padding: '32px 64px 0 64px', fontFamily: 'PingFang SC' }}>
+    <Box style={{ height: 88 }}>
+        <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.8, color: '#5E6752' }}>LIVE DEMO · 现场演示</Text>
+        <Text style={{ fontSize: 32, fontWeight: 700, color: '#20211E', letterSpacing: -0.4, marginTop: 6, lineHeight: 1.25 }}>现在，走一遍</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 48 }}>
+        <Box style={{ width: 464, justifyContent: 'center' }}>
+            <Box>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752' }}>01</Text>
+                    <Text style={{ fontSize: 17, fontWeight: 600, color: '#20211E' }}>说一句话，就开工</Text>
+                </Box>
+                <Text style={{ fontSize: 13.5, color: '#64645E', lineHeight: 1.6, marginTop: 8 }}>描述商品与目标市场，Agent 自己拆任务：理解商品 → 匹配平台规则 → 逐平台生成文案与视觉。不用填表，也不用挑模板。</Text>
+            </Box>
+
+            <Box style={{ marginTop: 34 }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752' }}>02</Text>
+                    <Text style={{ fontSize: 17, fontWeight: 600, color: '#20211E' }}>每一步都看得见</Text>
+                </Box>
+                <Text style={{ fontSize: 13.5, color: '#64645E', lineHeight: 1.6, marginTop: 8 }}>中间是实时轨迹：调了什么工具、生成了什么、模型自己怎么判断，全程滚动留痕——不是拿结果倒推的动画。</Text>
+            </Box>
+
+            <Box style={{ marginTop: 34 }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752' }}>03</Text>
+                    <Text style={{ fontSize: 17, fontWeight: 600, color: '#20211E' }}>改文案，再上架</Text>
+                </Box>
+                <Text style={{ fontSize: 13.5, color: '#64645E', lineHeight: 1.6, marginTop: 8 }}>随手改一句，47 项合规校验立刻重跑；确认后一键上架，需要人工审批放行，后台执行全程留痕。</Text>
+            </Box>
+        </Box>
+
+        <Box style={{ width: 640, justifyContent: 'center' }}>
+            <Image
+                src='assets/result_live.png'
+                style={{ width: 640, height: 400, objectFit: 'cover', borderRadius: 10, border: '1px solid #DEDED9' }}
+            />
+            <Text style={{ fontSize: 12, color: '#858580', marginTop: 14 }}>同屏三栏：对话轨迹 / 工具调用 / 各平台实时产物</Text>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 60, borderTop: '1px solid #DEDED9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 0.3 }}>千岸 QianAn · Simon Studio</Text>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 1.2 }}>07 / 10</Text>
+    </Box>
+</Slide>

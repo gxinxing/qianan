@@ -1,0 +1,84 @@
+<Slide style={{ width: 1280, height: 720, background: '#F7F7F5', padding: '32px 64px 0 64px', fontFamily: 'PingFang SC' }}>
+    <Box style={{ height: 88 }}>
+        <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.8, color: '#5E6752' }}>AGENTIC · 能力证据</Text>
+        <Text style={{ fontSize: 32, fontWeight: 700, color: '#20211E', letterSpacing: -0.4, marginTop: 6, lineHeight: 1.25 }}>为什么是 Agent，不是提示词包装</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 48 }}>
+        <Box style={{
+            width: 350,
+            background: '#EFEFEB',
+            borderRadius: 12,
+            padding: 30,
+            justifyContent: 'space-between',
+        }}>
+            <Box>
+                <Box style={{ width: 40, height: 2, background: '#5E6752', marginBottom: 20 }} />
+                <Text style={{ fontSize: 11, letterSpacing: 2, color: '#5E6752' }}>FOUR CAPABILITIES</Text>
+                <Text style={{ fontSize: 25, fontWeight: 700, color: '#20211E', lineHeight: 1.42, marginTop: 18 }}>
+                    判断一个产品<br />是不是 Agent，<br />别看它宣传了什么，<br />看它运行时<br />留下了什么痕。
+                </Text>
+            </Box>
+            <Box>
+                <Text style={{ fontSize: 12, color: '#64645E', lineHeight: 1.7 }}>
+                    以下四项全部是运行时留痕，<br />不是事后编排的演示脚本。
+                </Text>
+            </Box>
+        </Box>
+
+        <Box style={{ width: 754, justifyContent: 'space-between' }}>
+            <Box style={{ flex: 1, flexDirection: 'row', gap: 20, borderBottom: '1px solid #DEDED9', paddingBottom: 14 }}>
+                <Text style={{ fontSize: 13, fontWeight: 700, color: '#5E6752', width: 26, paddingTop: 4 }}>01</Text>
+                <Box style={{ flex: 1 }}>
+                    <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+                        <Text style={{ fontSize: 19, fontWeight: 600, color: '#20211E' }}>自主规划</Text>
+                        <Text style={{ fontSize: 11, color: '#858580', letterSpacing: 1 }}>PLANNING</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#64645E', lineHeight: 1.55, marginTop: 7 }}>决策前自己去查欧盟 GPSR 准入、竞品价格带、平台热搜，再提交策略与自愈预算。</Text>
+                    <Text style={{ fontSize: 12, color: '#5E6752', marginTop: 8, lineHeight: 1.4 }}>证据 · task.plan / research_tools[] / decided_by / heal_budget</Text>
+                </Box>
+            </Box>
+
+            <Box style={{ flex: 1, flexDirection: 'row', gap: 20, borderBottom: '1px solid #DEDED9', paddingBottom: 14, paddingTop: 14 }}>
+                <Text style={{ fontSize: 13, fontWeight: 700, color: '#5E6752', width: 26, paddingTop: 4 }}>02</Text>
+                <Box style={{ flex: 1 }}>
+                    <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+                        <Text style={{ fontSize: 19, fontWeight: 600, color: '#20211E' }}>工具调用</Text>
+                        <Text style={{ fontSize: 11, color: '#858580', letterSpacing: 1 }}>TOOL USE</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#64645E', lineHeight: 1.55, marginTop: 7 }}>真实 function calling 循环，模型自己决定调什么工具；轮数与墙钟双熔断，单工具失败不炸循环。</Text>
+                    <Text style={{ fontSize: 12, color: '#5E6752', marginTop: 8, lineHeight: 1.4 }}>证据 · task.trace 实时滚动，含每次调用的参数与结果</Text>
+                </Box>
+            </Box>
+
+            <Box style={{ flex: 1, flexDirection: 'row', gap: 20, borderBottom: '1px solid #DEDED9', paddingBottom: 14, paddingTop: 14 }}>
+                <Text style={{ fontSize: 13, fontWeight: 700, color: '#5E6752', width: 26, paddingTop: 4 }}>03</Text>
+                <Box style={{ flex: 1 }}>
+                    <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+                        <Text style={{ fontSize: 19, fontWeight: 600, color: '#20211E' }}>长期记忆</Text>
+                        <Text style={{ fontSize: 11, color: '#858580', letterSpacing: 1 }}>MEMORY</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#64645E', lineHeight: 1.55, marginTop: 7 }}>教训按「平台 × 类目」存成 JSONL，下次生成前召回 top-3 注入提示词，用完回写命中次数。</Text>
+                    <Text style={{ fontSize: 12, color: '#5E6752', marginTop: 8, lineHeight: 1.4 }}>证据 · task.memory_recall[] / hit_count（当前最高单条已复用 80+ 次）</Text>
+                </Box>
+            </Box>
+
+            <Box style={{ flex: 1, flexDirection: 'row', gap: 20, paddingTop: 14 }}>
+                <Text style={{ fontSize: 13, fontWeight: 700, color: '#5E6752', width: 26, paddingTop: 4 }}>04</Text>
+                <Box style={{ flex: 1 }}>
+                    <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+                        <Text style={{ fontSize: 19, fontWeight: 600, color: '#20211E' }}>反思迭代</Text>
+                        <Text style={{ fontSize: 11, color: '#858580', letterSpacing: 1 }}>REFLECTION</Text>
+                    </Box>
+                    <Text style={{ fontSize: 14, color: '#64645E', lineHeight: 1.55, marginTop: 7 }}>内环：合规 error 自动回炉修订并复检；外环：反思 Agent 蒸馏教训回写记忆库。</Text>
+                    <Text style={{ fontSize: 12, color: '#5E6752', marginTop: 8, lineHeight: 1.4 }}>证据 · task.reflections[] / 各平台 revised_count / heal_budget 消耗</Text>
+                </Box>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 60, borderTop: '1px solid #DEDED9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 0.3 }}>千岸 QianAn · Simon Studio</Text>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 1.2 }}>04 / 10</Text>
+    </Box>
+</Slide>

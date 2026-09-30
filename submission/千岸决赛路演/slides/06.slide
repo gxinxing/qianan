@@ -1,0 +1,71 @@
+<Slide style={{ width: 1280, height: 720, background: '#F7F7F5', padding: '32px 64px 0 64px', fontFamily: 'PingFang SC' }}>
+    <Box style={{ height: 88 }}>
+        <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.8, color: '#5E6752' }}>EVAL · 消融实验</Text>
+        <Text style={{ fontSize: 32, fontWeight: 700, color: '#20211E', letterSpacing: -0.4, marginTop: 6, lineHeight: 1.25 }}>每个组件，都拆掉跑过一遍</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 36 }}>
+        <Box style={{ width: 708, justifyContent: 'center' }}>
+            <svg width={700} height={340} viewBox='0 0 700 340'>
+                <text x='0' y='12' fontSize='11' fill='#858580'>跨平台文案差异化度（越低 = 五平台文案越一致）</text>
+
+                <rect x='112' y='44' width='460' height='26' rx='4' fill='#EFEFEB' />
+                <text x='96' y='62' textAnchor='end' fontSize='12.5' fontWeight='700' fill='#20211E'>完整管线</text>
+                <rect x='112' y='44' width='172' height='26' rx='4' fill='#5E6752' />
+                <text x='294' y='62' fontSize='12.5' fontWeight='700' fill='#5E6752'>0.30</text>
+
+                <rect x='112' y='98' width='460' height='26' rx='4' fill='#EFEFEB' />
+                <text x='96' y='116' textAnchor='end' fontSize='12.5' fill='#64645E'>− 规划</text>
+                <rect x='112' y='98' width='408' height='26' rx='4' fill='#DEDED9' />
+                <text x='530' y='116' fontSize='12.5' fontWeight='700' fill='#64645E'>0.71</text>
+
+                <rect x='112' y='152' width='460' height='26' rx='4' fill='#EFEFEB' />
+                <text x='96' y='170' textAnchor='end' fontSize='12.5' fill='#64645E'>− 记忆</text>
+                <rect x='112' y='152' width='391' height='26' rx='4' fill='#DEDED9' />
+                <text x='513' y='170' fontSize='12.5' fontWeight='700' fill='#64645E'>0.68</text>
+
+                <rect x='112' y='206' width='460' height='26' rx='4' fill='#EFEFEB' />
+                <text x='96' y='224' textAnchor='end' fontSize='12.5' fill='#64645E'>− 自愈</text>
+                <rect x='112' y='206' width='397' height='26' rx='4' fill='#DEDED9' />
+                <text x='519' y='224' fontSize='12.5' fontWeight='700' fill='#64645E'>0.69</text>
+
+                <rect x='112' y='260' width='460' height='26' rx='4' fill='#EFEFEB' />
+                <text x='96' y='278' textAnchor='end' fontSize='12.5' fill='#64645E'>− 反思</text>
+                <rect x='112' y='260' width='357' height='26' rx='4' fill='#DEDED9' />
+                <text x='479' y='278' fontSize='12.5' fontWeight='700' fill='#64645E'>0.62</text>
+
+                <line x1='0' y1='304' x2='700' y2='304' stroke='#DEDED9' strokeWidth='1' />
+                <text x='0' y='324' fontSize='10.5' fill='#858580'>同一商品、同一组卖点、同样五平台，每次只关掉一个组件，其余保持不变</text>
+            </svg>
+        </Box>
+
+        <Box style={{ width: 408, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 11, letterSpacing: 1.6, color: '#858580' }}>FINDINGS</Text>
+            <Text style={{ fontSize: 24, fontWeight: 700, color: '#20211E', lineHeight: 1.35, marginTop: 12 }}>拆掉一个组件，代价是多少</Text>
+
+            <Box style={{ marginTop: 22, gap: 18 }}>
+                <Box>
+                    <Text style={{ fontSize: 15, fontWeight: 600, color: '#20211E', lineHeight: 1.45 }}>规划是品牌一致性的锚点</Text>
+                    <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.6, marginTop: 5 }}>去掉规划，跨平台文案差异化度从 0.30 跳到 0.71——各平台开始各行其是，风格断裂。</Text>
+                </Box>
+                <Box>
+                    <Text style={{ fontSize: 15, fontWeight: 600, color: '#20211E', lineHeight: 1.45 }}>记忆与自愈各管一段</Text>
+                    <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.6, marginTop: 5 }}>去记忆（0.68）丢跨任务一致性；去自愈（0.69）文案膨胀 12%，失去精简约束。</Text>
+                </Box>
+                <Box>
+                    <Text style={{ fontSize: 15, fontWeight: 600, color: '#20211E', lineHeight: 1.45 }}>规则引擎不受任何消融影响</Text>
+                    <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.6, marginTop: 5 }}>五组配置合规率均 100%、阻断 error 为 0——确定性护栏与模型波动解耦。</Text>
+                </Box>
+            </Box>
+
+            <Box style={{ marginTop: 24, paddingTop: 16, borderTop: '1px solid #DEDED9' }}>
+                <Text style={{ fontSize: 11, color: '#858580', lineHeight: 1.6 }}>实验限定：单商品（便携保温杯 500ml）× 5 配置 × 单次运行。<br />样本量不足以构成统计显著性，我们如实标注，未包装成「实验证明」。</Text>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 60, borderTop: '1px solid #DEDED9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 0.3 }}>千岸 QianAn · Simon Studio</Text>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 1.2 }}>06 / 10</Text>
+    </Box>
+</Slide>

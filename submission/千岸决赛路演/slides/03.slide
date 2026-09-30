@@ -1,0 +1,95 @@
+<Slide style={{ width: 1280, height: 720, background: '#F7F7F5', padding: '32px 64px 0 64px', fontFamily: 'PingFang SC' }}>
+    <Box style={{ height: 88 }}>
+        <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.8, color: '#5E6752' }}>SOLUTION · 方案</Text>
+        <Text style={{ fontSize: 32, fontWeight: 700, color: '#20211E', letterSpacing: -0.4, marginTop: 6, lineHeight: 1.25 }}>一次输入，五份产出</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 48 }}>
+        <Box style={{ width: 640, justifyContent: 'center' }}>
+            <Image
+                src='assets/home_chat.png'
+                style={{ width: 640, height: 400, objectFit: 'cover', borderRadius: 10, border: '1px solid #DEDED9' }}
+            />
+            <Text style={{ fontSize: 12, color: '#858580', marginTop: 14 }}>对话式工作台：一句话说清商品、目标市场与要 Agent 做的事</Text>
+        </Box>
+
+        <Box style={{ width: 464, justifyContent: 'space-between', paddingTop: 10, paddingBottom: 12 }}>
+            <Box>
+                <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.6, color: '#858580' }}>每个平台一个独立上架包</Text>
+                <Box style={{ marginTop: 16, gap: 14 }}>
+                    <Box style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+                        <Box style={{ width: 30, height: 30, borderRadius: 8, background: '#EFEFEB', justifyContent: 'center', alignItems: 'center' }}>
+                            <FAIcon name='file-text' style={{ fill: '#5E6752', width: 15, height: 15 }} />
+                        </Box>
+                        <Box style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 16, fontWeight: 600, color: '#20211E' }}>多语言 Listing</Text>
+                            <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.5, marginTop: 3 }}>标题 / 五点 / 类目属性，按平台规范重排，不是直译</Text>
+                        </Box>
+                    </Box>
+                    <Box style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+                        <Box style={{ width: 30, height: 30, borderRadius: 8, background: '#EFEFEB', justifyContent: 'center', alignItems: 'center' }}>
+                            <FAIcon name='image' style={{ fill: '#5E6752', width: 15, height: 15 }} />
+                        </Box>
+                        <Box style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 16, fontWeight: 600, color: '#20211E' }}>规范主图</Text>
+                            <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.5, marginTop: 3 }}>以图改图，商品本体不变，只换场景与构图</Text>
+                        </Box>
+                    </Box>
+                    <Box style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+                        <Box style={{ width: 30, height: 30, borderRadius: 8, background: '#EFEFEB', justifyContent: 'center', alignItems: 'center' }}>
+                            <FAIcon name='copy' style={{ fill: '#5E6752', width: 15, height: 15 }} />
+                        </Box>
+                        <Box style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 16, fontWeight: 600, color: '#20211E' }}>A+ 详情模块</Text>
+                            <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.5, marginTop: 3 }}>按各平台模块结构生成并排版</Text>
+                        </Box>
+                    </Box>
+                    <Box style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+                        <Box style={{ width: 30, height: 30, borderRadius: 8, background: '#EFEFEB', justifyContent: 'center', alignItems: 'center' }}>
+                            <FAIcon name='table' style={{ fill: '#5E6752', width: 15, height: 15 }} />
+                        </Box>
+                        <Box style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 16, fontWeight: 600, color: '#20211E' }}>导入 CSV</Text>
+                            <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.5, marginTop: 3 }}>后台可直接导入的字段格式</Text>
+                        </Box>
+                    </Box>
+                    <Box style={{ flexDirection: 'row', gap: 14, alignItems: 'flex-start' }}>
+                        <Box style={{ width: 30, height: 30, borderRadius: 8, background: '#EFEFEB', justifyContent: 'center', alignItems: 'center' }}>
+                            <FAIcon name='check-circle' style={{ fill: '#5E6752', width: 15, height: 15 }} />
+                        </Box>
+                        <Box style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 16, fontWeight: 600, color: '#20211E' }}>合规报告</Text>
+                            <Text style={{ fontSize: 13, color: '#64645E', lineHeight: 1.5, marginTop: 3 }}>47 项确定性校验，逐条留痕</Text>
+                        </Box>
+                    </Box>
+                </Box>
+            </Box>
+
+            <Box style={{ background: '#EFEFEB', borderRadius: 10, padding: 22 }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 28 }}>
+                    <Box>
+                        <Text style={{ fontSize: 11, color: '#858580' }}>单平台</Text>
+                        <Box style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 6 }}>
+                            <Text style={{ fontSize: 34, fontWeight: 700, color: '#5E6752', lineHeight: 1 }}>30</Text>
+                            <Text style={{ fontSize: 14, color: '#64645E', marginBottom: 5 }}>秒</Text>
+                        </Box>
+                    </Box>
+                    <Box style={{ width: 1, height: 34, background: '#DEDED9' }} />
+                    <Box>
+                        <Text style={{ fontSize: 11, color: '#858580' }}>五平台</Text>
+                        <Box style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6, marginTop: 6 }}>
+                            <Text style={{ fontSize: 34, fontWeight: 700, color: '#5E6752', lineHeight: 1 }}>90</Text>
+                            <Text style={{ fontSize: 14, color: '#64645E', marginBottom: 5 }}>秒</Text>
+                        </Box>
+                    </Box>
+                </Box>
+                <Text style={{ fontSize: 11, color: '#858580', marginTop: 12, lineHeight: 1.5 }}>已有测试样本下的实测值，非对所有商品与网络环境的普遍保证</Text>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 60, borderTop: '1px solid #DEDED9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 0.3 }}>千岸 QianAn · Simon Studio</Text>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 1.2 }}>03 / 10</Text>
+    </Box>
+</Slide>

@@ -1,0 +1,99 @@
+<Slide style={{ width: 1280, height: 720, background: '#F7F7F5', padding: '32px 64px 0 64px', fontFamily: 'PingFang SC' }}>
+    <Box style={{ height: 88 }}>
+        <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.8, color: '#5E6752' }}>ARCHITECTURE · 架构</Text>
+        <Text style={{ fontSize: 32, fontWeight: 700, color: '#20211E', letterSpacing: -0.4, marginTop: 6, lineHeight: 1.25 }}>合规判定，不交给模型</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 32 }}>
+        <Box style={{ width: 680, justifyContent: 'center' }}>
+            <svg width={680} height={400} viewBox='0 0 680 400'>
+                <rect x='0' y='4' width='680' height='46' rx='8' fill='#FFFFFF' stroke='#DEDED9' strokeWidth='1' />
+                <text x='340' y='27' textAnchor='middle' fontSize='12.5' fontWeight='600' fill='#20211E'>一张商品图 + 一段中文卖点</text>
+                <text x='340' y='42' textAnchor='middle' fontSize='10.5' fill='#858580'>卖家自有素材，不爬平台数据</text>
+
+                <line x1='340' y1='50' x2='340' y2='66' stroke='#C9CAC2' strokeWidth='1.5' />
+                <polygon points='340,74 334,65 346,65' fill='#C9CAC2' />
+
+                <rect x='0' y='74' width='680' height='54' rx='8' fill='#FFFFFF' stroke='#DEDED9' strokeWidth='1' />
+                <rect x='0' y='74' width='4' height='54' rx='2' fill='#5E6752' />
+                <text x='20' y='98' fontSize='13' fontWeight='700' fill='#20211E'>主控编排 · plan_task</text>
+                <text x='20' y='116' fontSize='10.5' fill='#64645E'>先调研（欧盟 GPSR 准入 / 竞品价格带 / 平台热搜），再决策策略与自愈预算</text>
+
+                <line x1='340' y1='128' x2='340' y2='144' stroke='#C9CAC2' strokeWidth='1.5' />
+                <polygon points='340,152 334,143 346,143' fill='#C9CAC2' />
+
+                <rect x='0' y='152' width='106' height='72' rx='8' fill='#FFFFFF' stroke='#DEDED9' strokeWidth='1' />
+                <text x='53' y='194' textAnchor='middle' fontSize='11.5' fill='#20211E'>商品理解</text>
+
+                <rect x='114.8' y='152' width='106' height='72' rx='8' fill='#FFFFFF' stroke='#DEDED9' strokeWidth='1' />
+                <text x='167.8' y='194' textAnchor='middle' fontSize='11.5' fill='#20211E'>规则匹配</text>
+
+                <rect x='229.6' y='152' width='106' height='72' rx='8' fill='#FFFFFF' stroke='#DEDED9' strokeWidth='1' />
+                <text x='282.6' y='194' textAnchor='middle' fontSize='11.5' fill='#20211E'>多语言文案</text>
+
+                <rect x='344.4' y='152' width='106' height='72' rx='8' fill='#FFFFFF' stroke='#DEDED9' strokeWidth='1' />
+                <text x='397.4' y='194' textAnchor='middle' fontSize='11.5' fill='#20211E'>视觉生成</text>
+
+                <rect x='459.2' y='152' width='106' height='72' rx='8' fill='#FFFFFF' stroke='#DEDED9' strokeWidth='1' />
+                <text x='512.2' y='194' textAnchor='middle' fontSize='11.5' fill='#20211E'>合规体检</text>
+
+                <rect x='574' y='152' width='106' height='72' rx='8' fill='#5E6752' />
+                <text x='627' y='194' textAnchor='middle' fontSize='11.5' fontWeight='700' fill='#FFFFFF'>交付闸门</text>
+
+                <line x1='340' y1='224' x2='340' y2='240' stroke='#C9CAC2' strokeWidth='1.5' />
+                <polygon points='340,248 334,239 346,239' fill='#C9CAC2' />
+
+                <rect x='0' y='248' width='334' height='64' rx='8' fill='#FFFFFF' stroke='#5E6752' strokeWidth='1.5' />
+                <text x='20' y='274' fontSize='12.5' fontWeight='700' fill='#20211E'>规则引擎（非 LLM 判定）</text>
+                <text x='20' y='294' fontSize='10.5' fill='#64645E'>47 项确定性校验 · 不随模型波动</text>
+
+                <rect x='346' y='248' width='334' height='64' rx='8' fill='#FFFFFF' stroke='#DEDED9' strokeWidth='1' />
+                <text x='366' y='274' fontSize='12.5' fontWeight='700' fill='#20211E'>工具循环（function calling）</text>
+                <text x='366' y='294' fontSize='10.5' fill='#64645E'>轮数 + 墙钟双熔断 · 单工具失败不炸循环</text>
+
+                <line x1='340' y1='312' x2='340' y2='328' stroke='#C9CAC2' strokeWidth='1.5' />
+                <polygon points='340,336 334,327 346,327' fill='#C9CAC2' />
+
+                <rect x='0' y='336' width='680' height='52' rx='8' fill='#EFEFEB' />
+                <text x='340' y='358' textAnchor='middle' fontSize='12.5' fontWeight='600' fill='#20211E'>5 平台上架包 · 合规报告 · 导入 CSV</text>
+                <text x='340' y='376' textAnchor='middle' fontSize='10.5' fill='#858580'>每个平台一个独立上架包，可导出、可续查</text>
+            </svg>
+        </Box>
+
+        <Box style={{ width: 440, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 11, letterSpacing: 1.6, color: '#858580' }}>DELIVERY GATE</Text>
+            <Text style={{ fontSize: 26, fontWeight: 700, color: '#20211E', lineHeight: 1.35, marginTop: 12 }}>交付闸门是唯一能说「完成」的入口</Text>
+            <Text style={{ fontSize: 14, color: '#64645E', lineHeight: 1.6, marginTop: 14 }}>四不变量全部满足，才允许把任务置为 done；有一条不满足，缺口原样回给模型继续做。</Text>
+
+            <Box style={{ marginTop: 22, gap: 12 }}>
+                <Box style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                    <FAIcon name='check' style={{ fill: '#5E6752', width: 14, height: 14 }} />
+                    <Text style={{ fontSize: 14, color: '#20211E', flex: 1, lineHeight: 1.45 }}>目标平台全覆盖</Text>
+                </Box>
+                <Box style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                    <FAIcon name='check' style={{ fill: '#5E6752', width: 14, height: 14 }} />
+                    <Text style={{ fontSize: 14, color: '#20211E', flex: 1, lineHeight: 1.45 }}>必需产物完整（文案 / 五点 / 主图）</Text>
+                </Box>
+                <Box style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                    <FAIcon name='check' style={{ fill: '#5E6752', width: 14, height: 14 }} />
+                    <Text style={{ fontSize: 14, color: '#20211E', flex: 1, lineHeight: 1.45 }}>阻断级 error 为零</Text>
+                </Box>
+                <Box style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start' }}>
+                    <FAIcon name='check' style={{ fill: '#5E6752', width: 14, height: 14 }} />
+                    <Text style={{ fontSize: 14, color: '#20211E', flex: 1, lineHeight: 1.45 }}>审核覆盖且版本有效</Text>
+                </Box>
+            </Box>
+
+            <Box style={{ background: '#EFEFEB', borderRadius: 10, padding: 20, marginTop: 24 }}>
+                <Text style={{ fontSize: 13, color: '#20211E', lineHeight: 1.6 }}>超时 / 超轮数 / 网关异常 / 被取消<br />→ partial · failed · cancelled，<span style={{ color: '#5E6752', fontWeight: 600 }}>绝不标 done</span></Text>
+            </Box>
+
+            <Text style={{ fontSize: 12, color: '#858580', marginTop: 18, lineHeight: 1.55 }}>上架属于写操作：必须人工审批放行（approved=true）才执行，全程留痕。</Text>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 60, borderTop: '1px solid #DEDED9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 0.3 }}>千岸 QianAn · Simon Studio</Text>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 1.2 }}>05 / 10</Text>
+    </Box>
+</Slide>

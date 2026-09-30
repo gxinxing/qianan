@@ -1,0 +1,68 @@
+<Slide style={{ width: 1280, height: 720, background: '#F7F7F5', padding: '32px 64px 0 64px', fontFamily: 'PingFang SC' }}>
+    <Box style={{ height: 88 }}>
+        <Text style={{ fontSize: 12, fontWeight: 500, letterSpacing: 1.8, color: '#5E6752' }}>HONESTY · 边界</Text>
+        <Text style={{ fontSize: 32, fontWeight: 700, color: '#20211E', letterSpacing: -0.4, marginTop: 6, lineHeight: 1.25 }}>我们知道它现在还不行在哪</Text>
+    </Box>
+
+    <Box style={{ height: 540, flexDirection: 'row', gap: 48 }}>
+        <Box style={{
+            width: 350,
+            background: '#EFEFEB',
+            borderRadius: 12,
+            padding: 30,
+            justifyContent: 'space-between',
+        }}>
+            <Box>
+                <Box style={{ width: 40, height: 2, background: '#5E6752', marginBottom: 20 }} />
+                <Text style={{ fontSize: 11, letterSpacing: 2, color: '#5E6752' }}>LIMITS</Text>
+                <Text style={{ fontSize: 24, fontWeight: 700, color: '#20211E', lineHeight: 1.45, marginTop: 18 }}>
+                    把边界<br />写进交付文档，<br />比宣称<br />「100% 合规」<br />更值钱。
+                </Text>
+            </Box>
+            <Box>
+                <Text style={{ fontSize: 12, color: '#64645E', lineHeight: 1.7 }}>
+                    下面四条都出现在<br />我们的交付文档里，<br />没有藏起来。
+                </Text>
+            </Box>
+        </Box>
+
+        <Box style={{ width: 754, justifyContent: 'space-between' }}>
+            <Box style={{ flex: 1, borderBottom: '1px solid #DEDED9', paddingBottom: 14 }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752' }}>01</Text>
+                    <Text style={{ fontSize: 17, fontWeight: 600, color: '#20211E' }}>消融实验只测了一个商品</Text>
+                </Box>
+                <Text style={{ fontSize: 13.5, color: '#64645E', lineHeight: 1.6, marginTop: 8 }}>单商品 × 5 配置 × 单次运行，样本量撑不起统计显著性。我们在报告里如实标注，没有把它包装成「实验证明」。</Text>
+            </Box>
+
+            <Box style={{ flex: 1, borderBottom: '1px solid #DEDED9', paddingBottom: 14, paddingTop: 14 }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752' }}>02</Text>
+                    <Text style={{ fontSize: 17, fontWeight: 600, color: '#20211E' }}>多 Agent 蜂群只落地了第 1 层</Text>
+                </Box>
+                <Text style={{ fontSize: 13.5, color: '#64645E', lineHeight: 1.6, marginTop: 8 }}>黑板未落盘、平台 worker 仍是串行、未接多轮会话。蜂群默认关闭，不进演示路径——只把跑稳的那一层拿上台。</Text>
+            </Box>
+
+            <Box style={{ flex: 1, borderBottom: '1px solid #DEDED9', paddingBottom: 14, paddingTop: 14 }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752' }}>03</Text>
+                    <Text style={{ fontSize: 17, fontWeight: 600, color: '#20211E' }}>公网云函数有 120 秒超时</Text>
+                </Box>
+                <Text style={{ fontSize: 13.5, color: '#64645E', lineHeight: 1.6, marginTop: 8 }}>真实模式下多平台长任务可能触顶。演示走 SSE 流式通道（连接保持），或本地起服务走异步分支，立即返回 task_id。</Text>
+            </Box>
+
+            <Box style={{ flex: 1, paddingTop: 14 }}>
+                <Box style={{ flexDirection: 'row', alignItems: 'baseline', gap: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: 700, color: '#5E6752' }}>04</Text>
+                    <Text style={{ fontSize: 17, fontWeight: 600, color: '#20211E' }}>记忆检索还不是语义检索</Text>
+                </Box>
+                <Text style={{ fontSize: 13.5, color: '#64645E', lineHeight: 1.6, marginTop: 8 }}>目前是标签过滤 + 频次排序，教训库变大之后召回精度会衰减。已列为下一步的明确改造项，不在本次声称范围内。</Text>
+            </Box>
+        </Box>
+    </Box>
+
+    <Box style={{ height: 60, borderTop: '1px solid #DEDED9', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 0.3 }}>千岸 QianAn · Simon Studio</Text>
+        <Text style={{ fontSize: 12, color: '#858580', letterSpacing: 1.2 }}>09 / 10</Text>
+    </Box>
+</Slide>

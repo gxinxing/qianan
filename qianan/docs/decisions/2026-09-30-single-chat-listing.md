@@ -1,0 +1,5 @@
+## Decision: Complete listing preparation inside the QianAn conversation
+## Context: The user rejected navigation into the older workbench, decorative desktop controls, an empty account entry, and platform settings above the composer. The semifinal submission defines QianAn around product facts, platform-specific assets, compliance and delivery.
+## Alternatives considered: Continue linking the new visual prototype to legacy pages; migrate all legacy pages; expose existing APIs through contextual conversation cards.
+## Reasoning: Use conversation cards for product confirmation, task recovery, full assets, editable draft audits and downloads. Preserve truthful backend state and leave input focused on messages and attachments.
+## Trade-offs accepted: The existing publish endpoint targets a mock seller backend, not real stores. Do not present it as real publication. Edited drafts are audited and downloaded explicitly; they do not silently overwrite server export packages. Chat follow-ups still create new backend tasks with supplied context. The requested /decisions directory is read-only on this host, so this decision is recorded here.

@@ -110,3 +110,6 @@ qianan/web/.next-trash*/
 qianan/web/out.trash*/
 qianan/web/out-trash*/
 qianan/web/.taskId-trash/
+
+# 解压交付物（已包含在 zip 中，避免冗余入库）
+submission/SimonStudio_千岸QianAn_复赛作品/
