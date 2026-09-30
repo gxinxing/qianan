@@ -7,12 +7,12 @@ import { useAuth } from "./AuthProvider";
 
 const LINKS = [
   { href: "/", label: "首页" },
-  { href: "/workbench", label: "工作台" },
-  { href: "/batch", label: "批量上新" },
-  { href: "/rules", label: "规则库" },
-  { href: "/agent", label: "Agent" },
-  { href: "/files", label: "文件管理" },
-  { href: "/admin", label: "后台管理" },
+  { href: "/workbench/", label: "工作台" },
+  { href: "/batch/", label: "批量上新" },
+  { href: "/rules/", label: "规则库" },
+  { href: "/agent/", label: "Agent" },
+  { href: "/files/", label: "文件管理" },
+  { href: "/admin/", label: "后台管理" },
 ];
 
 function UserMenu() {
@@ -26,7 +26,7 @@ function UserMenu() {
   if (!user) {
     return (
       <Link
-        href="/login"
+        href="/login/"
         className="ml-3 hidden rounded-full bg-brand-800 px-3.5 py-1.5 text-[12.5px] font-medium text-white transition hover:bg-brand-700 lg:block"
       >
         登录
@@ -42,7 +42,7 @@ function UserMenu() {
       <button
         onClick={async () => {
           await signOut();
-          router.replace("/login");
+          router.replace("/login/");
         }}
         className="rounded-full border border-ink-200 px-2.5 py-1 text-[12px] text-ink-500 transition hover:bg-ink-50"
       >
@@ -73,7 +73,7 @@ export default function Nav() {
         {/* 桌面导航 */}
         <div className="hidden items-center gap-1 md:flex">
           {LINKS.map((l) => {
-            const active = pathname === l.href;
+            const active = pathname === l.href || (l.href !== "/" && pathname?.startsWith(l.href));
             return (
               <Link
                 key={l.href}
@@ -120,7 +120,7 @@ export default function Nav() {
         <div className="border-t border-ink-100 bg-white/95 backdrop-blur md:hidden">
           <div className="mx-auto grid max-w-6xl grid-cols-2 gap-1 px-6 py-3">
             {LINKS.map((l) => {
-              const active = pathname === l.href;
+              const active = pathname === l.href || (l.href !== "/" && pathname?.startsWith(l.href));
               return (
                 <Link
                   key={l.href}
@@ -142,7 +142,7 @@ export default function Nav() {
                   onClick={async () => {
                     await signOut();
                     setOpen(false);
-                    window.location.href = "/login";
+                    window.location.href = "/login/";
                   }}
                   className="w-full rounded-md bg-ink-50 px-3 py-2.5 text-[13px] text-ink-600"
                 >
@@ -150,7 +150,7 @@ export default function Nav() {
                 </button>
               ) : (
                 <Link
-                  href="/login"
+                  href="/login/"
                   onClick={() => setOpen(false)}
                   className="block rounded-md bg-brand-800 px-3 py-2.5 text-center text-[13px] font-medium text-white"
                 >

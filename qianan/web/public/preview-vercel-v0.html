@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>方案 2：Vercel v0 风格 (极简单色主义 · 极高工程质感)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Geist', -apple-system, sans-serif;
+      background-color: #000000;
+      color: #EDEDED;
+    }
+    .font-mono {
+      font-family: 'Geist Mono', monospace;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-thumb { background: #27272A; border-radius: 9999px; }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col antialiased selection:bg-zinc-800 selection:text-white">
+
+  <!-- 顶部对比快速切换 Bar -->
+  <div class="h-10 bg-zinc-950 border-b border-zinc-900 text-white px-4 flex items-center justify-between text-xs z-50 flex-shrink-0">
+    <div class="flex items-center gap-2">
+      <span class="font-bold text-zinc-100">原型对比模式</span>
+      <span class="text-zinc-600">|</span>
+      <span class="text-zinc-400">当前演示：方案 2 · Vercel v0 (单色系极简主义 · 极强极客高级感)</span>
+    </div>
+    <div class="flex items-center gap-1.5 font-medium">
+      <a href="/preview-assistant-ui.html" class="px-2.5 py-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">方案 1A (Muse分屏版)</a>
+      <a href="/preview-muse-v2.html" class="px-2.5 py-1 rounded hover:bg-white/10 text-amber-300 hover:text-white font-semibold transition-colors">✨ 方案 1B (Muse画廊版)</a>
+      <a href="/preview-vercel-v0.html" class="px-2.5 py-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">方案 2 (v0单色)</a>
+      <a href="/preview-copilotkit.html" class="px-2.5 py-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">方案 3 (SaaS风)</a>
+    </div>
+  </div>
+
+  <!-- v0 标志性极简顶栏 -->
+  <header class="h-14 border-b border-zinc-800 bg-black px-6 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="h-6 w-6 rounded-md bg-white text-black font-bold flex items-center justify-center text-xs">
+        ▲
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="font-semibold text-zinc-100">qianan.agent</span>
+        <span class="text-zinc-600">/</span>
+        <span class="text-zinc-400 font-mono text-[11px]">portable-blender-v2</span>
+      </div>
+    </div>
+
+    <!-- 模式切换控制器 (v0 签名组件：Preview / Code / JSON) -->
+    <div class="flex items-center bg-zinc-900 border border-zinc-800 p-1 rounded-full text-xs">
+      <button class="px-3 py-1 rounded-full bg-zinc-800 text-zinc-100 font-medium">Preview</button>
+      <button class="px-3 py-1 rounded-full text-zinc-500 hover:text-zinc-300 transition-colors">Code (Flat File)</button>
+      <button class="px-3 py-1 rounded-full text-zinc-500 hover:text-zinc-300 transition-colors">JSON</button>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button onclick="alert('已将资产打包下载')" class="h-8 px-3 rounded-md bg-white hover:bg-zinc-200 text-black text-xs font-medium flex items-center gap-1.5 transition-colors">
+        <span>Deploy Listing</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- v0 双屏切分 -->
+  <main class="flex-1 flex overflow-hidden">
+
+    <!-- 左侧：v0 对话框与提示词引擎 (42%) -->
+    <section class="w-[42%] flex flex-col border-r border-zinc-800 bg-black">
+      
+      <div class="flex-1 overflow-y-auto p-5 space-y-5">
+        
+        <!-- 用户消息 -->
+        <div class="space-y-1.5">
+          <div class="text-[11px] font-mono text-zinc-500">USER</div>
+          <div class="text-xs text-zinc-200 bg-zinc-900/60 border border-zinc-800/80 p-3 rounded-xl leading-relaxed">
+            把榨汁杯上架到亚马逊美区与 Shopee。要求标题严格按 A9 公式前置破壁核心词，五点全部带方括号反差评标签。
+          </div>
+        </div>
+
+        <!-- v0 风格的代码级沉着响应 -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-[11px] font-mono text-zinc-500">
+            <span>AGENT</span>
+            <span>Qwen3.7-Plus · 8.2s</span>
+          </div>
+          
+          <div class="text-xs text-zinc-300 space-y-3 bg-zinc-950 p-4 rounded-xl border border-zinc-800/80 leading-relaxed font-mono">
+            <div class="text-emerald-400">✓ Parsed 350ml specs & 6-blade motor specs</div>
+            <div class="text-emerald-400">✓ Applied Amazon A9 Title Formula</div>
+            <div class="text-emerald-400">✓ Generated Wan2.7 1024x1024 Commercial Visuals</div>
+            <div class="text-zinc-400 pt-1 text-[11px] font-sans">
+              已构建 Amazon 与 Shopee 双平台全套规范物料，并在右侧实时编译为组件画布。
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- v0 标志性悬浮胶囊输入框 -->
+      <div class="p-4 border-t border-zinc-900 bg-black">
+        <div class="border border-zinc-800 focus-within:border-zinc-500 rounded-xl bg-zinc-950 p-2.5 transition-all">
+          <textarea placeholder="Ask QianAn to refine, edit a bullet, or generate new visuals…" rows="2" class="w-full bg-transparent text-xs text-zinc-200 placeholder:text-zinc-600 resize-none outline-none font-mono"></textarea>
+          <div class="flex justify-between items-center pt-2 border-t border-zinc-900">
+            <span class="text-[10px] font-mono text-zinc-600">Press ↵ to send</span>
+            <button class="h-6 px-2.5 rounded bg-white text-black text-xs font-semibold hover:bg-zinc-200">
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 右侧：v0 极简代码与预览画布 (58%) -->
+    <section class="flex-1 flex flex-col bg-zinc-950 overflow-hidden">
+      
+      <!-- 平台切换器 -->
+      <div class="h-11 border-b border-zinc-800 px-5 flex items-center justify-between text-xs font-mono">
+        <div class="flex items-center gap-2">
+          <button class="text-zinc-100 font-semibold border-b-2 border-white pb-2 pt-2">amazon.us</button>
+          <button class="text-zinc-500 hover:text-zinc-300 pb-2 pt-2 transition-colors">shopee.my</button>
+        </div>
+        <div class="flex items-center gap-2 text-zinc-500 text-[11px]">
+          <span>47 Rules Passed</span>
+          <span>·</span>
+          <span>198/249B Search Terms</span>
+        </div>
+      </div>
+
+      <!-- 预览区 -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-5">
+        <div class="max-w-2xl mx-auto space-y-5 font-mono text-xs">
+          
+          <div class="p-4 rounded-xl border border-zinc-800 bg-black space-y-2">
+            <div class="text-[10px] text-zinc-500 uppercase tracking-widest">TITLE</div>
+            <div class="text-sm font-semibold text-zinc-100 font-sans leading-snug">
+              FreshJuice Portable Blender 350ml, 20000RPM High Speed Personal Smoothie Maker with 6-Blade, Type-C Rechargeable Leak-Proof Mini Juicer Cup
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="rounded-xl overflow-hidden border border-zinc-800 bg-black aspect-square">
+              <img src="https://images.unsplash.com/photo-1570857502809-08184874388e?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover">
+            </div>
+            <div class="rounded-xl overflow-hidden border border-zinc-800 bg-black aspect-square">
+              <img src="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover">
+            </div>
+          </div>
+
+          <div class="p-4 rounded-xl border border-zinc-800 bg-black space-y-2 font-sans">
+            <div class="text-[10px] text-zinc-500 uppercase font-mono tracking-widest">BULLETS</div>
+            <div class="space-y-1.5 text-xs text-zinc-300 leading-relaxed">
+              <p><strong class="text-white">[20000RPM 6-BLADE]</strong> 30s quick ice crushing with pure copper motor.</p>
+              <p><strong class="text-white">[100% LEAK-PROOF]</strong> Double silicone seal guarantees zero side leakage.</p>
+              <p><strong class="text-white">[TYPE-C CHARGING]</strong> 15 blends per charge via laptop or power bank.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+</body>
+</html>

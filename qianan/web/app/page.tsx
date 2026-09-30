@@ -5,7 +5,8 @@ import Link from "next/link";
 import {
   ArrowUp, Bot, Check, ChevronRight, Copy, Download, FileArchive, FolderOpen, Globe2,
   ImagePlus, KeyRound, Layers, Menu, MessageSquarePlus, Package, PanelRight,
-  Settings2, ShieldCheck, Sliders, Sparkles, Square, Target, Trash2, X, Brain
+  Settings2, ShieldCheck, Sliders, Sparkles, Square, Target, Trash2, X, Brain,
+  AlertTriangle, CheckCircle2, ArrowRight, ShieldAlert, Terminal, Zap
 } from "lucide-react";
 import AgentTracePanel from "@/components/AgentTracePanel";
 import { useChat } from "@/hooks/useChat";
@@ -35,7 +36,7 @@ export default function HomePage() {
   const [image, setImage] = useState("");
   const [imageName, setImageName] = useState("");
   const [platforms, setPlatforms] = useState(PLATFORM_META.map((item) => item.key));
-  const [sidebarMode, setSidebarMode] = useState<"sessions" | "settings">("sessions");
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [outputOpen, setOutputOpen] = useState(false);
   const [snapshot, setSnapshot] = useState<ListingSnapshot | null>(null);
@@ -48,8 +49,54 @@ export default function HomePage() {
   const [isSample, setIsSample] = useState(false);
   const [confidentialMode, setConfidentialMode] = useState(false);
   const [copiedAll, setCopiedAll] = useState(false);
-  const [outputTab, setOutputTab] = useState<"preview" | "judge" | "swarm" | "evolution">("preview");
+  const [copiedPlatform, setCopiedPlatform] = useState<string | null>(null);
+  const [outputTab, setOutputTab] = useState<"artifacts" | "blockers" | "actions" | "evidence">("artifacts");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // 实时从产物快照中计算阻断项 (基于确定性门禁判定)
+  const blockers: Array<{
+    platform: string;
+    type: string;
+    message: string;
+    actionText: string;
+    prompt: string;
+  }> = [];
+  if (snapshot) {
+    // 1. 检查是否有请求但尚未生成的平台
+    const coveredPlatforms = new Set(snapshot.listings.map((l) => l.platform));
+    for (const p of platforms) {
+      if (!coveredPlatforms.has(p)) {
+        blockers.push({
+          platform: p,
+          type: "missing_platform",
+          message: `${p} 尚未完成文案生成`,
+          actionText: "补充生成",
+          prompt: `请帮我生成 ${p} 的专属上架文案与素材`,
+        });
+      }
+    }
+    // 2. 检查是否有阻断级合规错误或缺主图
+    for (const l of snapshot.listings) {
+      if (l.compliance_errors > 0) {
+        blockers.push({
+          platform: l.display_name || l.platform,
+          type: "compliance_error",
+          message: `${l.display_name || l.platform} 存在 ${l.compliance_errors} 项阻断级合规问题`,
+          actionText: "修复文案",
+          prompt: `请针对 ${l.display_name || l.platform} 发现的合规问题进行修订`,
+        });
+      }
+      if (!l.images || l.images.length === 0) {
+        blockers.push({
+          platform: l.display_name || l.platform,
+          type: "missing_image",
+          message: `${l.display_name || l.platform} 尚未生成电商主图`,
+          actionText: "生成主图",
+          prompt: `请为 ${l.display_name || l.platform} 生成高保真主图`,
+        });
+      }
+    }
+  }
 
   const handleCopyAll = useCallback(() => {
     if (!snapshot?.listings || snapshot.listings.length === 0) return;
@@ -122,7 +169,7 @@ export default function HomePage() {
     else localStorage.removeItem(BYOK_STORAGE_KEY);
     if (ki) localStorage.setItem("qianan_byok_dashscope_key", ki);
     else localStorage.removeItem("qianan_byok_dashscope_key");
-    setSidebarMode("sessions");
+    setSettingsOpen(false);
   };
 
   const getExtraPayload = useCallback(() => ({ platforms }), [platforms]);
@@ -222,9 +269,9 @@ export default function HomePage() {
             <PressButton className="agent-chat-round-button" aria-label="上传商品图片" onClick={() => fileRef.current?.click()}><ImagePlus size={18} /></PressButton>
             <PressButton
               className="agent-chat-setting-button"
-              aria-expanded={sidebarMode === "settings"}
+              aria-expanded={settingsOpen}
               aria-controls="chat-platform-settings"
-              onClick={() => setSidebarMode((m) => (m === "settings" ? "sessions" : "settings"))}
+              onClick={() => setSettingsOpen(true)}
             >
               <Settings2 size={15} />{platforms.length} 个平台
             </PressButton>
@@ -244,7 +291,7 @@ export default function HomePage() {
   );
 
   return (
-    <main className={`agent-chat-app ${sidebarMode === "settings" ? "has-settings-open" : ""} ${outputOpen ? "has-output" : ""}`}>
+    <main className={`agent-chat-app ${outputOpen ? "has-output" : ""}`}>
       {(demoMode || isSample) && (
         <div
           role="status"
@@ -268,7 +315,7 @@ export default function HomePage() {
               : "当前为演示模式：服务端模型额度暂不可用，实时生成会返回示例数据。在「设置」里填入你自己的百炼 API Key 即可真实生成。"}
           </span>
           {demoMode && !byokKey && (
-            <PressButton style={{ marginLeft: "auto", fontSize: 12, color: "#8A6D1F", textDecoration: "underline" }} onClick={() => setSidebarMode("settings")}>
+            <PressButton style={{ marginLeft: "auto", fontSize: 12, color: "#8A6D1F", textDecoration: "underline" }} onClick={() => setSettingsOpen(true)}>
               填入 Key
             </PressButton>
           )}
@@ -276,50 +323,33 @@ export default function HomePage() {
       )}
       {mobileMenuOpen && <button className="agent-chat-overlay" aria-label="关闭会话列表" onClick={() => setMobileMenuOpen(false)} />}
       <aside className={`agent-chat-sidebar ${mobileMenuOpen ? "is-open" : ""}`} inert={!mobileMenuOpen ? undefined : false}>
-        {sidebarMode === "settings" ? (
-          <SidebarSettings
-            onBack={() => setSidebarMode("sessions")}
-            platforms={platforms}
-            setPlatforms={setPlatforms}
-            byokKey={byokKey}
-            setByokKey={setByokKey}
-            byokImgKey={byokImgKey}
-            setByokImgKey={setByokImgKey}
-            onSaveByok={saveByok}
-            confidentialMode={confidentialMode}
-            setConfidentialMode={setConfidentialMode}
-          />
-        ) : (
-          <>
-            <Link href="/" className="agent-chat-brand"><span>岸</span><strong>千岸</strong><small>Agent</small></Link>
-            <PressButton className="agent-chat-new" onClick={newConversation}><MessageSquarePlus size={17} />新对话</PressButton>
-            <p className="agent-chat-side-label">最近对话</p>
-            <div className="agent-chat-sessions">
-              {chat.sessions.length === 0 && <p>你的上新对话会保存在这里</p>}
-              {chat.sessions.map((session) => (
-                <div key={session.id} className={session.id === chat.currentSessionId ? "is-active" : ""}>
-                  <button onClick={() => { chat.selectSession(session.id); setMobileMenuOpen(false); }}>
-                    <span>{session.title}</span><small>{timeAgo(session.createdAt)}</small>
-                  </button>
-                  <button aria-label={`删除 ${session.title}`} onClick={() => chat.deleteSession(session.id)}><Trash2 size={13} /></button>
-                </div>
-              ))}
-            </div>
-            <nav className="agent-chat-nav" aria-label="产品导航">
-              <button
-                type="button"
-                onClick={() => setSidebarMode("settings")}
-                className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[#ecece8] text-[#6f6f69] hover:text-[#252525] text-[11px] font-medium w-full text-left transition-colors"
-              >
-                <Sliders size={15} />Agent 运行配置
+        <Link href="/" className="agent-chat-brand"><span>岸</span><strong>千岸</strong><small>Agent</small></Link>
+        <PressButton className="agent-chat-new" onClick={newConversation}><MessageSquarePlus size={17} />新对话</PressButton>
+        <p className="agent-chat-side-label">最近对话</p>
+        <div className="agent-chat-sessions">
+          {chat.sessions.length === 0 && <p>你的上新对话会保存在这里</p>}
+          {chat.sessions.map((session) => (
+            <div key={session.id} className={session.id === chat.currentSessionId ? "is-active" : ""}>
+              <button onClick={() => { chat.selectSession(session.id); setMobileMenuOpen(false); }}>
+                <span>{session.title}</span><small>{timeAgo(session.createdAt)}</small>
               </button>
-              <Link href="/workbench"><Layers size={16} />任务工作台</Link>
-              <Link href="/files"><FolderOpen size={16} />文件管理</Link>
-              <Link href="/rules"><ShieldCheck size={16} />平台规则</Link>
-              <Link href="/login"><Package size={16} />账户与登录</Link>
-            </nav>
-          </>
-        )}
+              <button aria-label={`删除 ${session.title}`} onClick={() => chat.deleteSession(session.id)}><Trash2 size={13} /></button>
+            </div>
+          ))}
+        </div>
+        <nav className="agent-chat-nav" aria-label="产品导航">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen(true)}
+            className="flex items-center gap-2.5 px-2 py-1.5 rounded-md hover:bg-[#ecece8] text-[#6f6f69] hover:text-[#252525] text-[11px] font-medium w-full text-left transition-colors"
+          >
+            <Sliders size={15} />Agent 运行配置
+          </button>
+          <Link href="/workbench/"><Layers size={16} />任务工作台</Link>
+          <Link href="/files/"><FolderOpen size={16} />文件管理</Link>
+          <Link href="/rules/"><ShieldCheck size={16} />平台规则</Link>
+          <Link href="/login/"><Package size={16} />账户与登录</Link>
+        </nav>
       </aside>
 
       <section className="agent-chat-main">
@@ -339,7 +369,7 @@ export default function HomePage() {
               <Sparkles size={16} />{sampleLoading ? "载入中…" : "看真实示例"}
             </PressButton>
             {snapshot && <PressButton className="agent-chat-output-toggle" onClick={() => setOutputOpen((value) => !value)}><PanelRight size={16} />{outputOpen ? "收起产物" : "查看产物"}</PressButton>}
-            <Link href="/workbench">全部任务 <ChevronRight size={14} /></Link>
+            <Link href="/workbench/">全部任务 <ChevronRight size={14} /></Link>
           </div>
         </header>
 
@@ -353,7 +383,18 @@ export default function HomePage() {
             </Enter>
             <Enter delay={0.08} className="agent-chat-empty-composer">{composer}</Enter>
             <div className="agent-chat-quick-starts">
-              {QUICK_STARTS.map((prompt) => <PressButton key={prompt} onClick={() => setInput(prompt)}>{prompt}<ArrowUp size={13} /></PressButton>)}
+              {QUICK_STARTS.map((prompt) => (
+                <PressButton
+                  key={prompt}
+                  onClick={() => {
+                    setInput("");
+                    void chat.sendMessage(prompt);
+                  }}
+                >
+                  {prompt}
+                  <ArrowUp size={13} />
+                </PressButton>
+              ))}
             </div>
           </div>
         ) : (
@@ -376,51 +417,65 @@ export default function HomePage() {
             </PressButton>
           </header>
           
-          {/* 三栏工作台 Tab 切换页签 (参考 mu 经典看板结构) */}
+          {/* 跨境卖家工作台驾驶舱 Tab 切换页签 (对齐 mu.app 核心工作台) */}
           <div className="flex items-center border-b border-[#e9e9e4] bg-[#f2f2ed] px-2 pt-2 gap-1 text-xs overflow-x-auto">
             <button
               type="button"
-              onClick={() => setOutputTab("preview")}
-              className={`px-2.5 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap ${
-                outputTab === "preview"
-                  ? "bg-white border-[#deded9] text-[#252525]"
+              onClick={() => setOutputTab("artifacts")}
+              className={`px-3 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap flex items-center gap-1.5 ${
+                outputTab === "artifacts"
+                  ? "bg-white border-[#deded9] text-[#252525] shadow-xs"
                   : "border-transparent text-[#6f6f69] hover:text-[#252525]"
               }`}
             >
-              看板预览
+              <Package size={13} />
+              <span>产物资产</span>
+              {snapshot?.listings.length ? (
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 font-bold">
+                  {snapshot.listings.length}
+                </span>
+              ) : null}
             </button>
             <button
               type="button"
-              onClick={() => setOutputTab("judge")}
-              className={`px-2.5 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap ${
-                outputTab === "judge"
-                  ? "bg-white border-[#deded9] text-[#252525]"
+              onClick={() => setOutputTab("blockers")}
+              className={`px-3 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap flex items-center gap-1.5 ${
+                outputTab === "blockers"
+                  ? "bg-white border-[#deded9] text-[#252525] shadow-xs"
                   : "border-transparent text-[#6f6f69] hover:text-[#252525]"
               }`}
             >
-              判定核裁决
+              <ShieldAlert size={13} className={blockers.length > 0 ? "text-amber-600" : "text-emerald-600"} />
+              <span>阻断排雷</span>
+              {blockers.length > 0 && (
+                <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 font-bold">
+                  {blockers.length}
+                </span>
+              )}
             </button>
             <button
               type="button"
-              onClick={() => setOutputTab("swarm")}
-              className={`px-2.5 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap ${
-                outputTab === "swarm"
-                  ? "bg-white border-[#deded9] text-[#252525]"
+              onClick={() => setOutputTab("actions")}
+              className={`px-3 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap flex items-center gap-1.5 ${
+                outputTab === "actions"
+                  ? "bg-white border-[#deded9] text-[#252525] shadow-xs"
                   : "border-transparent text-[#6f6f69] hover:text-[#252525]"
               }`}
             >
-              蜂群 Trace
+              <Zap size={13} />
+              <span>下一步决策</span>
             </button>
             <button
               type="button"
-              onClick={() => setOutputTab("evolution")}
-              className={`px-2.5 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap ${
-                outputTab === "evolution"
-                  ? "bg-white border-[#deded9] text-[#252525]"
+              onClick={() => setOutputTab("evidence")}
+              className={`px-3 py-1.5 rounded-t-md font-medium transition-colors border-t border-x whitespace-nowrap flex items-center gap-1.5 ${
+                outputTab === "evidence"
+                  ? "bg-white border-[#deded9] text-[#252525] shadow-xs"
                   : "border-transparent text-[#6f6f69] hover:text-[#252525]"
               }`}
             >
-              自进化经验
+              <Terminal size={13} />
+              <span>审计留痕</span>
             </button>
           </div>
 
@@ -428,78 +483,115 @@ export default function HomePage() {
             <span style={{ width: `${Math.max(4, Math.round((snapshot.progress || 0) * 100))}%` }} />
           </div>
 
-          {outputTab === "judge" ? (
+          {outputTab === "blockers" ? (
             <div className="p-4 overflow-y-auto flex-1 bg-white space-y-3">
-              <div className="p-3 rounded-lg bg-[#f9fafb] border border-[#e5e7eb] text-xs space-y-1.5">
-                <div className="font-semibold text-gray-800 flex items-center gap-1.5">
-                  <ShieldCheck size={14} className="text-emerald-600" />
-                  <span>判定核 (Judgment Kernel) 裁决账本</span>
-                </div>
-                <p className="text-[11px] text-gray-500">
-                  基于判定核哲学：80% 的前置校验与合规风险由确定性 Judge 处理，大模型专注生成。
-                </p>
+              <div className="flex items-center justify-between text-xs text-gray-500 pb-1 border-b border-gray-100">
+                <span>实时合规门禁扫描状态</span>
+                <span className="font-mono text-[10px]">47 项规则引擎排雷</span>
               </div>
 
-              <div className="space-y-2 text-xs">
-                <div className="p-2.5 rounded-md border border-emerald-200 bg-emerald-50/50 space-y-1">
-                  <div className="flex items-center justify-between font-mono text-[11px]">
-                    <span className="font-semibold text-emerald-800">input.preflight</span>
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold text-[9.5px]">ALLOWED (1.0)</span>
-                  </div>
-                  <div className="text-[11px] text-emerald-700">裁决原因: 输入字段符合准入要求，触发标准思考级别</div>
-                </div>
-
-                <div className="p-2.5 rounded-md border border-emerald-200 bg-emerald-50/50 space-y-1">
-                  <div className="flex items-center justify-between font-mono text-[11px]">
-                    <span className="font-semibold text-emerald-800">tool.risk</span>
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold text-[9.5px]">PASSED (1.0)</span>
-                  </div>
-                  <div className="text-[11px] text-emerald-700">裁决原因: 47项确定性排雷通过 (零阻断级违禁词)</div>
-                </div>
-
-                <div className="p-2.5 rounded-md border border-emerald-200 bg-emerald-50/50 space-y-1">
-                  <div className="flex items-center justify-between font-mono text-[11px]">
-                    <span className="font-semibold text-emerald-800">turn.completion</span>
-                    <span className="px-1.5 py-0.5 rounded bg-emerald-200 text-emerald-900 font-bold text-[9.5px]">COMPLETE (1.0)</span>
-                  </div>
-                  <div className="text-[11px] text-emerald-700">裁决原因: 目标平台产物全覆盖、通过独立审核且零阻断级错误</div>
-                </div>
-              </div>
-            </div>
-          ) : outputTab === "swarm" ? (
-            <div className="p-3 overflow-y-auto flex-1 bg-[#1a1b18]">
-              <AgentTracePanel events={chat.currentSession?.trace || []} running={chat.isLoading} variant="dark" />
-            </div>
-          ) : outputTab === "evolution" ? (
-            <div className="p-4 overflow-y-auto flex-1 bg-white space-y-3">
-              <div className="p-3 rounded-lg bg-[#f0f4ec] border border-[#d2e0ca] text-xs text-[#3d5732]">
-                <div className="font-semibold mb-1 flex items-center gap-1.5">
-                  <Sparkles size={14} />
-                  <span>店铺进化 SOP 知识库</span>
-                </div>
-                <p className="text-[11px] opacity-80">Evolution Agent 自动从过往上新自愈记录与买家反馈中蒸馏高转化经验。</p>
-              </div>
-
-              {snapshot.listings.flatMap(l => l.pain_point_mapping || []).length > 0 ? (
+              {blockers.length > 0 ? (
                 <div className="space-y-2">
-                  <div className="text-[11px] font-mono uppercase tracking-wider text-gray-500">已沉淀抗性规则</div>
-                  {snapshot.listings.flatMap(l => l.pain_point_mapping || []).map((m, idx) => (
-                    <div key={idx} className="p-2.5 rounded-md border border-[#e5e5e0] bg-[#fafaf8] text-xs space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-amber-800">[{m.bullet_tag}] 防御标签</span>
-                        <span className="text-[10px] text-gray-400 font-mono">Hit Count: 1</span>
+                  <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-xs text-amber-800 space-y-1">
+                    <div className="font-semibold flex items-center gap-1.5">
+                      <AlertTriangle size={14} className="text-amber-600" />
+                      <span>检测到 {blockers.length} 项需处理的阻断问题</span>
+                    </div>
+                    <p className="text-[11px] text-amber-700">交付门禁要求所有目标平台产物必须齐全、且无阻断级错误方可放行交付。</p>
+                  </div>
+
+                  {blockers.map((b, idx) => (
+                    <div key={idx} className="p-3 rounded-xl border border-gray-200 bg-[#fafaf8] flex items-center justify-between gap-3 text-xs">
+                      <div>
+                        <div className="font-semibold text-gray-900">{b.platform}</div>
+                        <div className="text-[11px] text-gray-500 mt-0.5">{b.message}</div>
                       </div>
-                      <div className="text-[11px] text-gray-600">痛点感应: {m.complaint}</div>
-                      <div className="text-[11px] text-emerald-700 font-medium">抗性武器: {m.counter_feature}</div>
+                      <button
+                        type="button"
+                        onClick={() => void chat.sendMessage(b.prompt)}
+                        className="px-3 py-1.5 rounded-lg bg-[#272824] hover:bg-[#414638] text-white text-xs font-medium flex-shrink-0 transition-colors"
+                      >
+                        {b.actionText}
+                      </button>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="py-12 text-center text-xs text-gray-400 space-y-2">
-                  <Brain className="mx-auto text-gray-300" size={32} />
-                  <p>暂无沉淀的记忆教训，随着上新进行，Evolution Agent 将自动提炼。</p>
+                <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2.5 text-xs">
+                  <div className="flex items-center gap-2 text-emerald-900 font-semibold text-sm">
+                    <CheckCircle2 size={16} className="text-emerald-600" />
+                    <span>✓ 判定核全量排雷通过 (0 阻断硬伤)</span>
+                  </div>
+                  <p className="text-emerald-800 leading-relaxed text-[11px]">
+                    已达成上架交付标准：目标平台 100% 覆盖 · 0 处绝对化营销词 · 0 处医疗虚假宣称 · Amazon A9 249B 限长达标。
+                  </p>
+                  <div className="pt-1 text-[10px] text-emerald-700 font-mono">
+                    门禁裁决: ALLOWED · 准许封包发布
+                  </div>
                 </div>
               )}
+            </div>
+          ) : outputTab === "actions" ? (
+            <div className="p-4 overflow-y-auto flex-1 bg-white space-y-3">
+              <div className="text-xs text-gray-500 pb-1 border-b border-gray-100">
+                Agent / Judge 智能决策建议
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div className="p-3.5 rounded-xl border border-gray-200 bg-[#f8f9fa] space-y-2">
+                  <div className="font-semibold text-gray-900 flex items-center gap-1.5">
+                    <Download size={14} className="text-cyan-700" />
+                    <span>全套上架包资产下载</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    导出全部平台的 Listing 文案、五点卖点、A9 后台词与商品主图资产清单。
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleExportAll}
+                    className="w-full py-2 rounded-lg bg-[#272824] hover:bg-[#414638] text-white text-xs font-medium transition-colors"
+                  >
+                    下载全套离线资产包 (JSON)
+                  </button>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-200 bg-[#f8f9fa] space-y-2">
+                  <div className="font-semibold text-gray-900 flex items-center gap-1.5">
+                    <Sliders size={14} className="text-emerald-700" />
+                    <span>5 岸单位经济利润测算</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    测算采购、头程空运/海运、FBA 尾程与各平台佣金扣除后的保本售价与净利率。
+                  </p>
+                  <Link
+                    href="/workbench/"
+                    className="w-full py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-800 text-xs font-medium block text-center transition-colors"
+                  >
+                    前往工作台测算经济模型 →
+                  </Link>
+                </div>
+
+                <div className="p-3.5 rounded-xl border border-gray-200 bg-[#f8f9fa] space-y-2">
+                  <div className="font-semibold text-gray-900 flex items-center gap-1.5">
+                    <Sparkles size={14} className="text-amber-600" />
+                    <span>强化短视频带货 Hook</span>
+                  </div>
+                  <p className="text-[11px] text-gray-500">
+                    针对 TikTok Shop 与东南亚移动端，为文案前 3 秒生成极具吸睛度的短视频脚本。
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => void chat.sendMessage("请针对东南亚移动端与 TikTok Shop 优化极具吸睛感的短视频 Hook 卖点")}
+                    className="w-full py-2 rounded-lg border border-gray-300 hover:bg-gray-50 text-gray-800 text-xs font-medium transition-colors"
+                  >
+                    一键生成短视频带货文案
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : outputTab === "evidence" ? (
+            <div className="p-3 overflow-y-auto flex-1 bg-[#1a1b18]">
+              <AgentTracePanel events={chat.currentSession?.trace || []} running={chat.isLoading} variant="dark" />
             </div>
           ) : (
             <>
@@ -641,6 +733,8 @@ export default function HomePage() {
                           const bulletsText = listing.bullets ? listing.bullets.join("\n• ") : "";
                           const text = `${listing.title}\n\n• ${bulletsText}\n\n${listing.description || ""}`;
                           navigator.clipboard.writeText(text);
+                          setCopiedPlatform(listing.platform);
+                          setTimeout(() => setCopiedPlatform(null), 2000);
                         }}
                         style={{
                           display: "inline-flex",
@@ -650,12 +744,14 @@ export default function HomePage() {
                           padding: "4px 8px",
                           borderRadius: 6,
                           border: "1px solid #deded9",
-                          background: "#fafaf8",
-                          color: "#555",
+                          background: copiedPlatform === listing.platform ? "#e8f5e9" : "#fafaf8",
+                          color: copiedPlatform === listing.platform ? "#2e7d32" : "#555",
                           cursor: "pointer",
+                          transition: "all 0.2s ease",
                         }}
                       >
-                        <Copy size={11} /> 复制本文案
+                        <Copy size={11} />
+                        <span>{copiedPlatform === listing.platform ? "✓ 已复制" : "复制本文案"}</span>
                       </button>
                     </div>
                   </article>
@@ -666,6 +762,21 @@ export default function HomePage() {
           </>
           )}
         </aside>
+      )}
+
+      {settingsOpen && (
+        <SidebarSettings
+          onBack={() => setSettingsOpen(false)}
+          platforms={platforms}
+          setPlatforms={setPlatforms}
+          byokKey={byokKey}
+          setByokKey={setByokKey}
+          byokImgKey={byokImgKey}
+          setByokImgKey={setByokImgKey}
+          onSaveByok={saveByok}
+          confidentialMode={confidentialMode}
+          setConfidentialMode={setConfidentialMode}
+        />
       )}
     </main>
   );

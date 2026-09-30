@@ -653,6 +653,9 @@ async def run_chat_agent(
         return
 
     stop_check = should_stop or (lambda: False)
+    # 流式回调：模型 token 级输出即时推前端（ChatGPT 式打字机）；
+    # 网关不支持流式时工具循环内部自动降级非流式，行为与改造前一致。
+    text_delta = (lambda chunk: on_event("text_delta", chunk)) if on_event else None
     try:
         result = await run_tool_loop(
             client,
@@ -662,6 +665,7 @@ async def run_chat_agent(
             max_rounds=CHAT_MAX_ROUNDS,
             deadline_s=CHAT_DEADLINE_S,
             should_stop=stop_check,
+            on_text_delta=text_delta,
             on_event=lambda name, args, out: record(
                 task, "build", name, json.dumps(args, ensure_ascii=False)[:60], out[:120]
             ),

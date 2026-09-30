@@ -191,6 +191,14 @@ class BailianLike(Protocol):
     def video_gen(self, image_url: str, prompt: str, model: str | None = None) -> str: ...
 
 
+class _StreamUnsupported(RuntimeError):
+    """网关不支持流式 chat（或请求在首字节前失败）。
+
+    语义契约：**抛出时保证尚未推送任何 delta** —— 调用方（工具循环）
+    可安全降级到非流式重试，不会造成前端文本重复。
+    """
+
+
 class _AsyncImageUnsupported(RuntimeError):
     """网关不支持异步 images/generations 任务接口（用于回退 DashScope chat 格式）。"""
 
@@ -401,6 +409,117 @@ class BailianClient:
         )
         return data["choices"][0]["message"]
 
+    def chat_with_tools_stream(
+        self,
+        messages: list[dict],
+        tools: list[dict],
+        model: str | None = None,
+        on_delta=None,
+    ) -> dict:
+        """流式 function calling：逐 token 回调 on_delta(text)，聚合返回与 chat_with_tools 同构的 message。
+
+        设计：流式只影响「字节何时到达」，不影响循环逻辑 —— 返回值结构与非流式完全一致，
+        调用方的 tool_calls / 消息拼接逻辑零改动。
+
+        异常语义：
+        - 未推送任何 delta 即失败（非 200 / 连接错误 / 响应非 SSE）→ 抛 _StreamUnsupported，
+          调用方可安全降级非流式重试（不产生重复文本）；
+        - 已推送 delta 后中途断流 → 原异常上抛（不可重试，重试会重复）。
+        """
+        payload = {
+            "model": model or TEXT_MODEL,
+            "enable_thinking": False,
+            "messages": messages,
+            "tools": tools,
+            "tool_choice": "auto",
+            "stream": True,
+        }
+        # 连接阶段重试与 _post 同策略；流式只在「未推 delta」时重试才安全
+        resp = None
+        pushed = False
+        for attempt in range(1, _MAX_ATTEMPTS + 1):
+            try:
+                resp = _session.post(
+                    f"{BASE_URL}/chat/completions",
+                    headers=_headers(),
+                    json=payload,
+                    timeout=(TIMEOUT, 300),
+                    stream=True,
+                )
+                break
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                if attempt == _MAX_ATTEMPTS:
+                    raise _StreamUnsupported(f"流式连接失败: {type(exc).__name__}: {exc}") from exc
+                time.sleep(_retry_delay(None, attempt))
+        if resp is None:
+            raise _StreamUnsupported("流式连接失败")
+        if _is_fatal_error(resp.status_code, resp.text or ""):
+            raise BailianAuthFatal(
+                f"流式调用鉴权/额度致命错误({resp.status_code}): {(resp.text or '')[:300]}"
+            )
+        if resp.status_code != 200:
+            raise _StreamUnsupported(f"流式请求失败({resp.status_code}): {_resp_preview(resp)}")
+
+        content_parts: list[str] = []
+        tool_acc: dict[int, dict] = {}  # index -> {"id", "name", "args_parts"}
+
+        def _emit(text: str) -> None:
+            nonlocal pushed
+            if not text:
+                return
+            pushed = True
+            content_parts.append(text)
+            if on_delta:
+                try:
+                    on_delta(text)
+                except Exception:  # noqa: BLE001 —— 推送失败不影响模型输出采集
+                    logger.warning("流式 delta 回调异常（已忽略）", exc_info=True)
+
+        try:
+            for raw in resp.iter_lines(decode_unicode=True):
+                if not raw:
+                    continue
+                line = raw.strip()
+                if not line.startswith("data:"):
+                    continue
+                data = line[5:].strip()
+                if not data or data == "[DONE]":
+                    continue
+                try:
+                    chunk = json.loads(data)
+                except json.JSONDecodeError:
+                    continue  # 个别网关会插入注释/心跳行，跳过
+                if "choices" not in chunk:
+                    continue
+                for choice in chunk.get("choices") or []:
+                    delta = choice.get("delta") or {}
+                    _emit(delta.get("content") or "")
+                    for tc in delta.get("tool_calls") or []:
+                        idx = int(tc.get("index") or 0)
+                        slot = tool_acc.setdefault(idx, {"id": "", "name": "", "args_parts": []})
+                        if tc.get("id"):
+                            slot["id"] = tc["id"]
+                        fn = tc.get("function") or {}
+                        if fn.get("name"):
+                            slot["name"] = fn["name"]
+                        if fn.get("arguments"):
+                            slot["args_parts"].append(fn["arguments"])
+        except Exception as exc:  # noqa: BLE001
+            # 已推 delta → 不可重试（会重复）；未推送 → 交给上层降级
+            if pushed:
+                raise
+            raise _StreamUnsupported(f"流式读取中断: {type(exc).__name__}: {exc}") from exc
+
+        tool_calls = [
+            {
+                "id": slot["id"] or f"call_{idx}",
+                "type": "function",
+                "function": {"name": slot["name"], "arguments": "".join(slot["args_parts"]) or "{}"},
+            }
+            for idx, slot in sorted(tool_acc.items())
+        ]
+        return {"content": "".join(content_parts), "tool_calls": tool_calls}
+
     def image_gen(self, prompt: str, model: str | None = None, ref_image: str | None = None) -> str:
         """图片生成，兼容三类网关：
 
@@ -423,9 +542,9 @@ class BailianClient:
             return self._async_image_gen(prompt, model, ref_image)
         except _AsyncImageUnsupported:
             pass  # 网关不支持异步任务接口 → 回退 DashScope chat 格式
-        content: list[dict] = [{"text": prompt}]
+        content: list[dict] = [{"type": "text", "text": prompt}]
         if ref_image:
-            content.append({"image": ref_image})
+            content.append({"type": "image_url", "image_url": {"url": ref_image}})
         data = _post(
             {
                 "model": model,
@@ -786,6 +905,28 @@ class _ResilientClient:
 
     def chat_with_tools(self, *a, **k):
         return self._guard("chat_with_tools", *a, **k)
+
+    def chat_with_tools_stream(self, messages, tools, model=None, on_delta=None):
+        """流式转发。契约与 BailianClient.chat_with_tools_stream 一致。
+
+        - 已降级 Mock：mock 无流式能力 → 抛 _StreamUnsupported，由工具循环降级非流式；
+        - 未降级：转发真实客户端的流式实现；
+        - 中途遇 fatal（如欠费）：按全局降级语义切换 Mock，并回以 mock 的非流式结果
+          （工具循环无需感知降级；后续轮次经 _StreamUnsupported 自然走非流式）。
+        """
+        if self._mock is not None:
+            raise _StreamUnsupported("已降级 Mock，无流式能力")
+        try:
+            return self._real.chat_with_tools_stream(
+                messages, tools, model=model, on_delta=on_delta
+            )
+        except BailianAuthFatal as exc:
+            logger.warning(
+                "百炼网关鉴权/额度致命错误，自动降级 Mock 模式以保证演示可用：%s", exc
+            )
+            self._mock = MockBailianClient()
+            self.is_mock = True
+            return self._mock.chat_with_tools(messages, tools)
 
     def vision(self, *a, **k):
         return self._guard("vision", *a, **k)

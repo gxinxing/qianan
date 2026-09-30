@@ -51,6 +51,8 @@ function getStageIndex(stage: string): number {
 /* ---- 单个平台产物卡片 ---- */
 function ListingCard({ item }: { item: ListingItem }) {
   const [expanded, setExpanded] = useState(false);
+  const [copiedSearchTerms, setCopiedSearchTerms] = useState(false);
+  const [copiedCard, setCopiedCard] = useState(false);
   const complianceColor = item.compliance_passed
     ? "text-emerald-400"
     : "text-red-400";
@@ -225,25 +227,37 @@ function ListingCard({ item }: { item: ListingItem }) {
               </div>
               <button
                 type="button"
-                className="w-full flex items-center justify-center gap-1 py-1 rounded bg-cyan-900/30 hover:bg-cyan-800/40 text-cyan-300 text-[10px] border border-cyan-700/40 transition-colors"
+                className={`w-full flex items-center justify-center gap-1 py-1 rounded text-[10px] border transition-colors ${
+                  copiedSearchTerms
+                    ? "bg-emerald-900/40 text-emerald-300 border-emerald-700/50"
+                    : "bg-cyan-900/30 hover:bg-cyan-800/40 text-cyan-300 border-cyan-700/40"
+                }`}
                 onClick={() => {
                   navigator.clipboard.writeText(item.search_terms || "");
+                  setCopiedSearchTerms(true);
+                  setTimeout(() => setCopiedSearchTerms(false), 2000);
                 }}
               >
-                <Copy size={10} /> 复制 A9 搜索词
+                <Copy size={10} /> {copiedSearchTerms ? "✓ 已复制搜索词" : "复制 A9 搜索词"}
               </button>
             </div>
           )}
 
           {/* 复制按钮 */}
           <button
-            className="w-full flex items-center justify-center gap-1 py-1.5 rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs transition-colors"
+            className={`w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs transition-colors ${
+              copiedCard
+                ? "bg-emerald-800 text-emerald-100"
+                : "bg-gray-700 hover:bg-gray-600 text-gray-300"
+            }`}
             onClick={() => {
               const text = `${item.title}\n\n${item.bullets.map((b) => `• ${b}`).join("\n")}\n\n${item.description}`;
               navigator.clipboard.writeText(text);
+              setCopiedCard(true);
+              setTimeout(() => setCopiedCard(false), 2000);
             }}
           >
-            <Copy size={12} /> 复制文案
+            <Copy size={12} /> {copiedCard ? "✓ 已复制文案" : "复制文案"}
           </button>
         </div>
       )}

@@ -96,6 +96,10 @@ if _ENABLE_CORS:
     _BASE_ORIGINS = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        # 本机常见占用下的次选端口（next dev -p 3001）——曾因缺 3001 导致本地浏览器
+        # preflight 被拒、前端 Failed to fetch，默认白名单直接带上
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
         "https://ai-native-d5gfb0dm2a28d1fe9-1419921079.tcloudbaseapp.com",
     ]
     _EXTRA_ORIGINS = [o.strip() for o in os.getenv("QIANAN_CORS_ORIGINS", "").split(",") if o.strip()]
@@ -673,6 +677,9 @@ async def chat(req: ChatRequest, request: Request, user: dict = Depends(cbauth.r
             nonlocal pushed_done
             if evt_type == "text":
                 queue.put_nowait(_sse_line({"type": "text", "content": content}))
+            elif evt_type == "text_delta":
+                # 模型 token 级增量（ChatGPT 式打字机）；前端累加渲染，不新起文本块
+                queue.put_nowait(_sse_line({"type": "text_delta", "content": content}))
             elif evt_type == "listing":
                 # 单平台产物更新。事件名统一为 `listing_update` —— 此前外层写死 "listing"，
                 # 会把 payload 自带的 type 覆盖掉，前端只能靠 data.listings 是否存在来猜，

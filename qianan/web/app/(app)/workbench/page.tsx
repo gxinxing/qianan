@@ -268,7 +268,7 @@ export default function WorkbenchPage() {
       setProductName("");
       setSellingPoints("");
       load();
-      window.open(`/result?taskId=${task_id}`, "_blank");
+      window.open(`/result/?taskId=${task_id}`, "_blank");
     } catch (e) {
       setError(`提交失败：${String(e)}`);
     } finally {
@@ -674,7 +674,7 @@ export default function WorkbenchPage() {
                     </span>
                     {b.task_id && (
                       <Link
-                        href={`/result?taskId=${b.task_id}`}
+                        href={`/result/?taskId=${b.task_id}`}
                         className="shrink-0 text-brand-700 transition duration-150 hover:underline"
                       >
                         查看
@@ -705,7 +705,7 @@ export default function WorkbenchPage() {
                         <span className="font-mono text-[11px] text-ink-400">{t.stage}</span>
                       </div>
                       <Link
-                        href={`/result?taskId=${t.task_id}`}
+                        href={`/result/?taskId=${t.task_id}`}
                         className="shrink-0 text-xs text-brand-700 transition duration-150 hover:text-brand-800 hover:underline"
                       >
                         查看流水线 →
@@ -836,13 +836,13 @@ export default function WorkbenchPage() {
                     </span>
                     <div className="flex shrink-0 gap-2 text-xs">
                       <Link
-                        href={`/result?taskId=${pkg.task_id}`}
+                        href={`/result/?taskId=${pkg.task_id}`}
                         className="text-brand-700 transition duration-150 hover:text-brand-800 hover:underline"
                       >
                         查看
                       </Link>
                       <Link
-                        href="/files"
+                        href="/files/"
                         className="text-ink-500 transition duration-150 hover:text-ink-700 hover:underline"
                       >
                         文件 →

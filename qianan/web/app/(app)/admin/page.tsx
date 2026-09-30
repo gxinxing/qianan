@@ -204,7 +204,7 @@ export default function AdminPage() {
                     <p className="text-sm font-medium text-red-700">
                       {metrics.anomaly_count} 个商品 CTR 跌破基线，已作为第三证据源注入进化 Agent
                     </p>
-                    <Link href="/agent" className="ml-auto text-xs font-medium text-red-600 underline underline-offset-2 hover:text-red-700">
+                    <Link href="/agent/" className="ml-auto text-xs font-medium text-red-600 underline underline-offset-2 hover:text-red-700">
                       查看进化提案 →
                     </Link>
                   </div>
@@ -275,7 +275,7 @@ export default function AdminPage() {
                                   live 页 ↗
                                 </a>
                                 {m.task_id && (
-                                  <Link href={`/result?taskId=${m.task_id}`} className="text-ink-400 hover:text-ink-600">
+                                  <Link href={`/result/?taskId=${m.task_id}`} className="text-ink-400 hover:text-ink-600">
                                     任务
                                   </Link>
                                 )}
@@ -318,7 +318,7 @@ export default function AdminPage() {
                           <tr key={t.task_id} className="border-b border-ink-100 last:border-0 transition duration-150 hover:bg-ink-50">
                             <td className="py-2.5 pr-4">
                               <Link
-                                href={`/result?taskId=${t.task_id}`}
+                                href={`/result/?taskId=${t.task_id}`}
                                 className="font-medium text-ink-800 transition duration-150 hover:text-brand-700"
                               >
                                 {t.product_name}

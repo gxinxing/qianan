@@ -9,7 +9,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { Message, ContentBlock, ToolCall, ListingSnapshot, ListingItem } from "../lib/chat-types";
 import { useSessions } from "./useSessions";
-import { API_BASE, qfetch } from "../lib/api";
+import { API_BASE, qfetch, type TraceEvent } from "../lib/api";
 
 export interface UseChatOptions {
   /** 额外请求体字段，由调用方从产品表单收集 */
@@ -178,6 +178,14 @@ export function useChat(options: UseChatOptions = {}) {
                 continue;
               }
 
+              if (data.type === "text_delta") {
+                // 模型 token 级增量（ChatGPT 式打字机）：累加到当前文本实时渲染，
+                // 后续 trace 事件会把 currentText 结转成独立文本块（与整段 text 事件兼容）
+                currentText += data.content || "";
+                flush();
+                continue;
+              }
+
               if (data.type === "trace") {
                 // 工具调用追踪
                 if (currentText) {
@@ -197,6 +205,18 @@ export function useChat(options: UseChatOptions = {}) {
                 };
                 toolCalls.push(tc);
                 contentBlocks.push({ type: "tool_use", toolCall: tc });
+
+                // 同步写回当前会话的 trace 数组，驱动右侧「审计留痕」实时面板
+                const traceEvt: TraceEvent = {
+                  ts: Date.now() / 1000,
+                  phase: (data.phase || "build") as any,
+                  tool: data.tool || "agent",
+                  args_summary: typeof data.args === "string" ? data.args : JSON.stringify(data.args || ""),
+                  result_summary: typeof data.result === "string" ? data.result : JSON.stringify(data.result || ""),
+                  status: (data.status || "completed") as any,
+                };
+                sessions.appendTrace(sessionId, traceEvt);
+
                 flush();
                 continue;
               }

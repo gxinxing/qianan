@@ -9,12 +9,26 @@ import json
 import logging
 import time
 
-from ..bailian.client import BailianLike
+from ..bailian.client import BailianLike, _StreamUnsupported
 from .registry import ToolSpec, openai_schema
 
 logger = logging.getLogger(__name__)
 
 TOOL_RESULT_LIMIT = 2000
+
+
+async def _call_model(client, messages, schemas, on_text_delta):
+    """一次模型调用：优先流式（token 级回调），不支持则降级非流式。
+
+    降级安全性由 _StreamUnsupported 的契约保证（抛出时保证未推过任何 delta）。
+    """
+    stream_fn = getattr(client, "chat_with_tools_stream", None)
+    if stream_fn is not None and on_text_delta:
+        try:
+            return await asyncio.to_thread(stream_fn, messages, schemas, on_delta=on_text_delta)
+        except _StreamUnsupported as exc:
+            logger.info("网关不支持流式 chat，降级非流式：%s", exc)
+    return await asyncio.to_thread(client.chat_with_tools, messages, schemas)
 
 
 async def run_tool_loop(
@@ -26,6 +40,7 @@ async def run_tool_loop(
     deadline_s: float = 40.0,
     on_event=None,
     should_stop=None,
+    on_text_delta=None,
 ) -> dict:
     """执行工具循环。
 
@@ -37,6 +52,9 @@ async def run_tool_loop(
 
     should_stop: 返回 True 时立即停止。用于「用户点了停止」时真正中断后台 Agent ——
     否则断开前端 fetch 只是不再接收事件，模型调用仍在继续烧额度。
+
+    on_text_delta: 流式回调（token 级）。传入时优先走 client.chat_with_tools_stream；
+    客户端无流式能力 / 网关不支持（_StreamUnsupported）时自动降级非流式，零回归。
     """
     result = {
         "content": None,
@@ -67,7 +85,7 @@ async def run_tool_loop(
             result["fallback"], result["reason"] = True, f"超墙钟预算 {deadline_s:.0f}s"
             return result
         try:
-            msg = await asyncio.to_thread(client.chat_with_tools, messages, schemas)
+            msg = await _call_model(client, messages, schemas, on_text_delta)
         except Exception as exc:  # noqa: BLE001 —— 网关异常即回退
             logger.warning("工具循环网关异常：%s", exc)
             result["fallback"], result["reason"] = True, f"网关异常: {exc}"

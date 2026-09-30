@@ -36,7 +36,7 @@ export default function RegisterPage() {
     try {
       await signUp(username.trim(), password);
       setDone(true);
-      setTimeout(() => router.replace("/workbench"), 900);
+      setTimeout(() => router.replace("/workbench/"), 900);
     } catch (err: any) {
       const msg = err?.message || err?.error_description || "注册失败，请更换用户名重试";
       setError(msg);
@@ -121,7 +121,7 @@ export default function RegisterPage() {
 
         <p className="mt-5 text-center text-[13px] text-ink-400">
           已有账户？{" "}
-          <Link href="/login" className="font-medium text-brand-700 hover:text-brand-800">
+          <Link href="/login/" className="font-medium text-brand-700 hover:text-brand-800">
             去登录
           </Link>
         </p>

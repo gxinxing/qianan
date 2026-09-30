@@ -64,7 +64,7 @@ async def run_swarm(
         }
 
     try:
-        result = await supervisor.run(req, task, should_stop=should_stop)
+        result = await supervisor.run(req, task, should_stop=should_stop, on_event=on_event)
     except Exception as exc:  # noqa: BLE001 —— 蜂群整体失败要落到 task 上而不是炸掉请求
         logger.exception("swarm 执行失败")
         bb.status = "failed"

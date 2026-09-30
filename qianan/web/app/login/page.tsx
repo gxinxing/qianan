@@ -10,7 +10,7 @@ function LoginInner() {
   const { signIn } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get("next") || "/workbench";
+  const next = params.get("next") || "/workbench/";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -90,7 +90,7 @@ function LoginInner() {
 
         <p className="mt-5 text-center text-[13px] text-ink-400">
           还没有账户？{" "}
-          <Link href="/register" className="font-medium text-brand-700 hover:text-brand-800">
+          <Link href="/register/" className="font-medium text-brand-700 hover:text-brand-800">
             立即注册
           </Link>
         </p>

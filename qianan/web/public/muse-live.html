@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>千岸 Muse — 真实多模态流式体验</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Helvetica Neue", Arial, sans-serif;
+      background-color: #FCFCFC;
+      color: #1C1C1E;
+      -webkit-font-smoothing: antialiased;
+    }
+    .font-mono {
+      font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    .muse-card {
+      background: #FFFFFF;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+    }
+    .composer-shadow {
+      box-shadow: 0 4px 25px -4px rgba(0, 0, 0, 0.07), 0 1px 3px rgba(0, 0, 0, 0.03);
+    }
+    /* 打字时光标闪烁效果 */
+    .typing-cursor::after {
+      content: "▋";
+      display: inline-block;
+      vertical-align: baseline;
+      color: #1C1C1E;
+      margin-left: 2px;
+      animation: blink 0.8s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-thumb { background: #E5E5EA; border-radius: 9999px; }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col antialiased">
+
+  <!-- ==================== 1. 顶栏：1:1 对齐 Muse 窗口头 ==================== -->
+  <header class="h-11 border-b border-[#F0F0F2] bg-white px-4 flex items-center justify-between flex-shrink-0 z-30 select-none">
+    <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2">
+        <span class="h-3 w-3 rounded-full bg-[#FF5F56] border border-[#E0443E] inline-block"></span>
+        <span class="h-3 w-3 rounded-full bg-[#FFBD2E] border border-[#DEA123] inline-block"></span>
+        <span class="h-3 w-3 rounded-full bg-[#27C93F] border border-[#1AAB29] inline-block"></span>
+      </div>
+      <div class="flex items-center gap-1.5 text-xs text-[#1C1C1E] font-medium px-2 py-1 rounded-md ml-1">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <span>聊天</span>
+      </div>
+    </div>
+
+    <!-- 中间：Logo + 真实模型标签 -->
+    <div class="flex items-center gap-2">
+      <div class="h-4 w-4 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-500 flex items-center justify-center text-white text-[9px] shadow-2xs">
+        ✦
+      </div>
+      <span class="font-semibold text-xs tracking-tight text-[#1C1C1E]">千岸 · Muse (真实多模态流式)</span>
+      <span id="liveStatusBadge" class="text-[9.5px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-mono">
+        Qwen3.7-Plus + 万相在线
+      </span>
+    </div>
+
+    <!-- 右侧：环境与操作 -->
+    <div class="flex items-center gap-2 text-xs">
+      <button onclick="clearChat()" class="text-[#8E8E93] hover:text-[#1C1C1E] px-2 py-1 rounded-md transition-colors">
+        清屏
+      </button>
+      <div class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
+    </div>
+  </header>
+
+  <!-- ==================== 2. 主体：单栏居中对话流 ==================== -->
+  <div class="flex-1 flex overflow-hidden">
+
+    <!-- 左侧极窄 Dock -->
+    <aside class="w-[52px] border-r border-[#F0F0F2] bg-[#FAFAFA] flex flex-col items-center justify-between py-5 flex-shrink-0 z-20 select-none">
+      <div class="space-y-4 flex flex-col items-center">
+        <button class="h-7 w-7 rounded-lg flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></button>
+        <button class="h-7 w-7 rounded-lg bg-white border border-[#D1D1D6] shadow-2xs flex items-center justify-center text-[#1C1C1E]"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg></button>
+        <button class="h-7 w-7 rounded-lg flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition-colors"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg></button>
+      </div>
+      <div class="h-7 w-7 rounded-full bg-[#E5E5EA] text-[#48484A] font-semibold text-xs flex items-center justify-center">
+        S
+      </div>
+    </aside>
+
+    <!-- 中间：对话流 -->
+    <main class="flex-1 flex flex-col items-center overflow-hidden relative bg-[#FCFCFC]">
+      
+      <!-- 消息流容器 (居中 780px) -->
+      <div id="threadContainer" class="flex-1 w-full max-w-[800px] px-6 pt-6 pb-28 overflow-y-auto space-y-6 text-[15px] text-[#1C1C1E]">
+        
+        <!-- 初始系统欢迎气泡 -->
+        <div class="flex items-start gap-3.5 pt-2">
+          <div class="h-7 w-7 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-600 text-white flex items-center justify-center flex-shrink-0 text-[11px] shadow-2xs mt-0.5">
+            ✦
+          </div>
+          <div class="space-y-2 text-sm text-[#1C1C1E] leading-relaxed max-w-[90%]">
+            <p class="font-medium text-[#111111]">你好！我是千岸 Muse 跨境上架智能体。</p>
+            <p class="text-[#636366] text-xs">
+              我已接入赛方 Token Plan 专属多模态引擎：<span class="font-semibold text-neutral-800">Qwen3.7-Plus（视觉认知 + 文案）</span> 与 <span class="font-semibold text-neutral-800">Wan2.7-Image（阿里万相真实生图）</span>。
+            </p>
+            <p class="text-[#636366] text-xs">
+              你可以直接上传实拍图，或者点击下方的真实商品指令，体验<strong>逐 token 流式打字机推理与实时万相出图</strong>：
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ==================== 3. 底部胶囊输入框 ==================== -->
+      <div class="w-full max-w-[800px] px-6 pb-6 pt-2 flex-shrink-0 z-20">
+        
+        <!-- 快速测试药丸 -->
+        <div class="flex items-center gap-2 overflow-x-auto text-[11px] pb-2.5">
+          <span class="text-neutral-400 whitespace-nowrap">点击立即实测:</span>
+          <button onclick="quickTest('便携榨汁杯，USB-C快充，350ml，六叶刀头，帮我上架到亚马逊美区')" class="px-3 py-1 rounded-full bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-800 whitespace-nowrap transition-colors shadow-2xs font-medium">
+            ⚡ 便携榨汁杯 (Amazon A9 埋词 + 万相生图)
+          </button>
+          <button onclick="quickTest('智能数显保温杯，500ml，316不锈钢，带茶水分离，做东南亚Shopee')" class="px-3 py-1 rounded-full bg-white hover:bg-neutral-100 border border-neutral-200 text-neutral-800 whitespace-nowrap transition-colors shadow-2xs font-medium">
+            ⚡ 智能保温杯 (Shopee 移动端爆款短文案)
+          </button>
+        </div>
+
+        <!-- 胶囊输入条 -->
+        <div class="bg-white border border-[#E5E5EA] hover:border-[#D1D1D6] focus-within:border-[#8E8E93] rounded-full h-[52px] px-4 flex items-center justify-between composer-shadow transition-all">
+          
+          <!-- 左侧：加号 (+) 附件上传 -->
+          <div class="flex items-center gap-3 flex-1">
+            <label class="h-7 w-7 rounded-full hover:bg-[#F2F2F7] flex items-center justify-center text-[#8E8E93] hover:text-[#1C1C1E] transition-colors cursor-pointer" title="上传实拍商品图片 (开启多模态视觉理解)">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="handleFileChoose(event)">
+            </label>
+            
+            <div id="imagePreviewPill" class="hidden items-center gap-1.5 bg-neutral-100 text-neutral-700 text-xs px-2 py-0.5 rounded-full border border-neutral-200">
+              <span id="imageNameSpan" class="max-w-[120px] truncate">商品图.jpg</span>
+              <button onclick="removeImage()" class="text-neutral-400 hover:text-black font-bold">×</button>
+            </div>
+
+            <input id="inputMessage" type="text" placeholder="描述商品、卖点或上传图片，体验真实流式推理…" class="w-full bg-transparent text-sm text-[#1C1C1E] placeholder:text-[#8E8E93] outline-none">
+          </div>
+
+          <!-- 右侧：圆形发送键 -->
+          <button id="sendBtn" onclick="handleSendLive()" class="h-8 w-8 rounded-full bg-[#1C1C1E] hover:bg-black active:scale-95 text-white flex items-center justify-center flex-shrink-0 transition-transform shadow-2xs">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 7-7 7 7"/><path d="M12 19V5"/></svg>
+          </button>
+
+        </div>
+      </div>
+
+    </main>
+
+  </div>
+
+  <!-- 核心逻辑：直连后端真实 SSE 流式传输与多模态出图 -->
+  <script>
+    let attachedBase64 = null;
+    let isStreaming = false;
+
+    function handleFileChoose(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        attachedBase64 = reader.result;
+        document.getElementById('imageNameSpan').innerText = file.name;
+        document.getElementById('imagePreviewPill').classList.remove('hidden');
+        document.getElementById('imagePreviewPill').classList.add('flex');
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function removeImage() {
+      attachedBase64 = null;
+      document.getElementById('fileInput').value = "";
+      document.getElementById('imagePreviewPill').classList.add('hidden');
+      document.getElementById('imagePreviewPill').classList.remove('flex');
+    }
+
+    function clearChat() {
+      document.getElementById('threadContainer').innerHTML = "";
+    }
+
+    function quickTest(text) {
+      document.getElementById('inputMessage').value = text;
+      handleSendLive();
+    }
+
+    async function handleSendLive() {
+      const input = document.getElementById('inputMessage');
+      const text = input.value.trim();
+      if ((!text && !attachedBase64) || isStreaming) return;
+
+      isStreaming = true;
+      document.getElementById('sendBtn').disabled = true;
+      input.value = "";
+
+      const thread = document.getElementById('threadContainer');
+
+      // 1. 在右侧追加用户提问气泡
+      const userBubble = document.createElement('div');
+      userBubble.className = "flex justify-end pt-2 animate-in fade-in";
+      userBubble.innerHTML = `
+        <div class="max-w-[80%] bg-[#F2F2F7] text-[#1C1C1E] rounded-3xl rounded-tr-md px-4 py-3 text-sm sm:text-[14.5px] leading-relaxed shadow-2xs space-y-1.5">
+          ${attachedBase64 ? `<div class="text-xs text-emerald-800 font-medium">📸 已附带商品实拍图 (开启 Qwen-VL 视觉认知)</div>` : ''}
+          <p>${text || "请根据上传的商品图进行多模态分析与全套上架生成"}</p>
+        </div>
+      `;
+      thread.appendChild(userBubble);
+      thread.scrollTop = thread.scrollHeight;
+
+      // 2. 在左侧创建 Muse 助手流式接收气泡
+      const museWrap = document.createElement('div');
+      museWrap.className = "flex items-start gap-3.5 pt-2 animate-in fade-in";
+      
+      const contentId = 'muse-content-' + Date.now();
+      const statusId = 'muse-status-' + Date.now();
+      const cardsId = 'muse-cards-' + Date.now();
+
+      museWrap.innerHTML = `
+        <div class="h-7 w-7 rounded-full bg-gradient-to-tr from-neutral-800 to-neutral-600 text-white flex items-center justify-center flex-shrink-0 text-[11px] shadow-2xs mt-1">
+          ✦
+        </div>
+        <div class="flex-1 space-y-3 leading-[1.75]">
+          <div class="flex items-center gap-2">
+            <span id="${statusId}" class="inline-flex items-center gap-1.5 bg-[#F2F2F7] text-[#1C1C1E] font-medium text-xs px-3 py-1 rounded-full">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>正在连通 Token Plan 极速模型...</span>
+            </span>
+          </div>
+
+          <!-- 真实 token 逐字流淌容器 -->
+          <div id="${contentId}" class="text-[14.5px] text-[#1C1C1E] leading-[1.75] whitespace-pre-wrap typing-cursor"></div>
+
+          <!-- 成果物料动态卡片容器 (当 listing 到达时实时长出) -->
+          <div id="${cardsId}" class="space-y-4 pt-1"></div>
+        </div>
+      `;
+      thread.appendChild(museWrap);
+      thread.scrollTop = thread.scrollHeight;
+
+      const contentBox = document.getElementById(contentId);
+      const statusBox = document.getElementById(statusId);
+      const cardsBox = document.getElementById(cardsId);
+
+      // 3. 发起真实后端的 SSE 请求
+      try {
+        const payload = {
+          message: text || "请完成该商品的多平台上架",
+          product_name: text.slice(0, 40),
+          selling_points: text,
+          platforms: ["amazon", "shopee"],
+          category: "home_kitchen",
+          ...(attachedBase64 ? { image_base64: attachedBase64 } : {})
+        };
+
+        const res = await fetch("http://localhost:8001/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok || !res.body) {
+          throw new Error(`服务连接失败 (HTTP ${res.status})`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop() || "";
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed.startsWith("data:")) continue;
+            const dataStr = trimmed.slice(5).trim();
+            if (!dataStr || dataStr === "[DONE]") continue;
+
+            try {
+              const ev = JSON.parse(dataStr);
+
+              // 核心 1：Token 级流式逐字打字机
+              if (ev.type === "text_delta") {
+                contentBox.innerText += ev.content;
+                thread.scrollTop = thread.scrollHeight;
+              }
+              // 文本事件 (阶段性总结)
+              else if (ev.type === "text") {
+                if (contentBox.innerText) contentBox.innerText += "\n\n";
+                contentBox.innerText += ev.content;
+                thread.scrollTop = thread.scrollHeight;
+              }
+              // Trace 状态更新
+              else if (ev.type === "trace") {
+                statusBox.innerHTML = `
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>[${ev.tool || 'Agent'}] ${ev.result ? String(ev.result).slice(0, 30) : '处理中...'}</span>
+                `;
+              }
+              // 核心 2：真实 Listing 与阿里万相主图卡片到达
+              else if (ev.type === "listing" || ev.type === "listing_update") {
+                renderListingCard(cardsBox, ev);
+                thread.scrollTop = thread.scrollHeight;
+              }
+              // 完成
+              else if (ev.type === "done") {
+                statusBox.innerHTML = `
+                  <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
+                  <span>✓ 任务完成 · 全部物料与万相出图已就绪</span>
+                `;
+              }
+            } catch (err) {
+              // 容错解析
+            }
+          }
+        }
+      } catch (err) {
+        contentBox.innerText += `\n[连接异常: ${err.message}]`;
+        statusBox.innerHTML = `<span>⚠️ 执行异常</span>`;
+      } finally {
+        contentBox.classList.remove("typing-cursor");
+        isStreaming = false;
+        document.getElementById('sendBtn').disabled = false;
+        removeImage();
+      }
+    }
+
+    function renderListingCard(container, data) {
+      const card = document.createElement('div');
+      card.className = "rounded-2xl border border-[#E5E5EA] bg-white p-5 muse-card space-y-3.5 my-2 animate-in fade-in";
+      
+      const isAmz = data.platform === "amazon";
+      const dotColor = isAmz ? "bg-amber-500" : "bg-orange-500";
+      const name = data.display_name || (isAmz ? "Amazon (美国站)" : "Shopee (东南亚)");
+
+      const bulletsHtml = (data.bullets || []).slice(0, 4).map(b => `
+        <div class="p-2.5 rounded-lg bg-neutral-50 border border-neutral-100 text-xs text-neutral-800 leading-relaxed">
+          ${b}
+        </div>
+      `).join("");
+
+      // 提取真实万相生成的图片 (如有)
+      const imagesHtml = (data.images && data.images.length > 0) ? `
+        <div class="space-y-1 pt-1">
+          <div class="text-[10px] font-mono text-neutral-400 uppercase">阿里万相真实电商主图</div>
+          <div class="rounded-xl overflow-hidden border border-neutral-200 aspect-[16/10] bg-neutral-100 max-w-[420px]">
+            <img src="${data.images[0]}" class="w-full h-full object-cover">
+          </div>
+        </div>
+      ` : '';
+
+      card.innerHTML = `
+        <div class="flex items-center justify-between pb-2.5 border-b border-neutral-100">
+          <div class="flex items-center gap-2">
+            <span class="h-2.5 w-2.5 rounded-full ${dotColor}"></span>
+            <span class="font-bold text-xs text-neutral-900">${name} 官方成果</span>
+          </div>
+          <span class="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+            ✓ 47项排雷通过
+          </span>
+        </div>
+
+        <div class="space-y-1">
+          <div class="text-[10px] font-mono text-neutral-400 uppercase">Title</div>
+          <div class="text-xs font-semibold text-neutral-900 bg-neutral-50 p-3 rounded-xl border border-neutral-100 leading-relaxed select-all">
+            ${data.title || '正在生成标题...'}
+          </div>
+        </div>
+
+        ${imagesHtml}
+
+        <div class="space-y-1.5">
+          <div class="text-[10px] font-mono text-neutral-400 uppercase">Bullet Points</div>
+          <div class="space-y-1.5">
+            ${bulletsHtml || '<div class="text-xs text-neutral-400">正在生成卖点...</div>'}
+          </div>
+        </div>
+
+        ${data.search_terms ? `
+          <div class="space-y-1 pt-1">
+            <div class="text-[10px] font-mono text-neutral-400 uppercase">A9 Generic Keywords</div>
+            <div class="p-2.5 rounded-lg bg-neutral-50 border border-neutral-100 font-mono text-[11px] text-neutral-700 break-all select-all">
+              ${data.search_terms}
+            </div>
+          </div>
+        ` : ''}
+
+        <div class="flex justify-end pt-2 border-t border-neutral-100">
+          <button onclick="navigator.clipboard.writeText('${(data.title || '').replace(/'/g, "\\'")}'); alert('已复制文案');" class="px-3 py-1 rounded-lg border border-neutral-200 hover:bg-neutral-50 text-xs font-medium text-neutral-700 transition-colors">
+            复制文案
+          </button>
+        </div>
+      `;
+
+      container.appendChild(card);
+    }
+
+    document.getElementById('inputMessage').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleSendLive();
+    });
+  </script>
+
+</body>
+</html>

@@ -328,10 +328,10 @@ export default function ResultPage() {
             请从工作台或文件管理进入某个具体任务的结果页
           </p>
           <div className="mt-8 flex justify-center gap-3">
-            <a href="/workbench" className="btn-primary inline-flex">
+            <a href="/workbench/" className="btn-primary inline-flex">
               去工作台
             </a>
-            <a href="/files" className="btn-ghost inline-flex">
+            <a href="/files/" className="btn-ghost inline-flex">
               文件管理
             </a>
           </div>

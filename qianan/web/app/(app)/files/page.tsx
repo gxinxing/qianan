@@ -148,7 +148,7 @@ export default function FilesPage() {
                   </div>
                   <div className="flex shrink-0 items-center gap-2">
                     <Link
-                      href={`/result?taskId=${pkg.task_id}`}
+                      href={`/result/?taskId=${pkg.task_id}`}
                       className="btn-ghost !px-3 !py-1.5 !text-xs"
                     >
                       查看结果

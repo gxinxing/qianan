@@ -379,7 +379,7 @@ export default function CopilotPage() {
             浏览器侧边栏演示
           </span>
         </div>
-        <Link href="/workbench" className="text-xs text-ink-500 transition duration-150 hover:text-ink-900">
+        <Link href="/workbench/" className="text-xs text-ink-500 transition duration-150 hover:text-ink-900">
           ← 返回工作台
         </Link>
       </header>

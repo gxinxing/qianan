@@ -7,6 +7,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import type { Session, Message } from "../lib/chat-types";
+import type { TraceEvent } from "../lib/api";
 
 const STORAGE_KEY = "qianan_sessions";
 
@@ -129,6 +130,19 @@ export function useSessions() {
     [],
   );
 
+  /** 追加会话的 Trace 事件 */
+  const appendTrace = useCallback(
+    (sessionId: string, event: TraceEvent) => {
+      setSessions((prev) =>
+        prev.map((s) => {
+          if (s.id !== sessionId) return s;
+          return { ...s, trace: [...(s.trace || []), event] };
+        }),
+      );
+    },
+    [],
+  );
+
   return {
     sessions,
     setSessions,
@@ -138,5 +152,6 @@ export function useSessions() {
     deleteSession,
     selectSession,
     updateMessages,
+    appendTrace,
   };
 }

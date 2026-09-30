@@ -57,6 +57,30 @@ SUPERVISOR_SYSTEM = """你是跨境上架任务的主控 Agent。你不生成内
 - 确认所有平台都合规后才 submit_deliverable。不要提前交付。"""
 
 
+def _listing_detail(listing: PlatformListing) -> dict:
+    """提取 listing 详情供前端展示。"""
+    from ..preflight import build_preflight_report
+    return {
+        "type": "listing_update",
+        "platform": listing.platform,
+        "display_name": listing.display_name,
+        "title": listing.title,
+        "bullets": listing.bullets,
+        "description": listing.description[:300] if listing.description else "",
+        "images": listing.images[:3] if listing.images else [],
+        "detail_images": listing.detail_images[:4] if listing.detail_images else [],
+        "video_url": listing.video_url,
+        "compliance_passed": listing.compliance_passed,
+        "revised_count": listing.revised_count,
+        "compliance_errors": sum(1 for i in listing.compliance if i.severity == "error"),
+        "compliance_warns": sum(1 for i in listing.compliance if i.severity == "warn"),
+        "search_terms": listing.search_terms or "",
+        "pain_point_mapping": listing.pain_point_mapping or [],
+        "keyword_strategy": listing.keyword_strategy or None,
+        "preflight_report": listing.preflight_report or build_preflight_report(listing),
+    }
+
+
 class Supervisor:
     """主控：持有黑板与动作表，驱动执行 agent 完成上架任务。"""
 
@@ -80,6 +104,14 @@ class Supervisor:
         )
         self.review_worker = ReviewWorker(client, ComplianceAgent())
         self.understanding_agent = ProductUnderstandingAgent(client)
+        self.on_event = None
+
+    def _emit(self, kind: str, content: Any) -> None:
+        if getattr(self, "on_event", None):
+            try:
+                self.on_event(kind, content)
+            except Exception:
+                logger.warning("蜂群事件推送失败: %s", kind)
 
     def _checkpoint(self) -> None:
         """黑板落盘（best-effort）：崩溃/取消后轨迹可查，也可供 Blackboard.resume() 恢复。
@@ -194,56 +226,81 @@ class Supervisor:
     # ---------------------------------------------------------- 动作实现
 
     async def _act_understand(self, req: GenerateRequest) -> str:
+        self._emit("text", "【商品认知模块】开始进行多模态视觉识别与卖点提炼...")
         self.understanding = await self.understanding_agent.run(req, self.image_ref)
         self.bb.mark_understanding(self.understanding)
         self.bb.rules.update(RulesEngineAgent().run(list(self.bb.platforms)))
-        return f"商品理解完成：{self.understanding.product_type or '—'}，已载入 {len(self.bb.rules)} 个平台规则。"
+        msg = f"商品理解完成：{self.understanding.product_type or '—'}，已载入 {len(self.bb.rules)} 个平台规则。"
+        self._emit("text", f"【商品认知模块】{msg}")
+        return msg
 
     async def _act_copy(self, req: GenerateRequest, platform: str) -> str:
+        display = (self.bb.rules.get(platform) or {}).get("displayName") or platform
+        self._emit("text", f"【平台工匠模块: {display}】开始撰写上架文案与五点卖点...")
         listing = await self.platform_worker.run_copy(self.bb, req, platform)
         if listing is None:
             return f"无法执行 generate_copy({platform})：文案生成失败，请换一个动作。"
         self.listings[platform] = listing
-        return f"{listing.display_name or platform} 文案已生成（v{self.bb.platforms[platform].copy_version}）。"
+        self._emit("listing", _listing_detail(listing))
+        msg = f"{listing.display_name or platform} 文案已生成（v{self.bb.platforms[platform].copy_version}）。"
+        self._emit("text", f"【平台工匠模块: {display}】{msg}")
+        return msg
 
     async def _act_review(self, platform: str, category: str) -> str:
         listing = self.listings.get(platform)
         if listing is None:
             return f"无法执行 review_listing({platform})：还没有产物。"
-        issues = await self.review_worker.run(self.bb, listing, platform, category)
-        blocking = [i for i in issues if i.severity == "error"]
         st = self.bb.platforms[platform]
+        display = st.display_name or platform
+        self._emit("text", f"【独立质检模块: {display}】启动跨上下文隔离合规审查...")
+        issues = await self.review_worker.run(self.bb, listing, platform, category)
+        self._emit("listing", _listing_detail(listing))
+        blocking = [i for i in issues if i.severity == "error"]
         if blocking:
             fields = "、".join(dict.fromkeys(i.field for i in blocking))
-            return f"{st.display_name or platform} 审核发现 {len(blocking)} 项阻断问题（{fields}），需要 revise_copy。"
-        return f"{st.display_name or platform} 审核通过，审核结论有效。"
+            msg = f"{display} 审核发现 {len(blocking)} 项阻断问题（{fields}），需要 revise_copy。"
+        else:
+            msg = f"{display} 审核通过，合规结论有效。"
+        self._emit("text", f"【独立质检模块: {display}】{msg}")
+        return msg
 
     async def _act_revise(self, platform: str) -> str:
         listing = self.listings.get(platform)
         st = self.bb.platforms[platform]
+        display = st.display_name or platform
         if listing is None:
             return f"无法执行 revise_copy({platform})：还没有产物。"
         rules = self.bb.rules.get(platform) or {}
         errors = [i for i in listing.compliance if i.severity == "error" and i.field != "mainImage"]
         if not errors:
             return f"无法执行 revise_copy({platform})：当前没有需要修订的 error（缺图请用 generate_images）。"
+        self._emit("text", f"【自愈修订模块: {display}】根据质检报告自愈修复 {len(errors)} 项合规硬伤...")
         revised = await self.platform_worker.copy_agent.revise(listing, rules, errors)
         revised.revised_count += 1
         self.listings[platform] = revised
         self.bb.mark_copy(platform)  # 版本 +1 → 自动作废旧审核结论
-        return (
-            f"{st.display_name or platform} 已修订（第 {revised.revised_count} 轮），"
+        self._emit("listing", _listing_detail(revised))
+        msg = (
+            f"{display} 已修订（第 {revised.revised_count} 轮），"
             f"审核结论已失效，请重新 review_listing。"
         )
+        self._emit("text", f"【自愈修订模块: {display}】{msg}")
+        return msg
 
     async def _act_images(self, platform: str) -> str:
         listing = self.listings.get(platform)
+        st = self.bb.platforms[platform]
+        display = st.display_name or platform
         if listing is None:
             return f"无法执行 generate_images({platform})：请先生成文案。"
+        self._emit("text", f"【视觉生成模块: {display}】阿里万相开始渲染商品电商主图...")
         await self.platform_worker.run_visual(self.bb, listing, platform, self.image_ref)
+        self._emit("listing", _listing_detail(listing))
         if not listing.images:
             return f"{platform} 图片生成未成功，但不阻断上架，可继续其他动作。"
-        return f"{platform} 图片已生成（主图 {len(listing.images)} 张、详情图 {len(listing.detail_images or [])} 张）。"
+        msg = f"{platform} 图片已生成（主图 {len(listing.images)} 张、详情图 {len(listing.detail_images or [])} 张）。"
+        self._emit("text", f"【视觉生成模块: {display}】{msg}")
+        return msg
 
     async def _act_video(self, platform: str) -> str:
         listing = self.listings.get(platform)
@@ -262,21 +319,35 @@ class Supervisor:
             logger.warning("视频生成失败: %s", exc)
             return f"{platform} 视频生成失败（{exc}），不影响上架，可跳过。"
         self.bb.mark_video(platform)
-        return f"{platform} 展示视频已生成。"
+        self._emit("listing", _listing_detail(listing))
+        msg = f"{platform} 展示视频已生成。"
+        self._emit("text", f"【视频生成模块: {platform}】{msg}")
+        return msg
 
     async def _act_deliver(self) -> str:
         self.bb.status = "completed"
-        return f"交付完成：{len(self.listings)}/{len(self.bb.platforms)} 个平台，全部通过审核。"
+        msg = f"蜂群交付完成：{len(self.listings)}/{len(self.bb.platforms)} 个平台，全部通过审核。"
+        self._emit("text", f"【交付门禁模块】{msg}")
+        return msg
 
     # ---------------------------------------------------------- 主循环
 
-    async def run(self, req: GenerateRequest, task=None, should_stop=None) -> dict:
+    async def run(
+        self,
+        req: GenerateRequest,
+        task=None,
+        should_stop=None,
+        on_event=None,
+    ) -> dict:
         """驱动整个上架任务。返回 {"status", "listings", "blackboard", "actions"}。
 
         should_stop：取消信号。必须一路传到工具循环，否则「停止」在蜂群模式下又失效。
+        on_event：实时流式事件钩子，向前端推送各模块产物与运行状态。
         """
+        self.on_event = on_event
         from ...agent_core.loop import run_tool_loop
         from ...agent_core.registry import ToolSpec
+        from ...agent_core.trace import record
 
         self.image_ref = resolve_image_ref(req.image_url, req.image_base64)
         self.req = req  # handler 通过 self 取，避免闭包传参出错
@@ -346,6 +417,8 @@ class Supervisor:
             f"请一步步选择动作，直到可以 submit_deliverable。"
         )
 
+        text_delta = (lambda chunk: on_event("text_delta", chunk)) if on_event else None
+
         result = await run_tool_loop(
             self.client,
             SUPERVISOR_SYSTEM,
@@ -354,6 +427,10 @@ class Supervisor:
             max_rounds=30,
             deadline_s=self.bb.budget["max_seconds"],
             should_stop=should_stop,
+            on_text_delta=text_delta,
+            on_event=lambda name, args, out: record(
+                task, "build", name, json.dumps(args, ensure_ascii=False)[:60], out[:120]
+            ) if task else None,
         )
 
         if result.get("cancelled"):
@@ -426,6 +503,8 @@ class Supervisor:
             listing = await self.platform_worker.run_copy(self.bb, req, p)
             if listing is not None:
                 self.listings[p] = listing
+                self._emit("listing", _listing_detail(listing))
+                self._emit("text", f"【平台工匠模块: {listing.display_name or p}】文案已就绪。")
 
         await asyncio.gather(*[_copy_one(p) for p in platforms])
 

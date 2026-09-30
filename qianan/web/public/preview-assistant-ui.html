@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>方案 1：Assistant UI 风格 (Muse / Claude Artifacts 艺术级留白)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Newsreader:ital,opsz,wght@1,6..72,400;1,6..72,500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background-color: #FAF8F5;
+      color: #1F201D;
+    }
+    .font-serif-title {
+      font-family: 'Newsreader', serif;
+    }
+    .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .paper-shadow {
+      box-shadow: 0 20px 40px -15px rgba(28, 28, 26, 0.05), 0 1px 3px rgba(28, 28, 26, 0.03);
+    }
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-thumb { background: #E6E4DF; border-radius: 9999px; }
+  </style>
+</head>
+<body class="h-screen w-screen overflow-hidden flex flex-col antialiased selection:bg-[#EAE6DF] selection:text-[#1F201D]">
+
+  <!-- 顶部对比快速切换 Bar -->
+  <div class="h-10 bg-[#1C1C1A] text-white px-4 flex items-center justify-between text-xs z-50 flex-shrink-0">
+    <div class="flex items-center gap-2">
+      <span class="font-bold text-amber-300">原型对比模式</span>
+      <span class="text-zinc-500">|</span>
+      <span class="text-zinc-300">当前演示：方案 1 · Assistant UI (Muse / Claude Artifacts 艺术级温润质感)</span>
+    </div>
+    <div class="flex items-center gap-1.5 font-medium">
+      <a href="/preview-assistant-ui.html" class="px-2.5 py-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">方案 1A (Muse分屏版)</a>
+      <a href="/preview-muse-v2.html" class="px-2.5 py-1 rounded hover:bg-white/10 text-amber-300 hover:text-white font-semibold transition-colors">✨ 方案 1B (Muse画廊版)</a>
+      <a href="/preview-vercel-v0.html" class="px-2.5 py-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">方案 2 (v0单色)</a>
+      <a href="/preview-copilotkit.html" class="px-2.5 py-1 rounded hover:bg-white/10 text-zinc-400 hover:text-white transition-colors">方案 3 (SaaS风)</a>
+    </div>
+  </div>
+
+  <!-- 顶部极简品牌栏 -->
+  <header class="h-14 border-b border-[#ECE9E2] bg-[#FAF8F5]/90 backdrop-blur-md px-6 flex items-center justify-between flex-shrink-0">
+    <div class="flex items-center gap-3">
+      <div class="h-7 w-7 rounded-lg bg-[#272824] flex items-center justify-center font-serif text-white font-bold text-sm">
+        Q
+      </div>
+      <div>
+        <span class="font-bold text-sm text-[#1F201D] tracking-tight">千岸 QianAn</span>
+        <span class="text-[11px] text-[#7F8178] ml-2 font-serif-title italic">The Editorial Launch Copilot</span>
+      </div>
+    </div>
+    
+    <div class="flex items-center gap-2 text-xs">
+      <span class="h-2 w-2 rounded-full bg-emerald-600 animate-pulse"></span>
+      <span class="text-[11px] text-[#5C5E57] font-medium">便携榨汁杯 350ml · 双站点就绪</span>
+      <button onclick="alert('已将完整上架包下载至本地')" class="ml-3 px-3 py-1.5 rounded-lg bg-[#272824] hover:bg-[#3E4039] text-white text-xs font-medium transition-all shadow-xs">
+        下载全套上架包
+      </button>
+    </div>
+  </header>
+
+  <!-- 主屏双栏：左侧沉浸对话 (46%) + 右侧纸质画布 (54%) -->
+  <main class="flex-1 flex overflow-hidden">
+
+    <!-- 左侧：Muse 风格温润对话流 -->
+    <section class="w-[46%] flex flex-col border-r border-[#ECE9E2] bg-[#FAF8F5]">
+      
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        
+        <!-- 用户气泡 -->
+        <div class="flex justify-end">
+          <div class="max-w-[85%] bg-[#F0EDE6] text-[#272824] rounded-2xl rounded-tr-xs p-4 text-xs sm:text-[13px] leading-relaxed paper-shadow space-y-2">
+            <div class="flex items-center gap-2 pb-1.5 border-b border-[#E3DFC9]/60 text-[11px] text-[#696C62]">
+              <span class="font-semibold text-[#3D4037]">📸 商品实拍图已载入</span>
+              <span>350ml · 6叶精钢破壁刀 · Type-C</span>
+            </div>
+            <p>我想把这款便携榨汁杯首发在亚马逊美区和东南亚 Shopee。请输出地道的大卖文案、精准埋词，并出两套真实场景图。</p>
+          </div>
+        </div>
+
+        <!-- Agent 运营总监声线回复 -->
+        <div class="flex items-start gap-3">
+          <div class="h-7 w-7 rounded-lg bg-[#EFECE4] border border-[#DDD9CE] flex items-center justify-center flex-shrink-0 text-[#4E5147] font-serif text-sm">
+            ✦
+          </div>
+          <div class="flex-1 space-y-3">
+            <div class="bg-white border border-[#ECE9E2] rounded-2xl rounded-tl-xs p-5 text-xs sm:text-[13px] leading-relaxed paper-shadow space-y-3">
+              <div class="flex items-center justify-between text-[11px] text-[#7E8077] border-b border-[#F2EFE9] pb-2">
+                <span class="font-semibold text-[#272824] flex items-center gap-1.5">
+                  千岸出海总监
+                </span>
+                <span class="font-mono text-[#9EA096]">Turn 01 · 深度推演</span>
+              </div>
+
+              <!-- 思考折叠过程 (Muse 极简卡片) -->
+              <details class="group bg-[#F7F5F0] border border-[#EBE7DE] rounded-xl p-2.5 text-xs">
+                <summary class="cursor-pointer font-medium text-[#5E6157] flex items-center justify-between select-none">
+                  <span class="flex items-center gap-1.5">
+                    <span class="text-amber-700">✦</span> 思考逻辑：破除竞品 3 大常见差评点
+                  </span>
+                  <span class="text-[10px] text-[#8F9287] group-open:rotate-180 transition-transform">▼</span>
+                </summary>
+                <div class="pt-2 text-[11px] text-[#6E7166] space-y-1 leading-normal border-t border-[#E8E4DA] mt-2">
+                  <p>1. 竞品高频差评：动力不足打不动冰块、硅胶圈漏水、移动端标题堆砌。</p>
+                  <p>2. 反击方案：Amazon 标题首屏前置 20000RPM；五点描述以方括号标签开篇，强调 30 秒破壁与 100% 防漏。</p>
+                </div>
+              </details>
+
+              <p class="text-[#3A3D33] leading-relaxed">
+                已为您完成全套商品画像解析。右侧画布为您实时渲染了 <strong>Amazon (美国)</strong> 与 <strong>Shopee (东南亚)</strong> 的差异化上架方案与阿里万相高保真主图。
+              </p>
+
+              <!-- Claude Artifact 悬浮卡片 -->
+              <div class="p-3.5 rounded-xl bg-[#FAF8F5] border border-[#E3DFD5] flex items-center justify-between hover:border-[#C4BFA6] transition-all cursor-pointer" onclick="alert('已聚焦右侧画布')">
+                <div class="flex items-center gap-3">
+                  <div class="h-9 w-9 rounded-lg bg-[#EFECE4] flex items-center justify-center text-[#55584D] font-bold">
+                    📦
+                  </div>
+                  <div>
+                    <div class="font-semibold text-xs text-[#272824] flex items-center gap-2">
+                      <span>便携榨汁杯双站 Listing 资料包</span>
+                      <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#EAE6DD] text-[#4E5147] font-mono">v1</span>
+                    </div>
+                    <div class="text-[11px] text-[#7F8277]">含 A9 249B 后台词、5点卖点、阿里万相实拍渲染图</div>
+                  </div>
+                </div>
+                <span class="text-xs text-[#5E6157] font-medium">查看画布 →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 底部输入框 (温润纸质胶囊) -->
+      <div class="p-4 border-t border-[#ECE9E2] bg-[#FAF8F5]">
+        <div class="bg-white border border-[#DDD9CE] focus-within:border-[#969A89] rounded-2xl p-2.5 paper-shadow transition-all">
+          <textarea placeholder="随时补充需求，例如：“把标题缩减为 150 字符”、“换张户外背景图”…" rows="2" class="w-full bg-transparent text-xs sm:text-[13px] text-[#272824] placeholder:text-[#9EA096] resize-none outline-none px-2 leading-relaxed"></textarea>
+          <div class="flex items-center justify-between pt-2 border-t border-[#F2EFE9] px-1">
+            <span class="text-[10px] text-[#7F8277] flex items-center gap-1">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span> 目标平台: Amazon, Shopee
+            </span>
+            <button class="px-3 py-1 bg-[#272824] hover:bg-[#3D4037] text-white text-xs font-medium rounded-lg transition-colors">
+              发送调整要求
+            </button>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- 右侧：Muse / Claude Artifacts 艺术级产物画布 (54%) -->
+    <section class="flex-1 flex flex-col bg-[#F3F1EC] overflow-hidden">
+      
+      <!-- 画布顶部控制台 -->
+      <div class="h-14 border-b border-[#ECE9E2] bg-white/70 backdrop-blur-md px-6 flex items-center justify-between flex-shrink-0">
+        <!-- 平台药丸切换 -->
+        <div class="flex items-center gap-1.5 bg-[#FAF8F5] p-1 rounded-xl border border-[#E3DFD5]">
+          <button class="px-3 py-1 rounded-lg text-xs font-semibold bg-white text-[#272824] shadow-xs">
+            Amazon (美区)
+          </button>
+          <button class="px-3 py-1 rounded-lg text-xs font-medium text-[#7F8277] hover:text-[#272824] transition-colors">
+            Shopee (东南亚)
+          </button>
+        </div>
+
+        <!-- 状态与复制操作 -->
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md flex items-center gap-1">
+            ✓ 47项排雷全绿
+          </span>
+          <button onclick="alert('已复制亚马逊全套文案')" class="px-2.5 py-1 rounded-lg border border-[#DDD9CE] hover:bg-white text-xs font-medium text-[#4E5147] transition-all bg-[#FAF8F5]">
+            复制本文案
+          </button>
+        </div>
+      </div>
+
+      <!-- 画布正文 (杂志级优雅排版) -->
+      <div class="flex-1 overflow-y-auto p-8 space-y-6">
+        
+        <div class="bg-white border border-[#E5E2D8] rounded-2xl p-6 paper-shadow space-y-6 max-w-2xl mx-auto">
+          
+          <!-- 标题区 -->
+          <div class="space-y-1 border-b border-[#F2EFE9] pb-4">
+            <div class="text-[10px] font-mono tracking-wider uppercase text-[#8F9287]">Listing Title · Formula A9</div>
+            <h1 class="text-base font-semibold text-[#1C1C1A] leading-snug">
+              FreshJuice Portable Blender 350ml, 20000RPM High Speed Personal Smoothie Maker with 6-Blade, Type-C Rechargeable Leak-Proof Mini Juicer Cup
+            </h1>
+            <div class="text-[10px] text-emerald-700 font-mono">168 字符 · 首屏核心词已前置 · 无标点滥用</div>
+          </div>
+
+          <!-- 万相生图画廊 -->
+          <div class="space-y-2">
+            <div class="text-[10px] font-mono tracking-wider uppercase text-[#8F9287]">Wan2.7 Product Visuals · 阿里万相高保真</div>
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-xl overflow-hidden border border-[#ECE9E2] aspect-square bg-[#FAF8F5]">
+                <img src="https://images.unsplash.com/photo-1570857502809-08184874388e?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover" alt="Blender">
+              </div>
+              <div class="rounded-xl overflow-hidden border border-[#ECE9E2] aspect-square bg-[#FAF8F5]">
+                <img src="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?auto=format&fit=crop&w=600&q=80" class="w-full h-full object-cover" alt="Blender in nature">
+              </div>
+            </div>
+          </div>
+
+          <!-- 5点卖点 -->
+          <div class="space-y-2.5">
+            <div class="text-[10px] font-mono tracking-wider uppercase text-[#8F9287]">5-Bullet Defensive Strategy · 防差评矩阵</div>
+            <div class="space-y-2 text-xs text-[#3E4137] leading-relaxed">
+              <div class="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#EAE7DE]">
+                <span class="font-bold text-[#1C1C1A]">[20000RPM 6-BLADE CRUSH]</span> 配备 6 叶精钢刀头与纯铜电机，30秒碎冰打坚果，击穿竞品“动力衰减”痛点。
+              </div>
+              <div class="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#EAE7DE]">
+                <span class="font-bold text-[#1C1C1A]">[100% LEAK-PROOF SEAL]</span> 食品级密封硅胶圈，倒置摇晃零漏水，随手丢进托特包。
+              </div>
+              <div class="p-2.5 rounded-xl bg-[#FAF8F5] border border-[#EAE7DE]">
+                <span class="font-bold text-[#1C1C1A]">[TYPE-C RECHARGEABLE]</span> 2000mAh 电池，充一次打 15 杯，车载/电脑/充电宝即插即充。
+              </div>
+            </div>
+          </div>
+
+          <!-- A9 249B 后台词 -->
+          <div class="p-3.5 rounded-xl bg-[#F8F7F2] border border-[#E5E2D8] space-y-1">
+            <div class="flex justify-between items-center text-[10px]">
+              <span class="font-bold text-[#4E5147]">Amazon A9 隐形后台搜索词</span>
+              <span class="font-mono text-emerald-700">198 / 249 Bytes (安全未超限)</span>
+            </div>
+            <div class="font-mono text-xs text-[#3E4137] break-all leading-normal select-all">
+              cordless portable juicer rechargeable blender cup personal shake mixer travel blender camping juice maker 6 blades fruit crusher bpa free
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+</body>
+</html>

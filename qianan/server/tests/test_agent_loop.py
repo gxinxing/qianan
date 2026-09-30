@@ -126,6 +126,7 @@ async def _async_noop(*args, **kwargs) -> None:  # noqa: ANN001
 
 def _install_stubs(monkeypatch) -> None:
     """把联网组件换成确定性替身，让 run_chat_agent 真正跑工具循环但不发网络请求。"""
+    monkeypatch.setenv("QIANAN_SWARM", "0")
     monkeypatch.setattr(chat_agent, "ProductUnderstandingAgent", FakeUnderstanding)
     monkeypatch.setattr(chat_agent, "CopywritingAgent", FakeCopy)
     monkeypatch.setattr(chat_agent, "VisualAgent", NoopVisual)

@@ -334,7 +334,7 @@ function BatchResultView({
               </div>
               {it.status === "done" && (
                 <Link
-                  href={`/result?taskId=${it.task_id}`}
+                  href={`/result/?taskId=${it.task_id}`}
                   className="mt-3 inline-block rounded-md bg-brand-800 px-3 py-1.5 text-[12px] font-medium text-white transition hover:bg-brand-700"
                 >
                   查看 Listing →
